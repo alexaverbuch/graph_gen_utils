@@ -24,8 +24,8 @@ public class NeoFromFile {
 	 * @param args
 	 */
 	public static void main(String[] args) throws FileNotFoundException {
-		NeoFromFile parser = new NeoFromFile("graphs/bcsstk30.graph",
-				"var/generated-bcsstk30");
+		NeoFromFile parser = new NeoFromFile("graphs/test0.graph",
+				"var/generated-test0");
 
 		System.out.printf("Generating Neo... ");
 
