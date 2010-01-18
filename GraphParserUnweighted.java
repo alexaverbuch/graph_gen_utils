@@ -1,4 +1,4 @@
-// Author: Alex Averbuch
+// Author: Alex Averbuch & Martin Neumann
 
 package graph_gen_utils;
 
