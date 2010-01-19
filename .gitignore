@@ -1,0 +1,9 @@
+# Files
+*~
+*.class
+.* 
+!.gitignore 
+
+# Directories
+target/
+var/
