@@ -1,5 +1,3 @@
-// Author: Alex Averbuch & Martin Neumann
-
 package graph_gen_utils;
 
 import java.util.HashMap;

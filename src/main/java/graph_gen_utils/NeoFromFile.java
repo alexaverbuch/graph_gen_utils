@@ -1,5 +1,3 @@
-// Author: Alex Averbuch & Martin Neumann
-
 package graph_gen_utils;
 
 import java.io.*;
@@ -24,8 +22,8 @@ public class NeoFromFile {
 	 * @param args
 	 */
 	public static void main(String[] args) throws FileNotFoundException {
-		NeoFromFile parser = new NeoFromFile("graphs/test0.graph",
-				"var/generated-test0");
+		NeoFromFile parser = new NeoFromFile("graphs/bcsstk30.graph",
+				"var/generated-bcsstk30");
 
 		System.out.printf("Generating Neo... ");
 
