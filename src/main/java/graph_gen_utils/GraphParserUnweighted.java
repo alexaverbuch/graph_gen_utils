@@ -12,15 +12,13 @@ public class GraphParserUnweighted extends GraphParser {
 	}
 
 	@Override
-	public NodeData parseLine(String aLine, int lineNum) {
+	public NodeData parseNodeAndRels(String aLine, int nodeNumber) {
 		try {
 			NodeData node = new NodeData();
 
-			// Scanner scanner = new Scanner(aLine.trim());
-			// scanner.useDelimiter(" ");
 			StringTokenizer st = new StringTokenizer(aLine, " ");
 
-			node.getProperties().put("name", Integer.toString(lineNum));
+			node.getProperties().put("name", Integer.toString(nodeNumber));
 			node.getProperties().put("weight", 1);
 
 			// while (scanner.hasNext()) {
@@ -31,10 +29,25 @@ public class GraphParserUnweighted extends GraphParser {
 				node.getRelationships().add(rel);
 			}
 
-//			scanner.close();
 			return node;
 		} catch (Exception e) {
-			System.err.printf("Could not parse line %d%n%n%s", lineNum + 1, e
+			System.err.printf("Could not parse line %d%n%n%s", nodeNumber + 1, e
+					.toString());
+			return null;
+		}
+	}
+
+	@Override
+	public NodeData parseNode(String aLine, int nodeNumber) {
+		try {
+			NodeData node = new NodeData();
+
+			node.getProperties().put("name", Integer.toString(nodeNumber));
+			node.getProperties().put("weight", 1);
+
+			return node;
+		} catch (Exception e) {
+			System.err.printf("Could not parse line %d%n%n%s", nodeNumber + 1, e
 					.toString());
 			return null;
 		}

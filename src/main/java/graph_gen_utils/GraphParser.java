@@ -18,6 +18,6 @@ public abstract class GraphParser {
 		return edgeCount;
 	}				
 	
-	public abstract NodeData parseLine(String aLine, int lineNum);
-
+	public abstract NodeData parseNodeAndRels(String aLine, int nodeNumber);
+	public abstract NodeData parseNode(String aLine, int lineNum);
 }

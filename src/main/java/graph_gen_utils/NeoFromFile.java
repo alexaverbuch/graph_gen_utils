@@ -14,22 +14,24 @@ import org.neo4j.kernel.impl.batchinsert.BatchInserterImpl;
 
 public class NeoFromFile {
 
-	private static final int STORE_BUFFER = 100;
+	private static final int NODE_STORE_BUFFER = 100000;
+	private static final int REL_STORE_BUFFER = 10000;
 	private String inputFile;
 	private String storeDir;
 
-	/**
-	 * @param args
-	 */
 	public static void main(String[] args) throws FileNotFoundException {
-		NeoFromFile parser = new NeoFromFile("graphs/bcsstk30.graph",
-				"var/generated-bcsstk30");
+		NeoFromFile parser = new NeoFromFile("graphs/auto.graph",
+				"var/generated-auto");
 
-		System.out.printf("Generating Neo... ");
+		long time = System.currentTimeMillis();
 
-		parser.generateNeo();
+		// parser.generateNeo1Pass();
+		parser.generateNeo2Pass();
 
-		System.out.printf("Complete");
+		// PRINTOUTS
+		System.out.printf("%n%nTime Taken[%d]: %ds", NeoFromFile.NODE_STORE_BUFFER,
+				time / 1000);
+
 	}
 
 	public NeoFromFile(String inputFile, String storeDir) {
@@ -37,13 +39,7 @@ public class NeoFromFile {
 		this.storeDir = storeDir;
 	}
 
-	public void generateNeo() throws FileNotFoundException {
-		BatchInserter batchNeo = new BatchInserterImpl(storeDir,
-				BatchInserterImpl.loadProperties("neo.props"));
-
-		LuceneIndexBatchInserter batchIndexService = new LuceneIndexBatchInserterImpl(
-				batchNeo);
-
+	public void generateNeo1Pass() throws FileNotFoundException {
 		File fFile = new File(inputFile);
 		Scanner scanner = new Scanner(fFile);
 		try {
@@ -54,62 +50,152 @@ public class NeoFromFile {
 				ArrayList<NodeData> nodes = new ArrayList<NodeData>();
 
 				// read each line to extract node & relationship information
-				int nodeCount = 0;
+				int nodeNumber = 0;
 				while (scanner.hasNextLine()) {
-					nodeCount++;
-					nodes.add(parser.parseLine(scanner.nextLine(), nodeCount));
-
-					// Commented out because at this point some relationships
-					// may reference unknown nodes.
-					// Assuming we have enough RAM to reduce complexity for the
-					// time being.
-					// if ((nodeCount % GraphFromFile.STORE_BUFFER) == 0) {
-					// storeToNeo(nodes, batchNeo, batchIndexService);
-					// nodes.clear();
-					// }
+					nodeNumber++;
+					nodes.add(parser.parseNodeAndRels(scanner.nextLine(),
+							nodeNumber));
 				}
 
-				storeToNeo(nodes, batchNeo, batchIndexService);
+				storeNodesAndRelsToNeo(nodes);
 				nodes.clear();
 			}
 		} finally {
 			// ensure the underlying stream is always closed
 			scanner.close();
-			batchIndexService.shutdown();
-			batchNeo.shutdown();
 		}
 
 	}
 
+	public void generateNeo2Pass() throws FileNotFoundException {
+
+		// PRINTOUTS
+		long time = System.currentTimeMillis();
+		System.out
+				.printf("%nOpening BatchInserter & LuceneIndexBatchInserter Service...");
+
+		BatchInserter batchNeo = new BatchInserterImpl(storeDir,
+				BatchInserterImpl.loadProperties("neo.props"));
+
+		LuceneIndexBatchInserter batchIndexService = new LuceneIndexBatchInserterImpl(
+				batchNeo);
+
+		// PRINTOUTS
+		System.out.printf("%dms%n", System.currentTimeMillis() - time);
+		time = System.currentTimeMillis();
+		System.out.printf("%nOpening Graph File...");
+
+		File fFile = new File(inputFile);
+
+		// PRINTOUTS
+		System.out.printf("%dms%n", System.currentTimeMillis() - time);
+		time = System.currentTimeMillis();
+		System.out.printf("%nReading & Indexing Nodes...");
+
+		GraphParser parser = null;
+		Scanner scanner = new Scanner(fFile);
+		try {
+			// read first line to distinguish format
+			if (scanner.hasNextLine()) {
+				parser = getFormat(scanner.nextLine());
+
+				ArrayList<NodeData> nodes = new ArrayList<NodeData>();
+
+				// read each line to extract node & relationship information
+				int nodeNumber = 0;
+				while (scanner.hasNextLine()) {
+					nodeNumber++;
+					nodes.add(parser.parseNode(scanner.nextLine(), nodeNumber));
+
+					if ((nodeNumber % NeoFromFile.NODE_STORE_BUFFER) == 0) {
+						System.out.printf(".");
+						storeNodesToNeo(nodes, batchNeo, batchIndexService);
+						nodes.clear();
+					}
+				}
+
+				storeNodesToNeo(nodes, batchNeo, batchIndexService);
+				nodes.clear();
+
+				batchIndexService.optimize();
+			}
+		} finally {
+			// ensure the underlying stream is always closed
+			scanner.close();
+		}
+
+		// PRINTOUTS
+		System.out.printf("%dms%n", System.currentTimeMillis() - time);
+		time = System.currentTimeMillis();
+		System.out.printf("%nReading & Indexing Relationships...");
+
+		scanner = new Scanner(fFile);
+		try {
+			// read first line to distinguish format
+			if (scanner.hasNextLine()) {
+
+				// skip over first line
+				scanner.nextLine();
+
+				ArrayList<NodeData> nodesAndRels = new ArrayList<NodeData>();
+
+				// read each line to extract node & relationship information
+				int nodeNumber = 0;
+				while (scanner.hasNextLine()) {
+
+					nodeNumber++;
+					nodesAndRels.add(parser.parseNodeAndRels(
+							scanner.nextLine(), nodeNumber));
+
+					if ((nodeNumber % NeoFromFile.REL_STORE_BUFFER) == 0) {
+						System.out.printf(".");
+						storeNodesToNeo(nodesAndRels, batchNeo,
+								batchIndexService);
+						nodesAndRels.clear();
+					}
+				}
+
+				storeRelsToNeo(nodesAndRels, batchNeo, batchIndexService);
+				nodesAndRels.clear();
+			}
+		} finally {
+			// ensure the underlying stream is always closed
+			scanner.close();
+		}
+
+		// PRINTOUTS
+		System.out.printf("%dms%n", System.currentTimeMillis() - time);
+		time = System.currentTimeMillis();
+		System.out
+				.printf("%nClosing BatchInserter & LuceneIndexBatchInserter Service...");
+
+		batchIndexService.shutdown();
+		batchNeo.shutdown();
+
+		// PRINTOUTS
+		System.out.printf("%dms%n", System.currentTimeMillis() - time);
+		time = System.currentTimeMillis();
+		System.out.printf("%nNeo4j Instance Created!");
+	}
+
 	private GraphParser getFormat(String aLine) {
-		StringTokenizer st = new StringTokenizer(aLine," ");
-//		while (st.hasMoreTokens()) {
-//			st.nextToken();
-//		}
-		
-//		Scanner scanner = new Scanner(aLine);
-//		scanner.useDelimiter(" ");
+		StringTokenizer st = new StringTokenizer(aLine, " ");
 
 		int nodeCount = 0;
 		int edgeCount = 0;
 		int format = 0;
 
 		if (st.hasMoreTokens()) {
-//		if (scanner.hasNextLine()) {
 			nodeCount = Integer.parseInt(st.nextToken());
 		}
 
 		if (st.hasMoreTokens()) {
-//		if (scanner.hasNextLine()) {
 			edgeCount = Integer.parseInt(st.nextToken());
 		}
 
 		if (st.hasMoreTokens()) {
-//		if (scanner.hasNextLine()) {
 			format = Integer.parseInt(st.nextToken());
 		}
-
-//		scanner.close();
 
 		switch (format) {
 		case 0:
@@ -125,35 +211,79 @@ public class NeoFromFile {
 		}
 	}
 
-	private void storeToNeo(ArrayList<NodeData> nodes, BatchInserter batchNeo,
-			LuceneIndexBatchInserter batchIndexService) {
+	private void storeNodesAndRelsToNeo(ArrayList<NodeData> nodesAndRels) {
+		BatchInserter batchNeo = new BatchInserterImpl(storeDir,
+				BatchInserterImpl.loadProperties("neo.props"));
 
-		for (NodeData node : nodes) {
-			long nodeID = batchNeo.createNode(node.getProperties());
+		LuceneIndexBatchInserter batchIndexService = new LuceneIndexBatchInserterImpl(
+				batchNeo);
 
-			batchIndexService.index(nodeID, "name", node.getProperties().get(
-					"name"));
-			batchIndexService.index(nodeID, "weight", node.getProperties().get(
-					"weight"));
+		for (NodeData nodeAndRels : nodesAndRels) {
+			long nodeID = batchNeo.createNode(nodeAndRels.getProperties());
+
+			batchIndexService.index(nodeID, "name", nodeAndRels.getProperties()
+					.get("name"));
+			batchIndexService.index(nodeID, "weight", nodeAndRels
+					.getProperties().get("weight"));
 		}
 
 		batchIndexService.optimize();
 
-		for (NodeData node : nodes) {
+		for (NodeData nodeAndRels : nodesAndRels) {
 			long fromNodeID = batchIndexService.getNodes("name",
-					node.getProperties().get("name")).iterator().next();
+					nodeAndRels.getProperties().get("name")).iterator().next();
 
-			for (Map<String, Object> relData : node.getRelationships()) {
-				String name = (String) relData.get("name");
+			for (Map<String, Object> rel : nodeAndRels.getRelationships()) {
+				String name = (String) rel.get("name");
 
 				long toNodeID = batchIndexService.getNodes("name", name)
 						.iterator().next();
 
-				relData.put("name", node.getProperties().get("name") + "->"
+				rel.put("name", nodeAndRels.getProperties().get("name") + "->"
 						+ name);
 
 				batchNeo.createRelationship(fromNodeID, toNodeID,
-						DynamicRelationshipType.withName("KNOWS"), relData);
+						DynamicRelationshipType.withName("KNOWS"), rel);
+			}
+		}
+
+		batchIndexService.shutdown();
+		batchNeo.shutdown();
+	}
+
+	private void storeNodesToNeo(ArrayList<NodeData> nodes,
+			BatchInserter batchNeo, LuceneIndexBatchInserter batchIndexService) {
+
+		for (NodeData nodeAndRels : nodes) {
+			long nodeID = batchNeo.createNode(nodeAndRels.getProperties());
+
+			batchIndexService.index(nodeID, "name", nodeAndRels.getProperties()
+					.get("name"));
+			batchIndexService.index(nodeID, "weight", nodeAndRels
+					.getProperties().get("weight"));
+		}
+
+		batchIndexService.optimize();
+	}
+
+	private void storeRelsToNeo(ArrayList<NodeData> nodes,
+			BatchInserter batchNeo, LuceneIndexBatchInserter batchIndexService) {
+
+		for (NodeData nodeAndRels : nodes) {
+			long fromNodeID = batchIndexService.getNodes("name",
+					nodeAndRels.getProperties().get("name")).iterator().next();
+
+			for (Map<String, Object> rel : nodeAndRels.getRelationships()) {
+				String name = (String) rel.get("name");
+
+				long toNodeID = batchIndexService.getNodes("name", name)
+						.iterator().next();
+
+				rel.put("name", nodeAndRels.getProperties().get("name") + "->"
+						+ name);
+
+				batchNeo.createRelationship(fromNodeID, toNodeID,
+						DynamicRelationshipType.withName("KNOWS"), rel);
 			}
 		}
 	}
