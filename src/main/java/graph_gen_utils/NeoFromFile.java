@@ -14,24 +14,44 @@ import org.neo4j.kernel.impl.batchinsert.BatchInserterImpl;
 
 public class NeoFromFile {
 
-	private static final int NODE_STORE_BUFFER = 100000;
-	private static final int REL_STORE_BUFFER = 10000;
+	private static final int NODE_STORE_BUF = 100000;
+	private static final int REL_STORE_BUF = 10000;
 	private String inputFile;
 	private String storeDir;
 
 	public static void main(String[] args) throws FileNotFoundException {
-		NeoFromFile parser = new NeoFromFile("graphs/auto.graph",
-				"var/generated-auto");
+		long time;
 
-		long time = System.currentTimeMillis();
+		NeoFromFile parser1 = new NeoFromFile("graphs/test11.graph",
+				"var/generated-test11-1");
 
-		// parser.generateNeo1Pass();
-		parser.generateNeo2Pass();
+		time = System.currentTimeMillis();
 
-		// PRINTOUTS
-		System.out.printf("%n%nTime Taken[%d]: %ds", NeoFromFile.NODE_STORE_BUFFER,
-				time / 1000);
+		parser1.generateNeo1Pass();
 
+		// PRINTOUT
+		System.out.printf("%n--------------------%n");
+		System.out.printf("1-Pass (REL_STORE_BUF=%d) - Time Taken: %fs",
+				NeoFromFile.REL_STORE_BUF,
+				(double) (System.currentTimeMillis() - time) / (double) 1000);
+		System.out.printf("%n--------------------%n");
+
+		NeoFromFile neoCreator2 = new NeoFromFile("graphs/test11.graph",
+				"var/generated-test11-2");
+
+		time = System.currentTimeMillis();
+
+		neoCreator2.generateNeo2Pass();
+
+		// PRINTOUT
+		System.out.printf("%n--------------------%n");
+		System.out
+				.printf(
+						"2-Pass (NODE_STORE_BUF=%d, REL_STORE_BUF=%d) - Time Taken: %fs",
+						NeoFromFile.NODE_STORE_BUF, NeoFromFile.REL_STORE_BUF,
+						(double) (System.currentTimeMillis() - time)
+								/ (double) 1000);
+		System.out.printf("%n--------------------%n");
 	}
 
 	public NeoFromFile(String inputFile, String storeDir) {
@@ -40,36 +60,8 @@ public class NeoFromFile {
 	}
 
 	public void generateNeo1Pass() throws FileNotFoundException {
-		File fFile = new File(inputFile);
-		Scanner scanner = new Scanner(fFile);
-		try {
-			// read first line to distinguish format
-			if (scanner.hasNextLine()) {
-				GraphParser parser = getFormat(scanner.nextLine());
 
-				ArrayList<NodeData> nodes = new ArrayList<NodeData>();
-
-				// read each line to extract node & relationship information
-				int nodeNumber = 0;
-				while (scanner.hasNextLine()) {
-					nodeNumber++;
-					nodes.add(parser.parseNodeAndRels(scanner.nextLine(),
-							nodeNumber));
-				}
-
-				storeNodesAndRelsToNeo(nodes);
-				nodes.clear();
-			}
-		} finally {
-			// ensure the underlying stream is always closed
-			scanner.close();
-		}
-
-	}
-
-	public void generateNeo2Pass() throws FileNotFoundException {
-
-		// PRINTOUTS
+		// PRINTOUT
 		long time = System.currentTimeMillis();
 		System.out
 				.printf("%nOpening BatchInserter & LuceneIndexBatchInserter Service...");
@@ -80,24 +72,99 @@ public class NeoFromFile {
 		LuceneIndexBatchInserter batchIndexService = new LuceneIndexBatchInserterImpl(
 				batchNeo);
 
-		// PRINTOUTS
+		// PRINTOUT
 		System.out.printf("%dms%n", System.currentTimeMillis() - time);
 		time = System.currentTimeMillis();
-		System.out.printf("%nOpening Graph File...");
+		System.out.printf("Opening Graph File...");
 
 		File fFile = new File(inputFile);
 
-		// PRINTOUTS
+		Scanner scanner = new Scanner(fFile);
+		try {
+			// read first line to distinguish format
+			if (scanner.hasNextLine()) {
+				// PRINTOUT
+				System.out.printf("%dms%n", System.currentTimeMillis() - time);
+
+				GraphParser parser = getFormat(scanner.nextLine());
+
+				// PRINTOUT
+				time = System.currentTimeMillis();
+				System.out
+						.printf("Reading & Indexing Nodes & Relationships...");
+
+				ArrayList<NodeData> nodes = new ArrayList<NodeData>();
+
+				// read each line to extract node & relationship information
+				int nodeNumber = 0;
+				while (scanner.hasNextLine()) {
+					nodeNumber++;
+					nodes.add(parser.parseNodeAndRels(scanner.nextLine(),
+							nodeNumber));
+
+					if ((nodeNumber % NeoFromFile.REL_STORE_BUF) == 0) {
+
+						// PRINTOUT
+						System.out.printf(".");
+					}
+				}
+
+				storeNodesAndRelsToNeo(nodes, batchNeo, batchIndexService);
+				nodes.clear();
+			}
+		} finally {
+			// ensure the underlying stream is always closed
+			scanner.close();
+		}
+
+		// PRINTOUT
 		System.out.printf("%dms%n", System.currentTimeMillis() - time);
 		time = System.currentTimeMillis();
-		System.out.printf("%nReading & Indexing Nodes...");
+		System.out
+				.printf("Closing BatchInserter & LuceneIndexBatchInserter Service...");
+
+		batchIndexService.shutdown();
+		batchNeo.shutdown();
+
+		// PRINTOUT
+		System.out.printf("%dms%n", System.currentTimeMillis() - time);
+		time = System.currentTimeMillis();
+		System.out.printf("Neo4j Instance Created!");
+	}
+
+	public void generateNeo2Pass() throws FileNotFoundException {
+
+		// PRINTOUT
+		long time = System.currentTimeMillis();
+		System.out
+				.printf("Opening BatchInserter & LuceneIndexBatchInserter Service...");
+
+		BatchInserter batchNeo = new BatchInserterImpl(storeDir,
+				BatchInserterImpl.loadProperties("neo.props"));
+
+		LuceneIndexBatchInserter batchIndexService = new LuceneIndexBatchInserterImpl(
+				batchNeo);
+
+		// PRINTOUT
+		System.out.printf("%dms%n", System.currentTimeMillis() - time);
+		time = System.currentTimeMillis();
+		System.out.printf("Opening Graph File...");
+
+		File fFile = new File(inputFile);
 
 		GraphParser parser = null;
 		Scanner scanner = new Scanner(fFile);
 		try {
 			// read first line to distinguish format
 			if (scanner.hasNextLine()) {
+				// PRINTOUT
+				System.out.printf("%dms%n", System.currentTimeMillis() - time);
+
 				parser = getFormat(scanner.nextLine());
+
+				// PRINTOUT
+				time = System.currentTimeMillis();
+				System.out.printf("Reading & Indexing Nodes...");
 
 				ArrayList<NodeData> nodes = new ArrayList<NodeData>();
 
@@ -107,8 +174,11 @@ public class NeoFromFile {
 					nodeNumber++;
 					nodes.add(parser.parseNode(scanner.nextLine(), nodeNumber));
 
-					if ((nodeNumber % NeoFromFile.NODE_STORE_BUFFER) == 0) {
+					if ((nodeNumber % NeoFromFile.NODE_STORE_BUF) == 0) {
+
+						// PRINTOUT
 						System.out.printf(".");
+
 						storeNodesToNeo(nodes, batchNeo, batchIndexService);
 						nodes.clear();
 					}
@@ -124,10 +194,10 @@ public class NeoFromFile {
 			scanner.close();
 		}
 
-		// PRINTOUTS
+		// PRINTOUT
 		System.out.printf("%dms%n", System.currentTimeMillis() - time);
 		time = System.currentTimeMillis();
-		System.out.printf("%nReading & Indexing Relationships...");
+		System.out.printf("Reading & Indexing Relationships...");
 
 		scanner = new Scanner(fFile);
 		try {
@@ -147,7 +217,7 @@ public class NeoFromFile {
 					nodesAndRels.add(parser.parseNodeAndRels(
 							scanner.nextLine(), nodeNumber));
 
-					if ((nodeNumber % NeoFromFile.REL_STORE_BUFFER) == 0) {
+					if ((nodeNumber % NeoFromFile.REL_STORE_BUF) == 0) {
 						System.out.printf(".");
 						storeNodesToNeo(nodesAndRels, batchNeo,
 								batchIndexService);
@@ -163,19 +233,19 @@ public class NeoFromFile {
 			scanner.close();
 		}
 
-		// PRINTOUTS
+		// PRINTOUT
 		System.out.printf("%dms%n", System.currentTimeMillis() - time);
 		time = System.currentTimeMillis();
 		System.out
-				.printf("%nClosing BatchInserter & LuceneIndexBatchInserter Service...");
+				.printf("Closing BatchInserter & LuceneIndexBatchInserter Service...");
 
 		batchIndexService.shutdown();
 		batchNeo.shutdown();
 
-		// PRINTOUTS
+		// PRINTOUT
 		System.out.printf("%dms%n", System.currentTimeMillis() - time);
 		time = System.currentTimeMillis();
-		System.out.printf("%nNeo4j Instance Created!");
+		System.out.printf("Neo4j Instance Created!");
 	}
 
 	private GraphParser getFormat(String aLine) {
@@ -197,26 +267,30 @@ public class NeoFromFile {
 			format = Integer.parseInt(st.nextToken());
 		}
 
+		System.out.printf("\tnodes \t= %d%n", nodeCount);
+		System.out.printf("\tedges \t= %d%n", edgeCount);
+
 		switch (format) {
 		case 0:
+			System.out.printf("\tFormat \t= Unweighted%n");
 			return new GraphParserUnweighted(nodeCount, edgeCount);
 		case 1:
+			System.out.printf("\tFormat \t= Weighted Edges%n");
 			return new GraphParserWeightedEdges(nodeCount, edgeCount);
 		case 10:
+			System.out.printf("\tFormat \t= Weighted Nodes%n");
 			return new GraphParserWeightedNodes(nodeCount, edgeCount);
 		case 11:
+			System.out.printf("\tFormat \t= Weighted%n");
 			return new GraphParserWeighted(nodeCount, edgeCount);
 		default:
+			System.out.printf("\tFormat \t= Unweighted%n");
 			return new GraphParserUnweighted(nodeCount, edgeCount);
 		}
 	}
 
-	private void storeNodesAndRelsToNeo(ArrayList<NodeData> nodesAndRels) {
-		BatchInserter batchNeo = new BatchInserterImpl(storeDir,
-				BatchInserterImpl.loadProperties("neo.props"));
-
-		LuceneIndexBatchInserter batchIndexService = new LuceneIndexBatchInserterImpl(
-				batchNeo);
+	private void storeNodesAndRelsToNeo(ArrayList<NodeData> nodesAndRels,
+			BatchInserter batchNeo, LuceneIndexBatchInserter batchIndexService) {
 
 		for (NodeData nodeAndRels : nodesAndRels) {
 			long nodeID = batchNeo.createNode(nodeAndRels.getProperties());
@@ -246,9 +320,6 @@ public class NeoFromFile {
 						DynamicRelationshipType.withName("KNOWS"), rel);
 			}
 		}
-
-		batchIndexService.shutdown();
-		batchNeo.shutdown();
 	}
 
 	private void storeNodesToNeo(ArrayList<NodeData> nodes,

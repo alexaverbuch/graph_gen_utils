@@ -2,6 +2,11 @@
 *~
 *.class
 .* 
+*.graph
+!test0.graph
+!test1.graph
+!test10.graph
+!test11.graph
 !.gitignore 
 
 # Directories
