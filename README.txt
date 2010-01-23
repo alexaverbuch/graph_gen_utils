@@ -7,6 +7,10 @@ Data is inserted using Neo4j's BatchInserter in 2 passes.
 1st pass - read complete Chaco file, insert vertices into Neo4j, and index vertices using Lucene
 2nd pass - read complete Chaco file again, insert edges into Neo4j, and index edges using Lucene
 
+Example Usage:
+	NeoFromFile neoCreator = new NeoFromFile("graphs/test1.graph", "var/generated-test1");
+	neoCreator.generateNeo();
+
 Pre-alpha status...
 - Using NeoClipse it has been visually tested for correctness when loading graphs of 5 vertices and 10 edges
   But no other testing has been performed yet

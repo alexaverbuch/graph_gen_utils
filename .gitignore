@@ -3,6 +3,7 @@
 *.class
 .* 
 *.graph
+*.ptn
 !test0.graph
 !test1.graph
 !test10.graph
