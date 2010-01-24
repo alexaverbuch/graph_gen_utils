@@ -10,13 +10,27 @@ Data is inserted using Neo4j's BatchInserter in 2 passes.
 1st pass - read complete Chaco file (and .ptn file), insert vertices into Neo4j, and index vertices using Lucene
 2nd pass - read complete Chaco file again, insert edges into Neo4j, and index edges using Lucene
 
-Example Usage:
-	NeoFromFile neoCreator = new NeoFromFile("graphs/test11.graph", "var/test11");
+Functionality:
+	-> Create Neo4j instance from Chaco (.graph) file
+	-> Create "coloured" Neo4j instance from Chaco (.graph) file and partition (.ptn) files
+	-> Create Chaco file frmo Neo4j instance [partially working...]
 
-	// either: to generate uncoloured/unpartitioned neo4j graph
-	neoCreator.generateNeo();
-	// or: to generate coloured/partitioned neo4j graph
-	neoCreator.generateNeoPartitioned("partitionings/test11.2.ptn");
+Example Usage:
+	// Create NeoFromFile and assign DB location
+	NeoFromFile neoCreator = new NeoFromFile("var/test11");
+
+	// To generate uncoloured/unpartitioned neo4j graph
+	//	* Assign input Chaco graph file
+	neoCreator.generateNeo("graphs/test11.graph");
+
+	// To generate coloured/partitioned neo4j graph
+	//	* Assign input Chaco graph file & input partitioning file
+	neoCreator.generateNeo("graphs/test11.graph","partitionings/test11.2.ptn");
+
+	// To generate a Chaco file from DB instance
+	//	* Assign output Chaco graph file & Chaco format
+	neoCreator.generateChaco("graphs/test11-gen.graph",ChacoType.UNWEIGHTED);
+
 
 Pre-alpha status...
 - Using NeoClipse it has been visually tested for correctness when loading graphs of 5 vertices and 10 edges
@@ -25,7 +39,7 @@ Pre-alpha status...
 
 To do:
 - Improve performance further
-- Generate Chaco file from Neo4j instance (currently only supports generating Neo4j from file)
+- Generate Chaco file from Neo4j instance (currently only supports generating Neo4j from file) [in progress...]
 - Add verification functionality to test if generated graphs are correct
 - Compare other graph metrics
 

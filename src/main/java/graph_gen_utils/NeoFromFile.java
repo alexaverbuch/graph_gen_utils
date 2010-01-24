@@ -20,11 +20,14 @@ import org.neo4j.kernel.impl.batchinsert.BatchInserterImpl;
 
 public class NeoFromFile {
 
+	public enum ChacoType {
+		UNWEIGHTED, WEIGHTED_EDGES, WEIGHTED_NODES, WEIGHTED
+	}
+
 	private static final int NODE_STORE_BUF = 100000;
 	private static final int REL_STORE_BUF = 10000;
 
-	private String sourceFile;
-	private String destinationDir;
+	private String databaseDir;
 
 	BatchInserter batchNeo = null;
 	LuceneIndexBatchInserter batchIndexService = null;
@@ -36,25 +39,29 @@ public class NeoFromFile {
 
 		long time;
 
-		NeoFromFile neoCreator = new NeoFromFile("graphs/add20.graph",
-				"var/add20-2");
+		NeoFromFile neoCreator = new NeoFromFile("var/test11");
 
 		time = System.currentTimeMillis();
 
-		// neoCreator.generateNeo();
-		neoCreator.generateNeoPartitioned("partitionings/add20.2.ptn");
+		// neoCreator.generateNeo("graphs/test11.graph");
+
+//		neoCreator.generateNeo("graphs/test11.graph",
+//				"partitionings/test11.2.ptn");
+
+		neoCreator.generateChaco("graphs/test11-gen.graph",
+				ChacoType.UNWEIGHTED);
 
 		// PRINTOUT
 		System.out.printf("--------------------%n");
-		System.out.printf("Neo Created - Time Taken: %fs", (double) (System
+		System.out.printf("Finished - Time Taken: %fs", (double) (System
 				.currentTimeMillis() - time)
 				/ (double) 1000);
 		System.out.printf("%n--------------------%n");
+
 	}
 
-	public NeoFromFile(String sourceFile, String destinationDir) {
-		this.sourceFile = sourceFile;
-		this.destinationDir = destinationDir;
+	public NeoFromFile(String databaseDir) {
+		this.databaseDir = databaseDir;
 
 		System.out.printf("NeoFromFile Settings:%n");
 		System.out.printf("\tNODE_STORE_BUF\t= %d%n",
@@ -62,61 +69,7 @@ public class NeoFromFile {
 		System.out.printf("\tREL_STORE_BUF\t= %d%n", NeoFromFile.REL_STORE_BUF);
 	}
 
-	private void openBatchServices() {
-		long time = System.currentTimeMillis();
-
-		// PRINTOUT
-		System.out.printf("Opening Batch Services...");
-
-		batchNeo = new BatchInserterImpl(this.destinationDir, BatchInserterImpl
-				.loadProperties("neo.props"));
-
-		batchIndexService = new LuceneIndexBatchInserterImpl(batchNeo);
-
-		// PRINTOUT
-		System.out.printf("%dms%n", System.currentTimeMillis() - time);
-	}
-
-	private void closeBatchServices() {
-		long time = System.currentTimeMillis();
-
-		// PRINTOUT
-		System.out.printf("Closing Batch Services...");
-
-		batchIndexService.shutdown();
-		batchNeo.shutdown();
-
-		// PRINTOUT
-		System.out.printf("%dms%n", System.currentTimeMillis() - time);
-	}
-
-	private void openTransServices() {
-		long time = System.currentTimeMillis();
-
-		// PRINTOUT
-		System.out.printf("Opening Transactional Services...");
-
-		transNeo = new EmbeddedGraphDatabase(this.destinationDir);
-		transIndexService = new LuceneIndexService(transNeo);
-
-		// PRINTOUT
-		System.out.printf("%dms%n", System.currentTimeMillis() - time);
-	}
-
-	private void closeTransServices() {
-		long time = System.currentTimeMillis();
-
-		// PRINTOUT
-		System.out.printf("Closing Transactional Services...");
-
-		transIndexService.shutdown();
-		transNeo.shutdown();
-
-		// PRINTOUT
-		System.out.printf("%dms%n", System.currentTimeMillis() - time);
-	}
-
-	public void generateNeo() throws FileNotFoundException {
+	public void generateNeo(String graphPath) throws FileNotFoundException {
 
 		openBatchServices();
 
@@ -125,7 +78,7 @@ public class NeoFromFile {
 		// PRINTOUT
 		System.out.printf("Opening Graph File...");
 
-		File graphFile = new File(sourceFile);
+		File graphFile = new File(graphPath);
 
 		// PRINTOUT
 		System.out.printf("%dms%n", System.currentTimeMillis() - time);
@@ -139,7 +92,7 @@ public class NeoFromFile {
 		closeBatchServices();
 	}
 
-	public void generateNeoPartitioned(String sourcePartitioning)
+	public void generateNeo(String graphPath, String partitionPath)
 			throws FileNotFoundException {
 
 		openBatchServices();
@@ -149,8 +102,8 @@ public class NeoFromFile {
 		// PRINTOUT
 		System.out.printf("Opening Graph & Partitioning Files...");
 
-		File graphFile = new File(sourceFile);
-		File partitionFile = new File(sourcePartitioning);
+		File graphFile = new File(graphPath);
+		File partitionFile = new File(partitionPath);
 
 		// PRINTOUT
 		System.out.printf("%dms%n", System.currentTimeMillis() - time);
@@ -166,6 +119,43 @@ public class NeoFromFile {
 		openTransServices();
 		storePartitionedRelsToNeo(graphFile, parser);
 		closeTransServices();
+	}
+
+	public void generateChaco(String chacoPath, ChacoType chacoType) {
+
+		openTransServices();
+
+		// PRINTOUT
+		long time = System.currentTimeMillis();
+		System.out.printf("Writing Chaco File...");
+
+		BufferedWriter bufferedWriter = null;
+		File chacoFile = null;
+		ChacoWriter chacoWriter = getWriter(chacoType);
+
+		chacoFile = new File(chacoPath);
+
+		chacoWriter.write(transNeo, chacoFile);
+
+		// PRINTOUT
+		System.out.printf("%dms%n", System.currentTimeMillis() - time);
+
+		closeTransServices();
+	}
+
+	private ChacoWriter getWriter(ChacoType chacoType) {
+		switch (chacoType) {
+		case UNWEIGHTED:
+			return new ChacoWriterUnweighted();
+		case WEIGHTED_EDGES:
+			return null;
+		case WEIGHTED_NODES:
+			return null;
+		case WEIGHTED:
+			return null;
+		default:
+			return null;
+		}
 	}
 
 	private GraphParser getParser(File graphFile) throws FileNotFoundException {
@@ -475,6 +465,60 @@ public class NeoFromFile {
 		} finally {
 			tx.finish();
 		}
+	}
+
+	private void openBatchServices() {
+		long time = System.currentTimeMillis();
+
+		// PRINTOUT
+		System.out.printf("Opening Batch Services...");
+
+		batchNeo = new BatchInserterImpl(this.databaseDir, BatchInserterImpl
+				.loadProperties("neo.props"));
+
+		batchIndexService = new LuceneIndexBatchInserterImpl(batchNeo);
+
+		// PRINTOUT
+		System.out.printf("%dms%n", System.currentTimeMillis() - time);
+	}
+
+	private void closeBatchServices() {
+		long time = System.currentTimeMillis();
+
+		// PRINTOUT
+		System.out.printf("Closing Batch Services...");
+
+		batchIndexService.shutdown();
+		batchNeo.shutdown();
+
+		// PRINTOUT
+		System.out.printf("%dms%n", System.currentTimeMillis() - time);
+	}
+
+	private void openTransServices() {
+		long time = System.currentTimeMillis();
+
+		// PRINTOUT
+		System.out.printf("Opening Transactional Services...");
+
+		transNeo = new EmbeddedGraphDatabase(this.databaseDir);
+		transIndexService = new LuceneIndexService(transNeo);
+
+		// PRINTOUT
+		System.out.printf("%dms%n", System.currentTimeMillis() - time);
+	}
+
+	private void closeTransServices() {
+		long time = System.currentTimeMillis();
+
+		// PRINTOUT
+		System.out.printf("Closing Transactional Services...");
+
+		transIndexService.shutdown();
+		transNeo.shutdown();
+
+		// PRINTOUT
+		System.out.printf("%dms%n", System.currentTimeMillis() - time);
 	}
 
 }
