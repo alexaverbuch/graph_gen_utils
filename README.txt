@@ -1,15 +1,22 @@
 graph_gen_utils is a Maven project, built in Eclipse.
 
 It's a helper library designed to quickly create and populate a Neo4j database instance.
-Input files must be text files, encoded in the Chaco ﬁle input format [1].
+Input graph files must be text files, encoded in the Chaco (often *.graph) ﬁle input format [1].
+Input colouring/partitioning files are often *.ptn ﬁles.
+
+Example files can be found in graphs/ and partitionings/ folders.
 
 Data is inserted using Neo4j's BatchInserter in 2 passes.
-1st pass - read complete Chaco file, insert vertices into Neo4j, and index vertices using Lucene
+1st pass - read complete Chaco file (and .ptn file), insert vertices into Neo4j, and index vertices using Lucene
 2nd pass - read complete Chaco file again, insert edges into Neo4j, and index edges using Lucene
 
 Example Usage:
-	NeoFromFile neoCreator = new NeoFromFile("graphs/test1.graph", "var/generated-test1");
+	NeoFromFile neoCreator = new NeoFromFile("graphs/test11.graph", "var/test11");
+
+	// either: to generate uncoloured/unpartitioned neo4j graph
 	neoCreator.generateNeo();
+	// or: to generate coloured/partitioned neo4j graph
+	neoCreator.generateNeoPartitioned("partitionings/test11.2.ptn");
 
 Pre-alpha status...
 - Using NeoClipse it has been visually tested for correctness when loading graphs of 5 vertices and 10 edges
