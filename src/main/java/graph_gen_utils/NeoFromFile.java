@@ -45,11 +45,11 @@ public class NeoFromFile {
 
 		// neoCreator.generateNeo("graphs/test11.graph");
 
-//		neoCreator.generateNeo("graphs/test11.graph",
-//				"partitionings/test11.2.ptn");
+		neoCreator.generateNeo("graphs/test11.graph",
+				"partitionings/test11.2.ptn");
 
-		neoCreator.generateChaco("graphs/test11-gen.graph",
-				ChacoType.UNWEIGHTED);
+		// neoCreator.generateChaco("graphs/test11-gen.graph",
+		// ChacoType.UNWEIGHTED);
 
 		// PRINTOUT
 		System.out.printf("--------------------%n");

@@ -24,7 +24,21 @@ public class ChacoWriterUnweighted extends ChacoWriter {
 		try {
 			bufferedWriter = new BufferedWriter(new FileWriter(chacoFile));
 
-			bufferedWriter.write("UNKNOWN_NODES UNKNOWN_EDGES 0");
+			long nodeCount = 0;
+			long edgeCount = 0;
+			for (Node node : transNeo.getAllNodes()) {
+				if (node.getId() != 0) {
+					nodeCount++;
+
+					for (Relationship rel : node
+							.getRelationships(Direction.OUTGOING)) {
+						edgeCount++;
+					}
+				}
+			}
+			
+			String firstLine = String.format("%d %d 0", nodeCount, edgeCount);
+			bufferedWriter.write(firstLine);
 
 			for (Node node : transNeo.getAllNodes()) {
 				if (node.getId() != 0) {
