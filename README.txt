@@ -29,7 +29,7 @@ Example Usage:
 
 	// To generate a Chaco file from DB instance
 	//	* Assign output Chaco graph file & Chaco format
-	neoCreator.generateChaco("graphs/test11-gen.graph",ChacoType.UNWEIGHTED);
+	neoCreator.generateChaco("graphs/test11-gen.graph",NeoFromFile.ChacoType.UNWEIGHTED);
 
 
 Pre-alpha status...
