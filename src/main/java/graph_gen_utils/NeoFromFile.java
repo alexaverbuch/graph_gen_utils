@@ -29,24 +29,27 @@ public class NeoFromFile {
 
 	private String databaseDir;
 
-	BatchInserter batchNeo = null;
-	LuceneIndexBatchInserter batchIndexService = null;
+	private BatchInserter batchNeo = null;
+	private LuceneIndexBatchInserter batchIndexService = null;
 
-	GraphDatabaseService transNeo = null;
-	IndexService transIndexService = null;
+	private GraphDatabaseService transNeo = null;
+	private IndexService transIndexService = null;
 
 	public static void main(String[] args) throws FileNotFoundException {
 
 		long time;
 
-		NeoFromFile neoCreator = new NeoFromFile("var/test11");
+//		NeoFromFile neoCreator = new NeoFromFile("var/test11");
+		NeoFromFile neoCreator = new NeoFromFile("var/test-DiDiC");
 
 		time = System.currentTimeMillis();
 
 		// neoCreator.generateNeo("graphs/test11.graph");
 
-		neoCreator.generateNeo("graphs/test11.graph",
-				"partitionings/test11.2.ptn");
+//		neoCreator.generateNeo("graphs/test11.graph",
+//				"partitionings/test11.2.ptn");
+		neoCreator.generateNeo("graphs/test-DiDiC.graph",
+		"partitionings/test-DiDiC.2.ptn");
 
 		// neoCreator.generateChaco("graphs/test11-gen.graph",
 		// ChacoType.UNWEIGHTED);
