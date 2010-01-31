@@ -1,4 +1,4 @@
-package graph_gen_utils;
+package graph_io;
 
 import java.util.HashMap;
 import java.util.Map;

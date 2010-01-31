@@ -1,5 +1,14 @@
 package graph_gen_utils;
 
+import graph_io.ChacoWriter;
+import graph_io.ChacoWriterUnweighted;
+import graph_io.GraphParser;
+import graph_io.GraphParserUnweighted;
+import graph_io.GraphParserWeighted;
+import graph_io.GraphParserWeightedEdges;
+import graph_io.GraphParserWeightedNodes;
+import graph_io.NodeData;
+
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Map;
@@ -132,13 +141,36 @@ public class NeoFromFile {
 		long time = System.currentTimeMillis();
 		System.out.printf("Writing Chaco File...");
 
-		BufferedWriter bufferedWriter = null;
 		File chacoFile = null;
 		ChacoWriter chacoWriter = getWriter(chacoType);
 
 		chacoFile = new File(chacoPath);
 
 		chacoWriter.write(transNeo, chacoFile);
+
+		// PRINTOUT
+		System.out.printf("%dms%n", System.currentTimeMillis() - time);
+
+		closeTransServices();
+	}
+
+	public void generateChaco(String chacoPath, ChacoType chacoType, String ptnPath) {
+
+		openTransServices();
+
+		// PRINTOUT
+		long time = System.currentTimeMillis();
+		System.out.printf("Writing Chaco & Partition Files...");
+
+		File chacoFile = null;
+		File ptnFile = null;
+		
+		ChacoWriter chacoWriter = getWriter(chacoType);
+
+		chacoFile = new File(chacoPath);
+		ptnFile = new File(ptnPath);
+
+		chacoWriter.write(transNeo, chacoFile, ptnFile);
 
 		// PRINTOUT
 		System.out.printf("%dms%n", System.currentTimeMillis() - time);
@@ -384,7 +416,6 @@ public class NeoFromFile {
 				nodesAndRels.clear();
 			}
 		}
-
 		flushRelsTrans(nodesAndRels);
 		nodesAndRels.clear();
 

@@ -1,4 +1,4 @@
-package graph_gen_utils;
+package graph_io;
 
 public abstract class GraphParser {
 	private int nodeCount;
