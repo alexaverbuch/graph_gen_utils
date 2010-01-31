@@ -117,17 +117,17 @@ public class ChacoWriterUnweighted extends ChacoWriter {
 						bufferedChacoWriter.write(" " + name);
 					}
 
-					if (!firstPtnLine) {
-						firstPtnLine = false;
+					if (!firstPtnLine)
 						bufferedPtnWriter.newLine();
-					}
+					else
+						firstPtnLine = false;
 
 					String line = "0";
 					if (node.hasProperty("color")) {
 						Integer color = (Integer) node.getProperty("color");
 						line = color.toString();
 					}
-					
+
 					bufferedPtnWriter.write(line);
 				}
 			}
@@ -149,7 +149,7 @@ public class ChacoWriterUnweighted extends ChacoWriter {
 			} catch (IOException ex) {
 				ex.printStackTrace();
 			}
-			
+
 			// Close the BufferedWriter
 			try {
 				if (bufferedPtnWriter != null) {
