@@ -8,6 +8,7 @@ import graph_io.GraphParserWeighted;
 import graph_io.GraphParserWeightedEdges;
 import graph_io.GraphParserWeightedNodes;
 import graph_io.NodeData;
+import graph_io.PartitionMetricsWriterUnweighted;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -49,20 +50,21 @@ public class NeoFromFile {
 		long time;
 
 //		NeoFromFile neoCreator = new NeoFromFile("var/test11");
-		NeoFromFile neoCreator = new NeoFromFile("var/test-DiDiC");
+		NeoFromFile neoCreator = new NeoFromFile("../didic_neo4j/var/add20-DiDiC-gen-35");
 
 		time = System.currentTimeMillis();
 
 		// neoCreator.generateNeo("graphs/test11.graph");
-
 //		neoCreator.generateNeo("graphs/test11.graph",
-//				"partitionings/test11.2.ptn");
-		neoCreator.generateNeo("graphs/test-DiDiC.graph",
-		"partitionings/test-DiDiC.2.ptn");
+//				"partitionings/test11.2.ptn");		
+//		neoCreator.generateNeo("graphs/add20.graph",
+//		"partitionings/add20.2.ptn");
 
 		// neoCreator.generateChaco("graphs/test11-gen.graph",
 		// ChacoType.UNWEIGHTED);
 
+		neoCreator.generateMetrics("metrics/add20-DiDiC-gen-35.met");
+		
 		// PRINTOUT
 		System.out.printf("--------------------%n");
 		System.out.printf("Finished - Time Taken: %fs", (double) (System
@@ -176,6 +178,26 @@ public class NeoFromFile {
 		System.out.printf("%dms%n", System.currentTimeMillis() - time);
 
 		closeTransServices();
+	}
+	
+	public void generateMetrics(String metricsPath) {
+
+		openTransServices();
+
+		// PRINTOUT
+		long time = System.currentTimeMillis();
+		System.out.printf("Writing Metrics File...");
+
+		File metricsFile = new File(metricsPath);
+		PartitionMetricsWriterUnweighted metricsWriter = new PartitionMetricsWriterUnweighted();
+		
+		metricsWriter.write_partition_metrics(transNeo, metricsFile);
+
+		// PRINTOUT
+		System.out.printf("%dms%n", System.currentTimeMillis() - time);
+
+		closeTransServices();
+
 	}
 
 	private ChacoWriter getWriter(ChacoType chacoType) {

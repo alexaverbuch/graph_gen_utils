@@ -4,12 +4,14 @@
 .* 
 *.graph
 *.ptn
+*.met
 !test0.graph
 !test1.graph
 !test10.graph
 !test11.graph
 !.gitignore 
 !test11.2.ptn
+!test11.met
 
 # Directories
 target/
