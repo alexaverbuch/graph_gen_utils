@@ -67,6 +67,10 @@ public class PartitionMetricsWriterUnweighted {
 			bufferedWriter.write(String.format("\tEdge Cut = %d", edgeCut));
 			bufferedWriter.newLine();
 
+			bufferedWriter.write(String.format("\tCluster Size Variation = %d",
+					maxClusterSize - minClusterSize));
+			bufferedWriter.newLine();
+
 			bufferedWriter.write(String.format("\tCluster Count = %d",
 					clusterCount));
 			bufferedWriter.newLine();
@@ -209,8 +213,9 @@ public class PartitionMetricsWriterUnweighted {
 			long intDeg = intDegEntry.getValue();
 			long extDeg = clusterExtDeg.get(intDegEntry.getKey());
 
-			modularity += (intDeg / edgeCount)
-					- ((intDeg + extDeg) / (2 * edgeCount)) ^ 2;
+			double left = ((double)intDeg / (double)edgeCount);
+			double right = (double)(intDeg + extDeg) / (2.0 * (double)edgeCount); 			
+			modularity += left - Math.pow( right , 2);
 		}
 	}
 

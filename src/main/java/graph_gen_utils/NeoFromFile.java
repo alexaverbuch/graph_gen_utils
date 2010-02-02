@@ -50,7 +50,7 @@ public class NeoFromFile {
 		long time;
 
 //		NeoFromFile neoCreator = new NeoFromFile("var/test11");
-		NeoFromFile neoCreator = new NeoFromFile("../didic_neo4j/var/add20-DiDiC-gen-35");
+		NeoFromFile neoCreator = new NeoFromFile("../didic_neo4j/var/add20-DiDiC-gen-45");
 
 		time = System.currentTimeMillis();
 
@@ -63,7 +63,7 @@ public class NeoFromFile {
 		// neoCreator.generateChaco("graphs/test11-gen.graph",
 		// ChacoType.UNWEIGHTED);
 
-		neoCreator.generateMetrics("metrics/add20-DiDiC-gen-35.met");
+		neoCreator.generateMetrics("metrics/add20-DiDiC-gen-45.met");
 		
 		// PRINTOUT
 		System.out.printf("--------------------%n");
