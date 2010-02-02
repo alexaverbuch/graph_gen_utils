@@ -13,7 +13,8 @@ Data is inserted using Neo4j's BatchInserter in 2 passes.
 Functionality:
 	-> Create Neo4j instance from Chaco (.graph) file
 	-> Create "coloured" Neo4j instance from Chaco (.graph) file and partition (.ptn) files
-	-> Create Chaco file frmo Neo4j instance [partially working...]
+	-> Create Chaco file from Neo4j instance
+	-> Create partition-quality metric (.met) file from a "coloured" Neo4j instance
 
 Example Usage:
 	// Create NeoFromFile and assign DB location
@@ -30,6 +31,9 @@ Example Usage:
 	// To generate a Chaco file from DB instance
 	//	* Assign output Chaco graph file & Chaco format
 	neoCreator.generateChaco("graphs/test11-gen.graph",NeoFromFile.ChacoType.UNWEIGHTED);
+
+	// To generate a partition-quality Metric file from a coloured DB instance
+	neoCreator.generateMetrics("metrics/test11-gen.met");
 
 
 Pre-alpha status...
