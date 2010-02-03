@@ -25,11 +25,15 @@ Example Usage:
 	neoCreator.generateNeo("graphs/test11.graph");
 
 	// To generate coloured/partitioned neo4j graph
-	//	* Assign input Chaco graph file & input partitioning file
+	//	* Assign input Chaco graph file & input Partitioning file
 	neoCreator.generateNeo("graphs/test11.graph","partitionings/test11.2.ptn");
 
 	// To generate a Chaco file from DB instance
-	//	* Assign output Chaco graph file & Chaco format
+	//	* Assign output Chaco graph file path & Chaco format
+	neoCreator.generateChaco("graphs/test11-gen.graph",NeoFromFile.ChacoType.UNWEIGHTED);
+
+	// To generate a Chaco file & Partition file from DB instance
+	//	* Assign output Chaco graph file path, Chaco format, & Partition file path
 	neoCreator.generateChaco("graphs/test11-gen.graph",NeoFromFile.ChacoType.UNWEIGHTED);
 
 	// To generate a partition-quality Metric file from a coloured DB instance
