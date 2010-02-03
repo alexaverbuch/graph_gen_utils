@@ -226,7 +226,7 @@ public class PartitionMetricsWriterUnweighted {
 	private String clusterNodes_toString() {
 		String result = "";
 		for (Entry<Integer, Long> clusterNodesEntry : clusterNodes.entrySet()) {
-			result += String.format("%s[%d=%d]", result, clusterNodesEntry
+			result = String.format("%s[%d=%d]", result, clusterNodesEntry
 					.getKey(), clusterNodesEntry.getValue());
 		}
 		return result;
