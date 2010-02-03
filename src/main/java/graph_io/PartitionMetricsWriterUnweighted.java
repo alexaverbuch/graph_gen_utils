@@ -51,44 +51,47 @@ public class PartitionMetricsWriterUnweighted {
 	private void metrics_to_file(File metricsFile) {
 		BufferedWriter bufferedWriter = null;
 		try {
-
+			
 			bufferedWriter = new BufferedWriter(new FileWriter(metricsFile));
 
 			bufferedWriter.write(String.format("***Graph Quality Metrics***"));
 			bufferedWriter.newLine();
+
+			bufferedWriter.write(String.format("\tNodes:\t\t\t%d", nodeCount));
 			bufferedWriter.newLine();
 
-			bufferedWriter.write(String.format("\tNodes = %d", nodeCount));
+			bufferedWriter.write(String.format("\tEdges:\t\t\t%d", edgeCount));
 			bufferedWriter.newLine();
 
-			bufferedWriter.write(String.format("\tEdges = %d", edgeCount));
+			bufferedWriter.write(String.format("\tEdge Cut:\t\t%d", edgeCut));
 			bufferedWriter.newLine();
 
-			bufferedWriter.write(String.format("\tEdge Cut = %d", edgeCut));
-			bufferedWriter.newLine();
-
-			bufferedWriter.write(String.format("\tCluster Size Variation = %d",
+			bufferedWriter.write(String.format("\tCluster Size Variation:\t%d",
 					maxClusterSize - minClusterSize));
 			bufferedWriter.newLine();
 
-			bufferedWriter.write(String.format("\tCluster Count = %d",
+			bufferedWriter.write(String.format("\tCluster Count:\t\t%d",
 					clusterCount));
 			bufferedWriter.newLine();
 
-			bufferedWriter.write(String.format("\tMean Cluster Size = %d",
+			bufferedWriter.write(String.format("\tMean Cluster Size:\t%d",
 					meanClusterSize));
 			bufferedWriter.newLine();
 
-			bufferedWriter.write(String.format("\tMin Cluster Size = %d",
+			bufferedWriter.write(String.format("\tMin Cluster Size:\t%d",
 					minClusterSize));
 			bufferedWriter.newLine();
 
-			bufferedWriter.write(String.format("\tMax Cluster Size = %d",
+			bufferedWriter.write(String.format("\tMax Cluster Size:\t%d",
 					maxClusterSize));
 			bufferedWriter.newLine();
 
+			bufferedWriter.write(String.format("\tCluster Sizes:\t\t%s",
+					clusterNodes_toString()));
+			bufferedWriter.newLine();
+
 			bufferedWriter
-					.write(String.format("\tModularity = %f", modularity));
+					.write(String.format("\tModularity:\t\t%f", modularity));
 			bufferedWriter.newLine();
 
 		} catch (FileNotFoundException ex) {
@@ -186,22 +189,22 @@ public class PartitionMetricsWriterUnweighted {
 		for (Entry<Integer, Long> extDegEntry : clusterExtDeg.entrySet()) {
 			edgeCut += extDegEntry.getValue();
 		}
-		
+
 		edgeCut = edgeCut / 2; // Undirected
 	}
 
 	private void calculate_cluster_size_metrics() {
 		minClusterSize = clusterNodes.entrySet().iterator().next().getValue();
 		maxClusterSize = minClusterSize;
-		
+
 		for (Entry<Integer, Long> sizeEntry : clusterNodes.entrySet()) {
 			long size = sizeEntry.getValue();
-			
+
 			meanClusterSize += size;
-			
+
 			if (size < minClusterSize)
 				minClusterSize = size;
-			
+
 			if (size > maxClusterSize)
 				maxClusterSize = size;
 		}
@@ -213,10 +216,20 @@ public class PartitionMetricsWriterUnweighted {
 			long intDeg = intDegEntry.getValue();
 			long extDeg = clusterExtDeg.get(intDegEntry.getKey());
 
-			double left = ((double)intDeg / (double)edgeCount);
-			double right = (double)(intDeg + extDeg) / (2.0 * (double)edgeCount); 			
-			modularity += left - Math.pow( right , 2);
+			double left = ((double) intDeg / (double) edgeCount);
+			double right = (double) (intDeg + extDeg)
+					/ (2.0 * (double) edgeCount);
+			modularity += left - Math.pow(right, 2);
 		}
+	}
+
+	private String clusterNodes_toString() {
+		String result = "";
+		for (Entry<Integer, Long> clusterNodesEntry : clusterNodes.entrySet()) {
+			result += String.format("%s[%d=%d]", result, clusterNodesEntry
+					.getKey(), clusterNodesEntry.getValue());
+		}
+		return result;
 	}
 
 }
