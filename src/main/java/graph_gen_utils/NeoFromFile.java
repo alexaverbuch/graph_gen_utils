@@ -47,23 +47,13 @@ public class NeoFromFile {
 
 	public static void main(String[] args) throws FileNotFoundException {
 
-		long time;
+//		NeoFromFile neoCreator = new NeoFromFile("../didic_neo4j/var/add20-DiDiC");
+		NeoFromFile neoCreator = new NeoFromFile("var/test11");
 
-//		NeoFromFile neoCreator = new NeoFromFile("var/test11");
-		NeoFromFile neoCreator = new NeoFromFile("../didic_neo4j/var/add20-DiDiC-gen-45");
+		long time = System.currentTimeMillis();
 
-		time = System.currentTimeMillis();
-
-		// neoCreator.generateNeo("graphs/test11.graph");
-//		neoCreator.generateNeo("graphs/test11.graph",
-//				"partitionings/test11.2.ptn");		
-//		neoCreator.generateNeo("graphs/add20.graph",
-//		"partitionings/add20.2.ptn");
-
-		// neoCreator.generateChaco("graphs/test11-gen.graph",
-		// ChacoType.UNWEIGHTED);
-
-		neoCreator.generateMetrics("metrics/add20-DiDiC-gen-45.met");
+//		neoCreator.generateMetrics("metrics/add20-DiDiC-TEST.met");
+		neoCreator.generateNeo("graphs/test11.graph");
 		
 		// PRINTOUT
 		System.out.printf("--------------------%n");
@@ -484,7 +474,6 @@ public class NeoFromFile {
 	}
 
 	private void flushRelsTrans(ArrayList<NodeData> nodes) {
-
 		Transaction tx = transNeo.beginTx();
 
 		try {

@@ -51,7 +51,7 @@ public class PartitionMetricsWriterUnweighted {
 	private void metrics_to_file(File metricsFile) {
 		BufferedWriter bufferedWriter = null;
 		try {
-			
+
 			bufferedWriter = new BufferedWriter(new FileWriter(metricsFile));
 
 			bufferedWriter.write(String.format("***Graph Quality Metrics***"));
@@ -63,11 +63,16 @@ public class PartitionMetricsWriterUnweighted {
 			bufferedWriter.write(String.format("\tEdges:\t\t\t%d", edgeCount));
 			bufferedWriter.newLine();
 
-			bufferedWriter.write(String.format("\tEdge Cut:\t\t%d", edgeCut));
+			bufferedWriter.write(String.format("\tEdge Cut:\t\t%d:", edgeCut));
+			bufferedWriter.write(String.format("\t\t%f", (double) edgeCut
+					/ (double) edgeCount));
 			bufferedWriter.newLine();
 
-			bufferedWriter.write(String.format("\tCluster Size Variation:\t%d",
-					maxClusterSize - minClusterSize));
+			long clusterSizeVariation = maxClusterSize - minClusterSize;
+			bufferedWriter.write(String.format(
+					"\tCluster Size Variation:\t%d:", clusterSizeVariation));
+			bufferedWriter.write(String.format("\t\t%f",
+					(double) clusterSizeVariation / (double) nodeCount));
 			bufferedWriter.newLine();
 
 			bufferedWriter.write(String.format("\tCluster Count:\t\t%d",
@@ -90,8 +95,8 @@ public class PartitionMetricsWriterUnweighted {
 					clusterNodes_toString()));
 			bufferedWriter.newLine();
 
-			bufferedWriter
-					.write(String.format("\tModularity:\t\t%f", modularity));
+			bufferedWriter.write(String.format("\tModularity:\t\t%f",
+					modularity));
 			bufferedWriter.newLine();
 
 		} catch (FileNotFoundException ex) {
@@ -163,17 +168,13 @@ public class PartitionMetricsWriterUnweighted {
 		edgeCount = edgeCount / 2; // Undirected
 
 		// Make sure all colours are represented in both HashMaps
+		for (Entry<Integer, Long> extDegEntry : clusterExtDeg.entrySet())
+			if (clusterIntDeg.containsKey(extDegEntry.getKey()) == false)
+				clusterIntDeg.put(extDegEntry.getKey(), new Long(0));
 		for (Entry<Integer, Long> intDegEntry : clusterIntDeg.entrySet()) {
 			if (clusterExtDeg.containsKey(intDegEntry.getKey()) == false)
 				clusterExtDeg.put(intDegEntry.getKey(), new Long(0));
-
-			clusterIntDeg.put(intDegEntry.getKey(), intDegEntry.getValue() / 2); // Undirected
-		}
-		for (Entry<Integer, Long> extDegEntry : clusterExtDeg.entrySet()) {
-			if (clusterIntDeg.containsKey(extDegEntry.getKey()) == false)
-				clusterIntDeg.put(extDegEntry.getKey(), new Long(0));
-
-			clusterExtDeg.put(extDegEntry.getKey(), extDegEntry.getValue() / 2); // Undirected
+			clusterIntDeg.put(intDegEntry.getKey(), intDegEntry.getValue() / 2);
 		}
 
 		clusterCount = clusterIntDeg.size();
@@ -186,8 +187,9 @@ public class PartitionMetricsWriterUnweighted {
 	}
 
 	private void calculate_edge_cut_metric() {
-		for (Entry<Integer, Long> extDegEntry : clusterExtDeg.entrySet()) {
-			edgeCut += extDegEntry.getValue();
+		edgeCut = 0;
+		for (Entry<Integer, Long> extDeg : clusterExtDeg.entrySet()) {
+			edgeCut += extDeg.getValue();
 		}
 
 		edgeCut = edgeCut / 2; // Undirected
@@ -197,8 +199,8 @@ public class PartitionMetricsWriterUnweighted {
 		minClusterSize = clusterNodes.entrySet().iterator().next().getValue();
 		maxClusterSize = minClusterSize;
 
-		for (Entry<Integer, Long> sizeEntry : clusterNodes.entrySet()) {
-			long size = sizeEntry.getValue();
+		for (Entry<Integer, Long> nodes : clusterNodes.entrySet()) {
+			long size = nodes.getValue();
 
 			meanClusterSize += size;
 
