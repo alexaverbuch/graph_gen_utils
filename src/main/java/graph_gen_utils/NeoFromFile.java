@@ -8,7 +8,7 @@ import graph_io.GraphParserWeighted;
 import graph_io.GraphParserWeightedEdges;
 import graph_io.GraphParserWeightedNodes;
 import graph_io.NodeData;
-import graph_io.PartitionMetricsWriterUnweighted;
+import graph_io.MetricsWriterUnweighted;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -47,13 +47,11 @@ public class NeoFromFile {
 
 	public static void main(String[] args) throws FileNotFoundException {
 
-//		NeoFromFile neoCreator = new NeoFromFile("../didic_neo4j/var/add20-DiDiC");
 		NeoFromFile neoCreator = new NeoFromFile("var/test11");
 
 		long time = System.currentTimeMillis();
 
-//		neoCreator.generateMetrics("metrics/add20-DiDiC-TEST.met");
-		neoCreator.generateNeo("graphs/test11.graph");
+		neoCreator.writeNeo("graphs/test11.graph");
 		
 		// PRINTOUT
 		System.out.printf("--------------------%n");
@@ -61,7 +59,6 @@ public class NeoFromFile {
 				.currentTimeMillis() - time)
 				/ (double) 1000);
 		System.out.printf("%n--------------------%n");
-
 	}
 
 	public NeoFromFile(String databaseDir) {
@@ -73,7 +70,7 @@ public class NeoFromFile {
 		System.out.printf("\tREL_STORE_BUF\t= %d%n", NeoFromFile.REL_STORE_BUF);
 	}
 
-	public void generateNeo(String graphPath) throws FileNotFoundException {
+	public void writeNeo(String graphPath) throws FileNotFoundException {
 
 		openBatchServices();
 
@@ -96,7 +93,7 @@ public class NeoFromFile {
 		closeBatchServices();
 	}
 
-	public void generateNeo(String graphPath, String partitionPath)
+	public void writeNeo(String graphPath, String partitionPath)
 			throws FileNotFoundException {
 
 		openBatchServices();
@@ -125,7 +122,7 @@ public class NeoFromFile {
 		closeTransServices();
 	}
 
-	public void generateChaco(String chacoPath, ChacoType chacoType) {
+	public void writeChaco(String chacoPath, ChacoType chacoType) {
 
 		openTransServices();
 
@@ -146,7 +143,7 @@ public class NeoFromFile {
 		closeTransServices();
 	}
 
-	public void generateChaco(String chacoPath, ChacoType chacoType, String ptnPath) {
+	public void writeChacoAndPtn(String chacoPath, ChacoType chacoType, String ptnPath) {
 
 		openTransServices();
 
@@ -170,7 +167,7 @@ public class NeoFromFile {
 		closeTransServices();
 	}
 	
-	public void generateMetrics(String metricsPath) {
+	public void writeMetrics(String metricsPath) {
 
 		openTransServices();
 
@@ -179,9 +176,9 @@ public class NeoFromFile {
 		System.out.printf("Writing Metrics File...");
 
 		File metricsFile = new File(metricsPath);
-		PartitionMetricsWriterUnweighted metricsWriter = new PartitionMetricsWriterUnweighted();
+		MetricsWriterUnweighted metricsWriter = new MetricsWriterUnweighted();
 		
-		metricsWriter.write_partition_metrics(transNeo, metricsFile);
+		metricsWriter.writeMetrics(transNeo, metricsFile);
 
 		// PRINTOUT
 		System.out.printf("%dms%n", System.currentTimeMillis() - time);
