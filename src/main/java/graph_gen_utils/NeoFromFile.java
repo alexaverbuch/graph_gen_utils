@@ -70,6 +70,8 @@ public class NeoFromFile {
 		System.out.printf("\tREL_STORE_BUF\t= %d%n", NeoFromFile.REL_STORE_BUF);
 	}
 
+	// PUBLIC METHODS
+	
 	public void writeNeo(String graphPath) throws FileNotFoundException {
 
 		openBatchServices();
@@ -176,9 +178,7 @@ public class NeoFromFile {
 		System.out.printf("Writing Metrics File...");
 
 		File metricsFile = new File(metricsPath);
-		MetricsWriterUnweighted metricsWriter = new MetricsWriterUnweighted();
-		
-		metricsWriter.writeMetrics(transNeo, metricsFile);
+		MetricsWriterUnweighted.writeMetrics(transNeo, metricsFile);
 
 		// PRINTOUT
 		System.out.printf("%dms%n", System.currentTimeMillis() - time);
@@ -187,6 +187,44 @@ public class NeoFromFile {
 
 	}
 
+	public void writeMetricsCSV(String metricsPath) {
+
+		openTransServices();
+
+		// PRINTOUT
+		long time = System.currentTimeMillis();
+		System.out.printf("Writing Metrics CSV File...");
+
+		File metricsFile = new File(metricsPath);
+		MetricsWriterUnweighted.writeMetricsCSV(transNeo, metricsFile);
+
+		// PRINTOUT
+		System.out.printf("%dms%n", System.currentTimeMillis() - time);
+
+		closeTransServices();
+
+	}
+
+	public void appendMetricsCSV(String metricsPath) {
+
+		openTransServices();
+
+		// PRINTOUT
+		long time = System.currentTimeMillis();
+		System.out.printf("Appending Metrics CSV File...");
+
+		File metricsFile = new File(metricsPath);
+		MetricsWriterUnweighted.writeMetricsCSV(transNeo, metricsFile);
+
+		// PRINTOUT
+		System.out.printf("%dms%n", System.currentTimeMillis() - time);
+
+		closeTransServices();
+
+	}
+
+	// PRIVATE METHODS
+	
 	private ChacoWriter getWriter(ChacoType chacoType) {
 		switch (chacoType) {
 		case UNWEIGHTED:
