@@ -13,6 +13,7 @@ import graph_io.MetricsWriterUnweighted;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Map;
+import java.util.Random;
 import java.util.Scanner;
 import java.util.StringTokenizer;
 
@@ -34,6 +35,10 @@ public class NeoFromFile {
 		UNWEIGHTED, WEIGHTED_EDGES, WEIGHTED_NODES, WEIGHTED
 	}
 
+	public enum ClusterInitType {
+		RANDOM, BALANCED, SINGLE
+	}
+
 	private static final int NODE_STORE_BUF = 100000;
 	private static final int REL_STORE_BUF = 10000;
 
@@ -52,7 +57,7 @@ public class NeoFromFile {
 		long time = System.currentTimeMillis();
 
 		neoCreator.writeNeo("graphs/test11.graph");
-		
+
 		// PRINTOUT
 		System.out.printf("--------------------%n");
 		System.out.printf("Finished - Time Taken: %fs", (double) (System
@@ -71,7 +76,7 @@ public class NeoFromFile {
 	}
 
 	// PUBLIC METHODS
-	
+
 	public void writeNeo(String graphPath) throws FileNotFoundException {
 
 		openBatchServices();
@@ -95,6 +100,31 @@ public class NeoFromFile {
 		closeBatchServices();
 	}
 
+	public void writeNeo(String graphPath, ClusterInitType clusterInitType,
+			int ptnVal) throws Exception {
+
+		openBatchServices();
+
+		long time = System.currentTimeMillis();
+
+		// PRINTOUT
+		System.out.printf("Opening Graph File...");
+
+		File graphFile = new File(graphPath);
+
+		// PRINTOUT
+		System.out.printf("%dms%n", System.currentTimeMillis() - time);
+
+		GraphParser parser = getParser(graphFile);
+
+		storePartitionedNodesToNeo(graphFile, clusterInitType, ptnVal, parser);
+
+		closeBatchServices();
+		openTransServices();
+		storePartitionedRelsToNeo(graphFile, parser);
+		closeTransServices();
+	}
+
 	public void writeNeo(String graphPath, String partitionPath)
 			throws FileNotFoundException {
 
@@ -114,9 +144,6 @@ public class NeoFromFile {
 		GraphParser parser = getParser(graphFile);
 
 		storePartitionedNodesToNeo(graphFile, partitionFile, parser);
-
-		// storeRelsToNeo(graphFile, parser);
-		// closeBatchServices();
 
 		closeBatchServices();
 		openTransServices();
@@ -145,7 +172,8 @@ public class NeoFromFile {
 		closeTransServices();
 	}
 
-	public void writeChacoAndPtn(String chacoPath, ChacoType chacoType, String ptnPath) {
+	public void writeChacoAndPtn(String chacoPath, ChacoType chacoType,
+			String ptnPath) {
 
 		openTransServices();
 
@@ -155,7 +183,7 @@ public class NeoFromFile {
 
 		File chacoFile = null;
 		File ptnFile = null;
-		
+
 		ChacoWriter chacoWriter = getWriter(chacoType);
 
 		chacoFile = new File(chacoPath);
@@ -168,7 +196,7 @@ public class NeoFromFile {
 
 		closeTransServices();
 	}
-	
+
 	public void writeMetrics(String metricsPath) {
 
 		openTransServices();
@@ -224,7 +252,7 @@ public class NeoFromFile {
 	}
 
 	// PRIVATE METHODS
-	
+
 	private ChacoWriter getWriter(ChacoType chacoType) {
 		switch (chacoType) {
 		case UNWEIGHTED:
@@ -361,10 +389,72 @@ public class NeoFromFile {
 
 			if ((nodeNumber % NeoFromFile.NODE_STORE_BUF) == 0) {
 
-				for (NodeData tempNode : nodes) {
-					Integer color = Integer.parseInt(partitionScanner
-							.nextLine());
-					tempNode.getProperties().put("color", color);
+				initPtnAsFile(partitionScanner, nodes);
+
+				// PRINTOUT
+				System.out.printf(".");
+
+				flushNodesBatch(nodes);
+				nodes.clear();
+			}
+		}
+
+		initPtnAsFile(partitionScanner, nodes);
+
+		flushNodesBatch(nodes);
+		nodes.clear();
+
+		// PRINTOUT
+		System.out.printf("%dms%n", System.currentTimeMillis() - time);
+		time = System.currentTimeMillis();
+		System.out.printf("Optimizing Index...");
+
+		batchIndexService.optimize();
+
+		// PRINTOUT
+		System.out.printf("%dms%n", System.currentTimeMillis() - time);
+
+		graphScanner.close();
+	}
+
+	private void storePartitionedNodesToNeo(File graphFile,
+			ClusterInitType clusterInitType, int ptnVal, GraphParser parser)
+			throws Exception {
+
+		Scanner graphScanner = new Scanner(graphFile);
+
+		long time = System.currentTimeMillis();
+
+		// skip first line (file format)
+		graphScanner.nextLine();
+
+		// PRINTOUT
+		System.out.printf("Reading & Indexing Nodes...");
+
+		ArrayList<NodeData> nodes = new ArrayList<NodeData>();
+
+		// read each line to extract node & relationship information
+		int nodeNumber = 0;
+		int lastPtn = -1;
+		while (graphScanner.hasNextLine()) {
+			nodeNumber++;
+			nodes.add(parser.parseNode(graphScanner.nextLine(), nodeNumber));
+
+			if ((nodeNumber % NeoFromFile.NODE_STORE_BUF) == 0) {
+
+				switch (clusterInitType) {
+				case RANDOM:
+					initPtnAsRandom(nodes, ptnVal);
+					break;
+				case BALANCED:
+					lastPtn = initPtnAsBalanced(nodes, lastPtn, ptnVal);
+					break;
+				case SINGLE:
+					initPtnAsSingle(nodes, ptnVal);
+					break;
+				default:
+					System.err.println("ClusterInitType not supported");
+					throw new Exception("ClusterInitType not supported");
 				}
 
 				// PRINTOUT
@@ -375,9 +465,19 @@ public class NeoFromFile {
 			}
 		}
 
-		for (NodeData tempNode : nodes) {
-			Integer color = Integer.parseInt(partitionScanner.nextLine());
-			tempNode.getProperties().put("color", color);
+		switch (clusterInitType) {
+		case RANDOM:
+			initPtnAsRandom(nodes, ptnVal);
+			break;
+		case BALANCED:
+			initPtnAsBalanced(nodes, lastPtn, ptnVal);
+			break;
+		case SINGLE:
+			initPtnAsSingle(nodes, ptnVal);
+			break;
+		default:
+			System.err.println("ClusterInitType not supported");
+			throw new Exception("ClusterInitType not supported");
 		}
 
 		flushNodesBatch(nodes);
@@ -394,6 +494,50 @@ public class NeoFromFile {
 		System.out.printf("%dms%n", System.currentTimeMillis() - time);
 
 		graphScanner.close();
+	}
+
+	private void initPtnAsFile(Scanner partitionScanner,
+			ArrayList<NodeData> nodes) {
+
+		for (NodeData tempNode : nodes) {
+			Integer color = Integer.parseInt(partitionScanner.nextLine());
+			tempNode.getProperties().put("color", color);
+		}
+
+	}
+
+	private void initPtnAsRandom(ArrayList<NodeData> nodes, int maxPtn) {
+
+		Random rand = new Random(System.currentTimeMillis());
+
+		for (NodeData tempNode : nodes) {
+			Integer color = rand.nextInt(maxPtn);
+			tempNode.getProperties().put("color", color);
+		}
+
+	}
+
+	private int initPtnAsBalanced(ArrayList<NodeData> nodes, int lastPtn,
+			int maxPtn) {
+
+		for (NodeData tempNode : nodes) {
+			lastPtn++;
+			if (lastPtn >= maxPtn)
+				lastPtn = 0;
+			Integer color = lastPtn;
+			tempNode.getProperties().put("color", color);
+		}
+
+		return lastPtn;
+	}
+
+	private void initPtnAsSingle(ArrayList<NodeData> nodes, int defaultPtn) {
+
+		for (NodeData tempNode : nodes) {
+			Integer color = new Integer(defaultPtn);
+			tempNode.getProperties().put("color", color);
+		}
+
 	}
 
 	private void storeRelsToNeo(File graphFile, GraphParser parser)
