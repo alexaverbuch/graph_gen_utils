@@ -57,7 +57,7 @@ public class MetricsReader {
 			calcMetricsClustering();
 			break;
 		}
-		
+
 	}
 
 	public long nodeCount() {
@@ -138,6 +138,7 @@ public class MetricsReader {
 					double nodeDegree = edgeCount;
 					double nodeNeighbourRels = 0.0;
 					ArrayList<Node> nodeNeighbours = new ArrayList<Node>();
+					ArrayList<Long> nodeNeighboursIDs = new ArrayList<Long>();
 
 					for (Relationship e : v
 							.getRelationships(Direction.OUTGOING)) {
@@ -162,6 +163,7 @@ public class MetricsReader {
 
 						// Used for Clustering Coefficient
 						nodeNeighbours.add(u);
+						nodeNeighboursIDs.add(u.getId());
 
 					}
 
@@ -176,8 +178,8 @@ public class MetricsReader {
 							Node nodeNeighboursNeighbour = e.getEndNode();
 
 							// my neighbour neighbours my other neighbours
-							if (nodeNeighbours
-									.contains(nodeNeighboursNeighbour))
+							if (nodeNeighboursIDs
+									.contains(nodeNeighboursNeighbour.getId()))
 								nodeNeighbourRels++;
 
 						}
