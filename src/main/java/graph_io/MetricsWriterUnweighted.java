@@ -13,14 +13,15 @@ public class MetricsWriterUnweighted {
 	public static void writeMetrics(GraphDatabaseService transNeo,
 			File metricsFile) {
 
-		MetricsReader metricsReader = new MetricsReader(transNeo);
+		MetricsReader metricsReader = new MetricsReader(transNeo,
+				MetricsReader.MetricsType.ALL);
 
 		BufferedWriter bufferedWriter = null;
 		try {
 
 			bufferedWriter = new BufferedWriter(new FileWriter(metricsFile));
 
-			bufferedWriter.write(String.format("***Graph Quality Metrics***"));
+			bufferedWriter.write(String.format("***Graph Metrics***"));
 			bufferedWriter.newLine();
 
 			bufferedWriter.write(String.format("\tNodes:\t\t\t%d",
@@ -29,6 +30,14 @@ public class MetricsWriterUnweighted {
 
 			bufferedWriter.write(String.format("\tEdges:\t\t\t%d",
 					metricsReader.edgeCount()));
+			bufferedWriter.newLine();
+
+			bufferedWriter.write(String.format(
+					"\tClustering Coefficient:\t\t%f", metricsReader
+							.clusteringCoefficient()));
+			bufferedWriter.newLine();
+
+			bufferedWriter.write(String.format("***Clustering Metrics***"));
 			bufferedWriter.newLine();
 
 			bufferedWriter.write(String.format("\tEdge Cut:\t\t%d:",
@@ -89,24 +98,32 @@ public class MetricsWriterUnweighted {
 	public static void writeMetricsCSV(GraphDatabaseService transNeo,
 			File metricsFile) {
 
-		MetricsReader metricsReader = new MetricsReader(transNeo);
+		MetricsReader metricsReader = new MetricsReader(transNeo,
+				MetricsReader.MetricsType.ALL);
 
 		BufferedWriter bufferedWriter = null;
 		try {
 
 			bufferedWriter = new BufferedWriter(new FileWriter(metricsFile));
 
+			bufferedWriter.write(String
+					.format("Nodes,Edges,ClusteringCoefficient"));
+			bufferedWriter.newLine();
+
+			bufferedWriter.write(String.format("%d,%d,%f", metricsReader
+					.nodeCount(), metricsReader.edgeCount(), metricsReader
+					.clusteringCoefficient()));
+			bufferedWriter.newLine();
+
 			bufferedWriter
 					.write(String
-							.format("Nodes,Edges,EdgeCut,EdgeCutPerc,ClusterCount,ClusterSizeDiff,ClusterSizeDiffPerc"));
+							.format("EdgeCut,EdgeCutPerc,ClusterCount,ClusterSizeDiff,ClusterSizeDiffPerc,"));
 			bufferedWriter
 					.write(String
 							.format("MeanClusterSize,MinClusterSize,MaxClusterCount,Modularity,Clusters"));
 			bufferedWriter.newLine();
 
-			bufferedWriter.write(String.format(
-					"%d,%d,%d,%f,%d,%d,%f,%d,%d,%d,%f,%s", metricsReader
-							.nodeCount(), metricsReader.edgeCount(),
+			bufferedWriter.write(String.format("%d,%f,%d,%d,%f,%d,%d,%d,%f,%s",
 					metricsReader.edgeCut(), metricsReader.edgeCutPerc(),
 					metricsReader.clusterCount(), metricsReader
 							.clusterSizeDiff(), metricsReader
@@ -137,7 +154,8 @@ public class MetricsWriterUnweighted {
 	public static void appendMetricsCSV(GraphDatabaseService transNeo,
 			File metricsFile) {
 
-		MetricsReader metricsReader = new MetricsReader(transNeo);
+		MetricsReader metricsReader = new MetricsReader(transNeo,
+				MetricsReader.MetricsType.CLUSTERING);
 
 		BufferedWriter bufferedWriter = null;
 		try {
@@ -145,9 +163,7 @@ public class MetricsWriterUnweighted {
 			bufferedWriter = new BufferedWriter(new FileWriter(metricsFile,
 					true));
 
-			bufferedWriter.write(String.format(
-					"%d,%d,%d,%f,%d,%d,%f,%d,%d,%d,%f,%s", metricsReader
-							.nodeCount(), metricsReader.edgeCount(),
+			bufferedWriter.write(String.format("%d,%f,%d,%d,%f,%d,%d,%d,%f,%s",
 					metricsReader.edgeCut(), metricsReader.edgeCutPerc(),
 					metricsReader.clusterCount(), metricsReader
 							.clusterSizeDiff(), metricsReader
