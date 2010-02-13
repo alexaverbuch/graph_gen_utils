@@ -216,6 +216,10 @@ public class NeoFromFile {
 	}
 
 	public void writeMetricsCSV(String metricsPath) {
+		writeMetricsCSV(metricsPath, null);
+	}
+
+	public void writeMetricsCSV(String metricsPath, Long timeStep) {
 
 		openTransServices();
 
@@ -224,7 +228,8 @@ public class NeoFromFile {
 		System.out.printf("Writing Metrics CSV File...");
 
 		File metricsFile = new File(metricsPath);
-		MetricsWriterUnweighted.writeMetricsCSV(transNeo, metricsFile);
+		MetricsWriterUnweighted
+				.writeMetricsCSV(transNeo, metricsFile, timeStep);
 
 		// PRINTOUT
 		System.out.printf("%dms%n", System.currentTimeMillis() - time);
@@ -234,6 +239,10 @@ public class NeoFromFile {
 	}
 
 	public void appendMetricsCSV(String metricsPath) {
+		appendMetricsCSV(metricsPath, null);
+	}
+
+	public void appendMetricsCSV(String metricsPath, Long timeStep) {
 
 		openTransServices();
 
@@ -242,7 +251,8 @@ public class NeoFromFile {
 		System.out.printf("Appending Metrics CSV File...");
 
 		File metricsFile = new File(metricsPath);
-		MetricsWriterUnweighted.writeMetricsCSV(transNeo, metricsFile);
+		MetricsWriterUnweighted.appendMetricsCSV(transNeo, metricsFile,
+				timeStep);
 
 		// PRINTOUT
 		System.out.printf("%dms%n", System.currentTimeMillis() - time);

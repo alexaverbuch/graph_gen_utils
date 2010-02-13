@@ -96,7 +96,11 @@ public class MetricsWriterUnweighted {
 	}
 
 	public static void writeMetricsCSV(GraphDatabaseService transNeo,
-			File metricsFile) {
+			File metricsFile, Long timeStep) {
+
+		String timeStepStr = "-";
+		if (timeStep != null)
+			timeStepStr = timeStep.toString();
 
 		MetricsReader metricsReader = new MetricsReader(transNeo,
 				MetricsReader.MetricsType.ALL);
@@ -117,13 +121,14 @@ public class MetricsWriterUnweighted {
 
 			bufferedWriter
 					.write(String
-							.format("EdgeCut,EdgeCutPerc,ClusterCount,ClusterSizeDiff,ClusterSizeDiffPerc,"));
+							.format("TimeStep,EdgeCut,EdgeCutPerc,ClusterCount,ClusterSizeDiff,ClusterSizeDiffPerc,"));
 			bufferedWriter
 					.write(String
 							.format("MeanClusterSize,MinClusterSize,MaxClusterCount,Modularity,Clusters"));
 			bufferedWriter.newLine();
 
-			bufferedWriter.write(String.format("%d,%f,%d,%d,%f,%d,%d,%d,%f,%s",
+			bufferedWriter.write(String.format(
+					"%s,%d,%f,%d,%d,%f,%d,%d,%d,%f,%s", timeStepStr,
 					metricsReader.edgeCut(), metricsReader.edgeCutPerc(),
 					metricsReader.clusterCount(), metricsReader
 							.clusterSizeDiff(), metricsReader
@@ -152,7 +157,11 @@ public class MetricsWriterUnweighted {
 	}
 
 	public static void appendMetricsCSV(GraphDatabaseService transNeo,
-			File metricsFile) {
+			File metricsFile, Long timeStep) {
+
+		String timeStepStr = "-";
+		if (timeStep != null)
+			timeStepStr = timeStep.toString();
 
 		MetricsReader metricsReader = new MetricsReader(transNeo,
 				MetricsReader.MetricsType.CLUSTERING);
@@ -163,7 +172,8 @@ public class MetricsWriterUnweighted {
 			bufferedWriter = new BufferedWriter(new FileWriter(metricsFile,
 					true));
 
-			bufferedWriter.write(String.format("%d,%f,%d,%d,%f,%d,%d,%d,%f,%s",
+			bufferedWriter.write(String.format(
+					"%s,%d,%f,%d,%d,%f,%d,%d,%d,%f,%s", timeStepStr,
 					metricsReader.edgeCut(), metricsReader.edgeCutPerc(),
 					metricsReader.clusterCount(), metricsReader
 							.clusterSizeDiff(), metricsReader
