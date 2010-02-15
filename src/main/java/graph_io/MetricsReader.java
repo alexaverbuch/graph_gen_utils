@@ -187,8 +187,9 @@ public class MetricsReader {
 
 					// Add local clustering coefficient to global clustering
 					// coefficient
-					clusteringCoefficient += nodeNeighbourRels
-							/ (nodeDegree * (nodeDegree - 1));
+					double denominator = nodeDegree * (nodeDegree - 1);
+					if (denominator != 0)
+						clusteringCoefficient += (nodeNeighbourRels / (nodeDegree * (nodeDegree - 1)));
 
 				}
 			}
