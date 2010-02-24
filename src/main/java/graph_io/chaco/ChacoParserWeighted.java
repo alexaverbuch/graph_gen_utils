@@ -1,13 +1,15 @@
-package graph_io;
+package graph_io.chaco;
+
+import graph_io.general.NodeData;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.StringTokenizer;
 
-public class GraphParserWeighted extends GraphParser {
+public class ChacoParserWeighted extends ChacoParser {
 
-	public GraphParserWeighted(int nodeCount, int edgeCount) {
+	public ChacoParserWeighted(int nodeCount, int edgeCount) {
 		super(nodeCount, edgeCount);
 	}
 

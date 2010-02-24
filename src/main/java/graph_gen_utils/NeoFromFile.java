@@ -1,14 +1,15 @@
 package graph_gen_utils;
 
-import graph_io.ChacoWriter;
-import graph_io.ChacoWriterUnweighted;
-import graph_io.GraphParser;
-import graph_io.GraphParserUnweighted;
-import graph_io.GraphParserWeighted;
-import graph_io.GraphParserWeightedEdges;
-import graph_io.GraphParserWeightedNodes;
-import graph_io.NodeData;
-import graph_io.MetricsWriterUnweighted;
+import graph_io.chaco.ChacoParser;
+import graph_io.chaco.ChacoParserUnweighted;
+import graph_io.chaco.ChacoParserWeighted;
+import graph_io.chaco.ChacoParserWeightedEdges;
+import graph_io.chaco.ChacoParserWeightedNodes;
+import graph_io.chaco.ChacoWriter;
+import graph_io.chaco.ChacoWriterUnweighted;
+import graph_io.general.NodeData;
+import graph_io.metrics.MetricsWriterUnweighted;
+import graph_io.topology.GraphTopology;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -91,13 +92,24 @@ public class NeoFromFile {
 		// PRINTOUT
 		System.out.printf("%dms%n", System.currentTimeMillis() - time);
 
-		GraphParser parser = getParser(graphFile);
+		ChacoParser parser = getParser(graphFile);
 
 		storeNodesToNeo(graphFile, parser);
 
 		storeRelsToNeo(graphFile, parser);
 
 		closeBatchServices();
+
+	}
+
+	public void writeNeo(GraphTopology topology) {
+
+		openBatchServices();
+
+		storeNodesAndRelsToNeo(topology);
+
+		closeBatchServices();
+
 	}
 
 	public void writeNeo(String graphPath, ClusterInitType clusterInitType,
@@ -115,14 +127,18 @@ public class NeoFromFile {
 		// PRINTOUT
 		System.out.printf("%dms%n", System.currentTimeMillis() - time);
 
-		GraphParser parser = getParser(graphFile);
+		ChacoParser parser = getParser(graphFile);
 
 		storePartitionedNodesToNeo(graphFile, clusterInitType, ptnVal, parser);
 
 		closeBatchServices();
+
 		openTransServices();
+
 		storePartitionedRelsToNeo(graphFile, parser);
+
 		closeTransServices();
+
 	}
 
 	public void writeNeo(String graphPath, String partitionPath)
@@ -141,14 +157,18 @@ public class NeoFromFile {
 		// PRINTOUT
 		System.out.printf("%dms%n", System.currentTimeMillis() - time);
 
-		GraphParser parser = getParser(graphFile);
+		ChacoParser parser = getParser(graphFile);
 
 		storePartitionedNodesToNeo(graphFile, partitionFile, parser);
 
 		closeBatchServices();
+
 		openTransServices();
+
 		storePartitionedRelsToNeo(graphFile, parser);
+
 		closeTransServices();
+
 	}
 
 	public void writeChaco(String chacoPath, ChacoType chacoType) {
@@ -170,6 +190,7 @@ public class NeoFromFile {
 		System.out.printf("%dms%n", System.currentTimeMillis() - time);
 
 		closeTransServices();
+		
 	}
 
 	public void writeChacoAndPtn(String chacoPath, ChacoType chacoType,
@@ -278,7 +299,7 @@ public class NeoFromFile {
 		}
 	}
 
-	private GraphParser getParser(File graphFile) throws FileNotFoundException {
+	private ChacoParser getParser(File graphFile) throws FileNotFoundException {
 
 		Scanner scanner = new Scanner(graphFile);
 
@@ -310,23 +331,56 @@ public class NeoFromFile {
 		switch (format) {
 		case 0:
 			System.out.printf("\tFormat \t= Unweighted%n");
-			return new GraphParserUnweighted(nodeCount, edgeCount);
+			return new ChacoParserUnweighted(nodeCount, edgeCount);
 		case 1:
 			System.out.printf("\tFormat \t= Weighted Edges%n");
-			return new GraphParserWeightedEdges(nodeCount, edgeCount);
+			return new ChacoParserWeightedEdges(nodeCount, edgeCount);
 		case 10:
 			System.out.printf("\tFormat \t= Weighted Nodes%n");
-			return new GraphParserWeightedNodes(nodeCount, edgeCount);
+			return new ChacoParserWeightedNodes(nodeCount, edgeCount);
 		case 11:
 			System.out.printf("\tFormat \t= Weighted%n");
-			return new GraphParserWeighted(nodeCount, edgeCount);
+			return new ChacoParserWeighted(nodeCount, edgeCount);
 		default:
 			System.out.printf("\tFormat \t= Unweighted%n");
-			return new GraphParserUnweighted(nodeCount, edgeCount);
+			return new ChacoParserUnweighted(nodeCount, edgeCount);
 		}
 	}
 
-	private void storeNodesToNeo(File graphFile, GraphParser parser)
+	private void storeNodesAndRelsToNeo(GraphTopology topology) {
+
+		long time = System.currentTimeMillis();
+
+		// PRINTOUT
+		System.out.printf("Reading & Indexing Nodes...");
+
+		ArrayList<NodeData> nodesAndRels = topology.getNodesAndRels();
+
+		flushNodesBatch(nodesAndRels);
+
+		// PRINTOUT
+		System.out.printf("%dms%n", System.currentTimeMillis() - time);
+		time = System.currentTimeMillis();
+		System.out.printf("Optimizing Index...");
+
+		batchIndexService.optimize();
+
+		// PRINTOUT
+		System.out.printf("%dms%n", System.currentTimeMillis() - time);
+
+		// PRINTOUT
+		System.out.printf("Reading & Indexing Relationships...");
+
+		time = System.currentTimeMillis();
+
+		flushRelsBatch(nodesAndRels);
+
+		// PRINTOUT
+		System.out.printf("%dms%n", System.currentTimeMillis() - time);
+
+	}
+
+	private void storeNodesToNeo(File graphFile, ChacoParser parser)
 			throws FileNotFoundException {
 
 		Scanner scanner = new Scanner(graphFile);
@@ -346,7 +400,7 @@ public class NeoFromFile {
 		while (scanner.hasNextLine()) {
 			nodeNumber++;
 			NodeData node = parser.parseNode(scanner.nextLine(), nodeNumber);
-			node.getProperties().put("color", new Integer(1));
+			node.getProperties().put("color", -1);
 			nodes.add(node);
 
 			if ((nodeNumber % NeoFromFile.NODE_STORE_BUF) == 0) {
@@ -376,7 +430,7 @@ public class NeoFromFile {
 	}
 
 	private void storePartitionedNodesToNeo(File graphFile, File partitionFile,
-			GraphParser parser) throws FileNotFoundException {
+			ChacoParser parser) throws FileNotFoundException {
 
 		Scanner graphScanner = new Scanner(graphFile);
 		Scanner partitionScanner = new Scanner(partitionFile);
@@ -428,7 +482,7 @@ public class NeoFromFile {
 	}
 
 	private void storePartitionedNodesToNeo(File graphFile,
-			ClusterInitType clusterInitType, int ptnVal, GraphParser parser)
+			ClusterInitType clusterInitType, int ptnVal, ChacoParser parser)
 			throws Exception {
 
 		Scanner graphScanner = new Scanner(graphFile);
@@ -541,7 +595,7 @@ public class NeoFromFile {
 		return lastPtn;
 	}
 
-	private void initPtnAsSingle(ArrayList<NodeData> nodes, int defaultPtn) {
+	private void initPtnAsSingle(ArrayList<NodeData> nodes, Integer defaultPtn) {
 
 		for (NodeData tempNode : nodes) {
 			Integer color = new Integer(defaultPtn);
@@ -550,7 +604,7 @@ public class NeoFromFile {
 
 	}
 
-	private void storeRelsToNeo(File graphFile, GraphParser parser)
+	private void storeRelsToNeo(File graphFile, ChacoParser parser)
 			throws FileNotFoundException {
 
 		// PRINTOUT
@@ -567,14 +621,13 @@ public class NeoFromFile {
 		// read each line to extract node & relationship information
 		int nodeNumber = 0;
 		while (scanner.hasNextLine()) {
-
 			nodeNumber++;
 			nodesAndRels.add(parser.parseNodeAndRels(scanner.nextLine(),
 					nodeNumber));
 
 			if ((nodeNumber % NeoFromFile.REL_STORE_BUF) == 0) {
 				System.out.printf(".");
-				flushNodesBatch(nodesAndRels);
+				flushRelsBatch(nodesAndRels);
 				nodesAndRels.clear();
 			}
 		}
@@ -589,7 +642,7 @@ public class NeoFromFile {
 
 	}
 
-	private void storePartitionedRelsToNeo(File graphFile, GraphParser parser)
+	private void storePartitionedRelsToNeo(File graphFile, ChacoParser parser)
 			throws FileNotFoundException {
 
 		// PRINTOUT
@@ -613,7 +666,7 @@ public class NeoFromFile {
 
 			if ((nodeNumber % NeoFromFile.REL_STORE_BUF) == 0) {
 				System.out.printf(".");
-				flushNodesBatch(nodesAndRels);
+				flushRelsTrans(nodesAndRels);
 				nodesAndRels.clear();
 			}
 		}

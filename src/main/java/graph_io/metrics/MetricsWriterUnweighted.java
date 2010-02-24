@@ -1,4 +1,4 @@
-package graph_io;
+package graph_io.metrics;
 
 import java.io.BufferedWriter;
 import java.io.File;

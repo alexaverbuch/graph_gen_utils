@@ -1,10 +1,12 @@
-package graph_io;
+package graph_io.chaco;
 
-public abstract class GraphParser {
+import graph_io.general.NodeData;
+
+public abstract class ChacoParser {
 	private int nodeCount;
 	private int edgeCount;	
 	
-	public GraphParser(int nodeCount, int edgeCount) {
+	public ChacoParser(int nodeCount, int edgeCount) {
 		super();
 		this.nodeCount = nodeCount;
 		this.edgeCount = edgeCount;

@@ -1,4 +1,4 @@
-package graph_io;
+package graph_io.general;
 
 import java.util.ArrayList;
 import java.util.HashMap;

@@ -1,30 +1,32 @@
-package graph_io;
+package graph_io.chaco;
+
+import graph_io.general.NodeData;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.StringTokenizer;
 
-public class GraphParserWeightedNodes extends GraphParser {
+public class ChacoParserWeightedEdges extends ChacoParser {
 
-	public GraphParserWeightedNodes(int nodeCount, int edgeCount) {
+	public ChacoParserWeightedEdges(int nodeCount, int edgeCount) {
 		super(nodeCount, edgeCount);
 	}
 
 	@Override
 	public NodeData parseNodeAndRels(String aLine, int nodeNumber) {
-		try {
+		try {			
 			NodeData node = new NodeData();
 			
 			StringTokenizer st = new StringTokenizer(aLine, " ");
 			
 			node.getProperties().put("name", Integer.toString(nodeNumber));
-			node.getProperties().put("weight", st.nextToken());
+			node.getProperties().put("weight", 1);
 			
 			while (st.hasMoreTokens()) {
 				Map<String,Object> rel = new HashMap<String, Object>();			
 				rel.put("name", st.nextToken());
-				rel.put("weight", 1);
+				rel.put("weight", st.nextToken());
 				node.getRelationships().add(rel);
 			}
 			
@@ -38,13 +40,11 @@ public class GraphParserWeightedNodes extends GraphParser {
 
 	@Override
 	public NodeData parseNode(String aLine, int nodeNumber) {
-		try {
+		try {			
 			NodeData node = new NodeData();
 			
-			StringTokenizer st = new StringTokenizer(aLine, " ");
-			
 			node.getProperties().put("name", Integer.toString(nodeNumber));
-			node.getProperties().put("weight", st.nextToken());
+			node.getProperties().put("weight", 1);
 			
 			return node;
 		} catch (Exception e) {
