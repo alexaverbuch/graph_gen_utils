@@ -1,6 +1,6 @@
-package graph_io.topology;
+package graph_gen_utils.topology;
 
-import graph_io.general.NodeData;
+import graph_gen_utils.general.NodeData;
 
 import java.util.ArrayList;
 import java.util.HashMap;

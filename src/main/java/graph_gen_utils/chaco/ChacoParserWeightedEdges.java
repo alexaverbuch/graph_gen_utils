@@ -1,6 +1,6 @@
-package graph_io.chaco;
+package graph_gen_utils.chaco;
 
-import graph_io.general.NodeData;
+import graph_gen_utils.general.NodeData;
 
 import java.util.HashMap;
 import java.util.Map;

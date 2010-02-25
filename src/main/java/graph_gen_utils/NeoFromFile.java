@@ -1,17 +1,17 @@
 package graph_gen_utils;
 
-import graph_io.chaco.ChacoParser;
-import graph_io.chaco.ChacoParserUnweighted;
-import graph_io.chaco.ChacoParserWeighted;
-import graph_io.chaco.ChacoParserWeightedEdges;
-import graph_io.chaco.ChacoParserWeightedNodes;
-import graph_io.chaco.ChacoWriter;
-import graph_io.chaco.ChacoWriterUnweighted;
-import graph_io.general.NodeData;
-import graph_io.metrics.MetricsWriterUnweighted;
-import graph_io.topology.GraphTopology;
-import graph_io.topology.GraphTopologyFullyConnected;
-import graph_io.topology.GraphTopologyRandom;
+import graph_gen_utils.chaco.ChacoParser;
+import graph_gen_utils.chaco.ChacoParserUnweighted;
+import graph_gen_utils.chaco.ChacoParserWeighted;
+import graph_gen_utils.chaco.ChacoParserWeightedEdges;
+import graph_gen_utils.chaco.ChacoParserWeightedNodes;
+import graph_gen_utils.chaco.ChacoWriter;
+import graph_gen_utils.chaco.ChacoWriterUnweighted;
+import graph_gen_utils.general.NodeData;
+import graph_gen_utils.metrics.MetricsWriterUnweighted;
+import graph_gen_utils.topology.GraphTopology;
+import graph_gen_utils.topology.GraphTopologyFullyConnected;
+import graph_gen_utils.topology.GraphTopologyRandom;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -65,12 +65,14 @@ public class NeoFromFile {
 
 		NeoFromFile neoCreator = new NeoFromFile("var/test-connected");
 
-		neoCreator.writeNeo("graphs/random-1000-5.graph",
-				ClusterInitType.BALANCED, 16);
-		// neoCreator.writeNeo(new GraphTopologyFullyConnected(100),
+		// neoCreator.writeNeo("graphs/random-1000-5.graph",
+		// ClusterInitType.BALANCED, 16);
+		// neoCreator.writeNeo(new GraphTopologyFullyConnected(5),
 		// ClusterInitType.RANDOM, 2);
-		neoCreator.writeChacoAndPtn("temp/random-1000-5.graph",
-				ChacoType.UNWEIGHTED, "temp/random-1000-5-BAL.16.ptn");
+		neoCreator.writeNeo(new GraphTopologyFullyConnected(5));
+		// neoCreator.writeChacoAndPtn("temp/connected-1000-5.graph",
+		// ChacoType.UNWEIGHTED, "temp/random-1000-5-BAL.16.ptn");
+		neoCreator.writeChaco("temp/connected-5.graph", ChacoType.UNWEIGHTED);
 
 		// PRINTOUT
 		System.out.printf("--------------------%n");

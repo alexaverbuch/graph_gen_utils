@@ -1,4 +1,4 @@
-package graph_io.chaco;
+package graph_gen_utils.chaco;
 
 import java.io.File;
 
