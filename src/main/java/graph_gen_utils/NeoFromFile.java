@@ -104,11 +104,14 @@ public class NeoFromFile {
 
 	public void writeNeo(GraphTopology topology) {
 
-		openBatchServices();
-
 		storeNodesAndRelsToNeo(topology);
 
-		closeBatchServices();
+	}
+
+	public void writeNeo(GraphTopology topology,
+			ClusterInitType clusterInitType, int ptnVal) throws Exception {
+
+		storePartitionedNodesAndRelsToNeo(topology, clusterInitType, ptnVal);
 
 	}
 
@@ -190,7 +193,7 @@ public class NeoFromFile {
 		System.out.printf("%dms%n", System.currentTimeMillis() - time);
 
 		closeTransServices();
-		
+
 	}
 
 	public void writeChacoAndPtn(String chacoPath, ChacoType chacoType,
@@ -349,6 +352,8 @@ public class NeoFromFile {
 
 	private void storeNodesAndRelsToNeo(GraphTopology topology) {
 
+		openBatchServices();
+
 		long time = System.currentTimeMillis();
 
 		// PRINTOUT
@@ -377,6 +382,8 @@ public class NeoFromFile {
 
 		// PRINTOUT
 		System.out.printf("%dms%n", System.currentTimeMillis() - time);
+
+		closeBatchServices();
 
 	}
 
@@ -427,6 +434,62 @@ public class NeoFromFile {
 		System.out.printf("%dms%n", System.currentTimeMillis() - time);
 
 		scanner.close();
+	}
+
+	private void storePartitionedNodesAndRelsToNeo(GraphTopology topology,
+			ClusterInitType clusterInitType, int ptnVal) throws Exception {
+
+		openBatchServices();
+
+		long time = System.currentTimeMillis();
+
+		// PRINTOUT
+		System.out.printf("Reading & Indexing Nodes...");
+
+		ArrayList<NodeData> nodesAndRels = topology.getNodesAndRels();
+
+		switch (clusterInitType) {
+		case RANDOM:
+			initPtnAsRandom(nodesAndRels, ptnVal);
+			break;
+		case BALANCED:
+			initPtnAsBalanced(nodesAndRels, -1, ptnVal);
+			break;
+		case SINGLE:
+			initPtnAsSingle(nodesAndRels, ptnVal);
+			break;
+		default:
+			System.err.println("ClusterInitType not supported");
+			throw new Exception("ClusterInitType not supported");
+		}
+
+		flushNodesBatch(nodesAndRels);
+
+		// PRINTOUT
+		System.out.printf("%dms%n", System.currentTimeMillis() - time);
+		time = System.currentTimeMillis();
+		System.out.printf("Optimizing Index...");
+
+		batchIndexService.optimize();
+
+		// PRINTOUT
+		System.out.printf("%dms%n", System.currentTimeMillis() - time);
+
+		closeBatchServices();
+
+		openTransServices();
+
+		// PRINTOUT
+		System.out.printf("Reading & Indexing Relationships...");
+
+		time = System.currentTimeMillis();
+
+		flushRelsBatch(nodesAndRels);
+
+		// PRINTOUT
+		System.out.printf("%dms%n", System.currentTimeMillis() - time);
+
+		closeTransServices();
 	}
 
 	private void storePartitionedNodesToNeo(File graphFile, File partitionFile,
