@@ -10,6 +10,8 @@ import graph_io.chaco.ChacoWriterUnweighted;
 import graph_io.general.NodeData;
 import graph_io.metrics.MetricsWriterUnweighted;
 import graph_io.topology.GraphTopology;
+import graph_io.topology.GraphTopologyFullyConnected;
+import graph_io.topology.GraphTopologyRandom;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -51,13 +53,24 @@ public class NeoFromFile {
 	private GraphDatabaseService transNeo = null;
 	private IndexService transIndexService = null;
 
-	public static void main(String[] args) throws FileNotFoundException {
-
-		NeoFromFile neoCreator = new NeoFromFile("var/test11");
+	public static void main(String[] args) throws Exception {
 
 		long time = System.currentTimeMillis();
 
-		neoCreator.writeNeo("graphs/test11.graph");
+		// NeoFromFile neoCreator = new NeoFromFile("var/test11");
+		// neoCreator.writeNeo("graphs/test11.graph");
+
+		// NeoFromFile neoCreator = new NeoFromFile("var/test-connected");
+		// neoCreator.writeNeo(new GraphTopologyFullyConnected(5));
+
+		NeoFromFile neoCreator = new NeoFromFile("var/test-connected");
+
+		neoCreator.writeNeo("graphs/random-1000-5.graph",
+				ClusterInitType.BALANCED, 16);
+		// neoCreator.writeNeo(new GraphTopologyFullyConnected(100),
+		// ClusterInitType.RANDOM, 2);
+		neoCreator.writeChacoAndPtn("temp/random-1000-5.graph",
+				ChacoType.UNWEIGHTED, "temp/random-1000-5-BAL.16.ptn");
 
 		// PRINTOUT
 		System.out.printf("--------------------%n");
@@ -65,6 +78,7 @@ public class NeoFromFile {
 				.currentTimeMillis() - time)
 				/ (double) 1000);
 		System.out.printf("%n--------------------%n");
+
 	}
 
 	public NeoFromFile(String databaseDir) {
@@ -102,9 +116,9 @@ public class NeoFromFile {
 
 	}
 
-	public void writeNeo(GraphTopology topology) {
+	public void writeNeo(GraphTopology topology) throws Exception {
 
-		storeNodesAndRelsToNeo(topology);
+		storePartitionedNodesAndRelsToNeo(topology, ClusterInitType.SINGLE, -1);
 
 	}
 
@@ -350,43 +364,6 @@ public class NeoFromFile {
 		}
 	}
 
-	private void storeNodesAndRelsToNeo(GraphTopology topology) {
-
-		openBatchServices();
-
-		long time = System.currentTimeMillis();
-
-		// PRINTOUT
-		System.out.printf("Reading & Indexing Nodes...");
-
-		ArrayList<NodeData> nodesAndRels = topology.getNodesAndRels();
-
-		flushNodesBatch(nodesAndRels);
-
-		// PRINTOUT
-		System.out.printf("%dms%n", System.currentTimeMillis() - time);
-		time = System.currentTimeMillis();
-		System.out.printf("Optimizing Index...");
-
-		batchIndexService.optimize();
-
-		// PRINTOUT
-		System.out.printf("%dms%n", System.currentTimeMillis() - time);
-
-		// PRINTOUT
-		System.out.printf("Reading & Indexing Relationships...");
-
-		time = System.currentTimeMillis();
-
-		flushRelsBatch(nodesAndRels);
-
-		// PRINTOUT
-		System.out.printf("%dms%n", System.currentTimeMillis() - time);
-
-		closeBatchServices();
-
-	}
-
 	private void storeNodesToNeo(File graphFile, ChacoParser parser)
 			throws FileNotFoundException {
 
@@ -484,7 +461,7 @@ public class NeoFromFile {
 
 		time = System.currentTimeMillis();
 
-		flushRelsBatch(nodesAndRels);
+		flushRelsTrans(nodesAndRels);
 
 		// PRINTOUT
 		System.out.printf("%dms%n", System.currentTimeMillis() - time);
@@ -811,7 +788,7 @@ public class NeoFromFile {
 
 			tx.success();
 		} catch (Exception e) {
-			System.out.println(e.toString());
+			e.printStackTrace();
 		} finally {
 			tx.finish();
 		}

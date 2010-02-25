@@ -21,15 +21,17 @@ public class GraphTopologyFullyConnected extends GraphTopology {
 
 		ArrayList<NodeData> nodes = new ArrayList<NodeData>();
 
-		for (int nodeNumber = 0; nodeNumber < nodeCount; nodeNumber++) {
+		for (int nodeNumber = 1; nodeNumber <= nodeCount; nodeNumber++) {
 
 			NodeData node = new NodeData();
 
 			node.getProperties().put("name", Integer.toString(nodeNumber));
 			node.getProperties().put("weight", 1);
-			node.getProperties().put("color", -1);
 
-			for (int relNumber = 0; relNumber < nodeCount; relNumber++) {
+			for (int relNumber = 1; relNumber <= nodeCount; relNumber++) {
+				if (nodeNumber == relNumber)
+					continue;
+				
 				Map<String, Object> rel = new HashMap<String, Object>();
 				rel.put("name", Integer.toString(relNumber));
 				rel.put("weight", 1);
