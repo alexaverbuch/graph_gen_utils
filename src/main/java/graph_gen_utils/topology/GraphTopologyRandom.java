@@ -30,7 +30,7 @@ public class GraphTopologyRandom extends GraphTopology {
 			NodeData node = new NodeData();
 
 			node.getProperties().put("name", Integer.toString(nodeId));
-			node.getProperties().put("weight", 1);
+			node.getProperties().put("weight", 1.0);
 
 			nodes.add(node);
 		}
@@ -58,12 +58,12 @@ public class GraphTopologyRandom extends GraphTopology {
 
 			Map<String, Object> rel1 = new HashMap<String, Object>();
 			rel1.put("name", node2.getProperties().get("name"));
-			rel1.put("weight", 1);
+			rel1.put("weight", 1.0);
 			node1.getRelationships().add(rel1);
 
 			Map<String, Object> rel2 = new HashMap<String, Object>();
 			rel2.put("name", node1.getProperties().get("name"));
-			rel2.put("weight", 1);
+			rel2.put("weight", 1.0);
 			node2.getRelationships().add(rel2);
 
 			edgeNumber++;

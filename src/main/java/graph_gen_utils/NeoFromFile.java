@@ -66,10 +66,10 @@ public class NeoFromFile {
 
 		NeoFromFile neoCreator = new NeoFromFile("var/test-random");
 
-		// neoCreator.writeNeo(new GraphTopologyRandom(1000, 10000),
-		// ClusterInitType.RANDOM, 2);
-		neoCreator.writeNeo("graphs/random-1000-10000.graph",
-				ClusterInitType.BALANCED, 16);
+		neoCreator.writeNeo(new GraphTopologyRandom(5, 10),
+				ClusterInitType.RANDOM, 2);
+		// neoCreator.writeNeo("graphs/random-1000-10000.graph",
+		// ClusterInitType.BALANCED, 16);
 		neoCreator.writeChacoAndPtn("temp/random-1000-10000.graph",
 				ChacoType.UNWEIGHTED, "temp/random-1000-10000-IN-BAL.16.ptn");
 
@@ -282,26 +282,38 @@ public class NeoFromFile {
 
 		MemGraph memGraph = new MemGraph();
 
-		for (Node node : this.transNeo.getAllNodes()) {
+		Transaction tx = transNeo.beginTx();
 
-			Long nodeId = node.getId();
+		try {
+			for (Node node : this.transNeo.getAllNodes()) {
+				// Ignore reference node
+				if (node.getId() == 0)
+					continue;
 
-			memGraph.addNode(nodeId, (Integer) node.getProperty("color"));
+				Long nodeId = Long.parseLong((String) node.getProperty("name"));
 
-			for (Relationship rel : node.getRelationships(Direction.OUTGOING)) {
-				MemRel memRel = new MemRel(rel.getEndNode().getId(),
-						(Double) rel.getProperty("weight"));
+				memGraph.addNode(nodeId, (Integer) node.getProperty("color"));
 
-				memGraph.getNode(nodeId).getNeighbours().add(memRel);
+				for (Relationship rel : node
+						.getRelationships(Direction.OUTGOING)) {
+					MemRel memRel = new MemRel(rel.getEndNode().getId(),
+							(Double) rel.getProperty("weight"));
+
+					memGraph.getNode(nodeId).addNeighbour(memRel);
+				}
+
 			}
-
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			tx.finish();
 		}
 
 		// PRINTOUT
 		System.out.printf("%dms%n", System.currentTimeMillis() - time);
 
 		closeTransServices();
-
+		
 		return memGraph;
 	}
 
@@ -696,16 +708,18 @@ public class NeoFromFile {
 							toName);
 					Integer toColor = (Integer) toNode.getProperty("color");
 
-					rel.put("name", fromName + "->" + toName);
+					Relationship neoRel = null;
 
 					if (fromColor == toColor) {
-						fromNode.createRelationshipTo(toNode,
+						neoRel = fromNode.createRelationshipTo(toNode,
 								DynamicRelationshipType.withName("INTERNAL"));
 					} else {
-						fromNode.createRelationshipTo(toNode,
+						neoRel = fromNode.createRelationshipTo(toNode,
 								DynamicRelationshipType.withName("EXTERNAL"));
 					}
 
+					neoRel.setProperty("name", fromName + "->" + toName);
+					neoRel.setProperty("weight", rel.get("weight"));
 				}
 			}
 

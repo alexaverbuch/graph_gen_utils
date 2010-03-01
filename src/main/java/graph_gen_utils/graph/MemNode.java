@@ -46,6 +46,10 @@ public class MemNode {
 		return neighbours.size();
 	}
 
+	public void addNeighbour(MemRel rel) {
+		neighbours.put(rel.getEndNodeId(), rel);
+	}
+
 	public Collection<MemRel> getNeighbours() {
 		return neighbours.values();
 	}
@@ -56,6 +60,10 @@ public class MemNode {
 
 	public Integer getColor() {
 		return color;
+	}
+
+	public void setColor(Integer color) {
+		this.color = color;
 	}
 
 	public Long getId() {

@@ -26,7 +26,7 @@ public class GraphTopologyFullyConnected extends GraphTopology {
 			NodeData node = new NodeData();
 
 			node.getProperties().put("name", Integer.toString(nodeNumber));
-			node.getProperties().put("weight", 1);
+			node.getProperties().put("weight", 1.0);
 
 			for (int relNumber = 1; relNumber <= nodeCount; relNumber++) {
 				if (nodeNumber == relNumber)
@@ -34,7 +34,7 @@ public class GraphTopologyFullyConnected extends GraphTopology {
 				
 				Map<String, Object> rel = new HashMap<String, Object>();
 				rel.put("name", Integer.toString(relNumber));
-				rel.put("weight", 1);
+				rel.put("weight", 1.0);
 				node.getRelationships().add(rel);
 			}
 

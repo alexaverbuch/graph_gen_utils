@@ -1,7 +1,10 @@
 package graph_gen_utils.graph;
 
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Random;
+import java.util.TreeMap;
 
 import org.uncommons.maths.random.MersenneTwisterRNG;
 
@@ -9,7 +12,7 @@ public class MemGraph {
 
 	private Random rng = null;
 
-	private HashMap<Long, MemNode> nodes = new HashMap<Long, MemNode>();
+	private Map<Long, MemNode> nodes = null;
 
 	public MemGraph() {
 		super();
@@ -33,4 +36,16 @@ public class MemGraph {
 	public MemNode getNode(Long id) {
 		return this.nodes.get(id);
 	}
+
+	public Collection<MemNode> getAllNodes() {
+		return this.nodes.values();
+	}
+
+	// May be useful for defining order returned by getAllNodes()
+	// NOTE Order returned by MemNode.getNeighbours() still undefined
+	// NOTE Degrades insertion performance & expensive on larger graphs
+	public void sortNodesByKey() {
+		this.nodes = new TreeMap<Long, MemNode>(this.nodes);
+	}
+
 }
