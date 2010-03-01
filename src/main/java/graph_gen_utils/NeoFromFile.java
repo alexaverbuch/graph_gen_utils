@@ -60,19 +60,14 @@ public class NeoFromFile {
 		// NeoFromFile neoCreator = new NeoFromFile("var/test11");
 		// neoCreator.writeNeo("graphs/test11.graph");
 
-		// NeoFromFile neoCreator = new NeoFromFile("var/test-connected");
-		// neoCreator.writeNeo(new GraphTopologyFullyConnected(5));
+		NeoFromFile neoCreator = new NeoFromFile("var/test-random");
 
-		NeoFromFile neoCreator = new NeoFromFile("var/test-connected");
-
-		// neoCreator.writeNeo("graphs/random-1000-5.graph",
-		// ClusterInitType.BALANCED, 16);
-		// neoCreator.writeNeo(new GraphTopologyFullyConnected(5),
+		// neoCreator.writeNeo(new GraphTopologyRandom(1000, 10000),
 		// ClusterInitType.RANDOM, 2);
-		neoCreator.writeNeo(new GraphTopologyFullyConnected(5));
-		// neoCreator.writeChacoAndPtn("temp/connected-1000-5.graph",
-		// ChacoType.UNWEIGHTED, "temp/random-1000-5-BAL.16.ptn");
-		neoCreator.writeChaco("temp/connected-5.graph", ChacoType.UNWEIGHTED);
+		neoCreator.writeNeo("graphs/random-1000-10000.graph",
+				ClusterInitType.BALANCED, 16);
+		neoCreator.writeChacoAndPtn("temp/random-1000-10000.graph",
+				ChacoType.UNWEIGHTED, "temp/random-1000-10000-IN-BAL.16.ptn");
 
 		// PRINTOUT
 		System.out.printf("--------------------%n");

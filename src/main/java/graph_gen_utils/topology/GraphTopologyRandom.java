@@ -10,80 +10,67 @@ import java.util.Random;
 public class GraphTopologyRandom extends GraphTopology {
 
 	private int nodeCount = 0;
-	private int nodeDegree = 0;
+	private int edgeCount = 0;
 
-	public GraphTopologyRandom(int nodeCount, int nodeDegree) throws Exception {
+	public GraphTopologyRandom(int nodeCount, int edgeCount) throws Exception {
 		super();
 		this.nodeCount = nodeCount;
-		this.nodeDegree = nodeDegree;
-		throw new Exception("Not Implemented Yet");
+		this.edgeCount = edgeCount;
 	}
 
 	@Override
 	public ArrayList<NodeData> getNodesAndRels() {
 
-		HashMap<String, NodeData> nodes = new HashMap<String, NodeData>();
+		ArrayList<NodeData> nodes = new ArrayList<NodeData>();
 
 		Random rand = new Random(System.currentTimeMillis());
 
-		rand.nextInt(nodeCount);
+		for (int nodeId = 1; nodeId <= nodeCount; nodeId++) {
 
-		for (int nodeID = 1; nodeID <= nodeCount; nodeID++) {
+			NodeData node = new NodeData();
 
-			String nodeName = Integer.toString(nodeID);
-
-			// If node doesn't exist, create it
-			if (nodes.containsKey(nodeName) == false)
-				nodes.put(nodeName, new NodeData());
-
-			NodeData node = nodes.get(nodeName);
-
-			node.getProperties().put("name", nodeName);
+			node.getProperties().put("name", Integer.toString(nodeId));
 			node.getProperties().put("weight", 1);
 
-			int neighbourCount = node.NEWgetRelationshipsCollection().size();
+			nodes.add(node);
+		}
 
-			while (neighbourCount < nodeDegree) {
-				// Node numbering starts at 1
-				int neighbourID = rand.nextInt(nodeCount) + 1;
+		int edgeNumber = 0;
 
-				String neighbourName = Integer.toString(neighbourID);
+		while (edgeNumber < edgeCount) {
 
-				// If neighbour doesn't exist, create
-				if (nodes.containsKey(neighbourName) == false)
-					nodes.put(neighbourName, new NodeData());
+			int nodeId1 = rand.nextInt(nodeCount);
+			int nodeId2 = rand.nextInt(nodeCount);
 
-				NodeData neighbour = nodes.get(neighbourName);
+			// No relations to self
+			if (nodeId1 == nodeId2)
+				continue;
 
-				// Neighbour is self (no self loops)
-				if ((nodeID == neighbourID)
-				// Neighbour already in list (no multiple edges between nodes)
-						|| (node.NEWgetRelationships()
-								.containsKey(neighbourName)))
-					// // Neighbour has max neighbours (must be symmetric)
-					// || (neighbour.NEWgetRelationshipsCollection().size() >=
-					// nodeDegree))
-					continue;
+			NodeData node1 = nodes.get(nodeId1);
+			NodeData node2 = nodes.get(nodeId2);
 
-				Map<String, Object> neighbourProps = new HashMap<String, Object>();
-				neighbourProps.put("name", neighbourName);
-				neighbourProps.put("weight", 1);
+			// No duplicate relations
+			if ((node1.containsRelation((String) node2.getProperties().get(
+					"name")))
+					|| (node2.containsRelation((String) node1.getProperties()
+							.get("name"))))
+				continue;
 
-				// Add neighbour to my neighbour list
-				node.NEWgetRelationships().put(neighbourName, neighbourProps);
+			Map<String, Object> rel1 = new HashMap<String, Object>();
+			rel1.put("name", node2.getProperties().get("name"));
+			rel1.put("weight", 1);
+			node1.getRelationships().add(rel1);
 
-				// Add me to neighbour's neighbour list (must be symmetric)
-				neighbour.NEWgetRelationships().put(nodeName,
-						node.getProperties());
+			Map<String, Object> rel2 = new HashMap<String, Object>();
+			rel2.put("name", node1.getProperties().get("name"));
+			rel2.put("weight", 1);
+			node2.getRelationships().add(rel2);
 
-				neighbourCount++;
-			}
-
-			nodes.put(nodeName, node);
+			edgeNumber++;
 
 		}
 
-		return (ArrayList<NodeData>) nodes.values();
+		return nodes;
 
 	}
 }
