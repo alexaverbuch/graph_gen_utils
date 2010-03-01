@@ -1,6 +1,6 @@
 package graph_gen_utils.graph;
 
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Random;
 
@@ -36,7 +36,7 @@ public class MemNode {
 
 		if (randIndex >= neighboursSize)
 			throw new Exception(String.format(
-					"randIndex[%d] >= neighbourSize[%d]", randIndex,
+					"randIndex[%d] >= neighbourSize[%d]\n", randIndex,
 					neighboursSize));
 
 		return this.neighbours.get(randIndex).getEndNodeId();
@@ -46,8 +46,8 @@ public class MemNode {
 		return neighbours.size();
 	}
 
-	public ArrayList<MemRel> getNeighbours() {
-		return (ArrayList<MemRel>) neighbours.values();
+	public Collection<MemRel> getNeighbours() {
+		return neighbours.values();
 	}
 
 	public boolean hasNeighbour(Long id) {
