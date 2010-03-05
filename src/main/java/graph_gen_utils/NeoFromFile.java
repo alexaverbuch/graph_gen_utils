@@ -61,17 +61,11 @@ public class NeoFromFile {
 
 		long time = System.currentTimeMillis();
 
-		// NeoFromFile neoCreator = new NeoFromFile("var/test11");
-		// neoCreator.writeNeo("graphs/test11.graph");
+		NeoFromFile neoCreator = new NeoFromFile("var/auto");
 
-		NeoFromFile neoCreator = new NeoFromFile("var/test-random");
-
-		neoCreator.writeNeo(new GraphTopologyRandom(5, 10),
-				ClusterInitType.RANDOM, 2);
-		// neoCreator.writeNeo("graphs/random-1000-10000.graph",
-		// ClusterInitType.BALANCED, 16);
-		neoCreator.writeChacoAndPtn("temp/random-1000-10000.graph",
-				ChacoType.UNWEIGHTED, "temp/random-1000-10000-IN-BAL.16.ptn");
+		neoCreator.writeNeo("graphs/auto.graph", ClusterInitType.BALANCED, 2);
+		neoCreator.writeChacoAndPtn("temp/auto.graph", ChacoType.UNWEIGHTED,
+				"temp/auto-IN-BAL.2.ptn");
 
 		// PRINTOUT
 		System.out.printf("--------------------%n");
@@ -313,7 +307,7 @@ public class NeoFromFile {
 		System.out.printf("%dms%n", System.currentTimeMillis() - time);
 
 		closeTransServices();
-		
+
 		return memGraph;
 	}
 
@@ -693,17 +687,19 @@ public class NeoFromFile {
 	private void flushRelsTrans(ArrayList<NodeData> nodes) {
 		Transaction tx = transNeo.beginTx();
 
+		String fromName = null;
+		String toName = null;
+
 		try {
 
 			for (NodeData nodeAndRels : nodes) {
-				String fromName = (String) nodeAndRels.getProperties().get(
-						"name");
+				fromName = (String) nodeAndRels.getProperties().get("name");
 				Node fromNode = transIndexService.getSingleNode("name",
 						fromName);
 				Integer fromColor = (Integer) fromNode.getProperty("color");
 
 				for (Map<String, Object> rel : nodeAndRels.getRelationships()) {
-					String toName = (String) rel.get("name");
+					toName = (String) rel.get("name");
 					Node toNode = transIndexService.getSingleNode("name",
 							toName);
 					Integer toColor = (Integer) toNode.getProperty("color");
