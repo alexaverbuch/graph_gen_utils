@@ -1,6 +1,6 @@
-package graph_io.chaco;
+package graph_gen_utils.chaco;
 
-import graph_io.general.NodeData;
+import graph_gen_utils.general.NodeData;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -21,13 +21,13 @@ public class ChacoParserUnweighted extends ChacoParser {
 			StringTokenizer st = new StringTokenizer(aLine, " ");
 
 			node.getProperties().put("name", Integer.toString(nodeNumber));
-			node.getProperties().put("weight", 1);
+			node.getProperties().put("weight", 1.0);
 
 			// while (scanner.hasNext()) {
 			while (st.hasMoreTokens()) {
 				Map<String, Object> rel = new HashMap<String, Object>();
 				rel.put("name", st.nextToken());
-				rel.put("weight", 1);
+				rel.put("weight", 1.0);
 				node.getRelationships().add(rel);
 			}
 
@@ -45,7 +45,7 @@ public class ChacoParserUnweighted extends ChacoParser {
 			NodeData node = new NodeData();
 
 			node.getProperties().put("name", Integer.toString(nodeNumber));
-			node.getProperties().put("weight", 1);
+			node.getProperties().put("weight", 1.0);
 
 			return node;
 		} catch (Exception e) {

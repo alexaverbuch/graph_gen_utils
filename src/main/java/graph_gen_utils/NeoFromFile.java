@@ -1,17 +1,19 @@
 package graph_gen_utils;
 
-import graph_io.chaco.ChacoParser;
-import graph_io.chaco.ChacoParserUnweighted;
-import graph_io.chaco.ChacoParserWeighted;
-import graph_io.chaco.ChacoParserWeightedEdges;
-import graph_io.chaco.ChacoParserWeightedNodes;
-import graph_io.chaco.ChacoWriter;
-import graph_io.chaco.ChacoWriterUnweighted;
-import graph_io.general.NodeData;
-import graph_io.metrics.MetricsWriterUnweighted;
-import graph_io.topology.GraphTopology;
-import graph_io.topology.GraphTopologyFullyConnected;
-import graph_io.topology.GraphTopologyRandom;
+import graph_gen_utils.chaco.ChacoParser;
+import graph_gen_utils.chaco.ChacoParserUnweighted;
+import graph_gen_utils.chaco.ChacoParserWeighted;
+import graph_gen_utils.chaco.ChacoParserWeightedEdges;
+import graph_gen_utils.chaco.ChacoParserWeightedNodes;
+import graph_gen_utils.chaco.ChacoWriter;
+import graph_gen_utils.chaco.ChacoWriterUnweighted;
+import graph_gen_utils.general.NodeData;
+import graph_gen_utils.graph.MemGraph;
+import graph_gen_utils.graph.MemRel;
+import graph_gen_utils.metrics.MetricsWriterUnweighted;
+import graph_gen_utils.topology.GraphTopology;
+import graph_gen_utils.topology.GraphTopologyFullyConnected;
+import graph_gen_utils.topology.GraphTopologyRandom;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -20,9 +22,11 @@ import java.util.Random;
 import java.util.Scanner;
 import java.util.StringTokenizer;
 
+import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.DynamicRelationshipType;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
+import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.index.IndexService;
 import org.neo4j.index.lucene.LuceneIndexBatchInserter;
@@ -60,17 +64,14 @@ public class NeoFromFile {
 		// NeoFromFile neoCreator = new NeoFromFile("var/test11");
 		// neoCreator.writeNeo("graphs/test11.graph");
 
-		// NeoFromFile neoCreator = new NeoFromFile("var/test-connected");
-		// neoCreator.writeNeo(new GraphTopologyFullyConnected(5));
+		NeoFromFile neoCreator = new NeoFromFile("var/test-random");
 
-		NeoFromFile neoCreator = new NeoFromFile("var/test-connected");
-
-		neoCreator.writeNeo("graphs/random-1000-5.graph",
-				ClusterInitType.BALANCED, 16);
-		// neoCreator.writeNeo(new GraphTopologyFullyConnected(100),
-		// ClusterInitType.RANDOM, 2);
-		neoCreator.writeChacoAndPtn("temp/random-1000-5.graph",
-				ChacoType.UNWEIGHTED, "temp/random-1000-5-BAL.16.ptn");
+		neoCreator.writeNeo(new GraphTopologyRandom(5, 10),
+				ClusterInitType.RANDOM, 2);
+		// neoCreator.writeNeo("graphs/random-1000-10000.graph",
+		// ClusterInitType.BALANCED, 16);
+		neoCreator.writeChacoAndPtn("temp/random-1000-10000.graph",
+				ChacoType.UNWEIGHTED, "temp/random-1000-10000-IN-BAL.16.ptn");
 
 		// PRINTOUT
 		System.out.printf("--------------------%n");
@@ -92,27 +93,9 @@ public class NeoFromFile {
 
 	// PUBLIC METHODS
 
-	public void writeNeo(String graphPath) throws FileNotFoundException {
+	public void writeNeo(String graphPath) throws Exception {
 
-		openBatchServices();
-
-		long time = System.currentTimeMillis();
-
-		// PRINTOUT
-		System.out.printf("Opening Graph File...");
-
-		File graphFile = new File(graphPath);
-
-		// PRINTOUT
-		System.out.printf("%dms%n", System.currentTimeMillis() - time);
-
-		ChacoParser parser = getParser(graphFile);
-
-		storeNodesToNeo(graphFile, parser);
-
-		storeRelsToNeo(graphFile, parser);
-
-		closeBatchServices();
+		writeNeo(graphPath, ClusterInitType.SINGLE, -1);
 
 	}
 
@@ -188,7 +171,8 @@ public class NeoFromFile {
 
 	}
 
-	public void writeChaco(String chacoPath, ChacoType chacoType) {
+	public void writeChaco(String chacoPath, ChacoType chacoType)
+			throws Exception {
 
 		openTransServices();
 
@@ -211,7 +195,7 @@ public class NeoFromFile {
 	}
 
 	public void writeChacoAndPtn(String chacoPath, ChacoType chacoType,
-			String ptnPath) {
+			String ptnPath) throws Exception {
 
 		openTransServices();
 
@@ -254,11 +238,6 @@ public class NeoFromFile {
 	}
 
 	public void writeMetricsCSV(String metricsPath) {
-		writeMetricsCSV(metricsPath, null);
-	}
-
-	public void writeMetricsCSV(String metricsPath, Long timeStep) {
-
 		openTransServices();
 
 		// PRINTOUT
@@ -266,18 +245,12 @@ public class NeoFromFile {
 		System.out.printf("Writing Metrics CSV File...");
 
 		File metricsFile = new File(metricsPath);
-		MetricsWriterUnweighted
-				.writeMetricsCSV(transNeo, metricsFile, timeStep);
+		MetricsWriterUnweighted.writeMetricsCSV(transNeo, metricsFile, null);
 
 		// PRINTOUT
 		System.out.printf("%dms%n", System.currentTimeMillis() - time);
 
 		closeTransServices();
-
-	}
-
-	public void appendMetricsCSV(String metricsPath) {
-		appendMetricsCSV(metricsPath, null);
 	}
 
 	public void appendMetricsCSV(String metricsPath, Long timeStep) {
@@ -299,20 +272,65 @@ public class NeoFromFile {
 
 	}
 
+	public MemGraph readMemGraph() {
+
+		openTransServices();
+
+		// PRINTOUT
+		long time = System.currentTimeMillis();
+		System.out.printf("Loading Neo4j into MemGraph...");
+
+		MemGraph memGraph = new MemGraph();
+
+		Transaction tx = transNeo.beginTx();
+
+		try {
+			for (Node node : this.transNeo.getAllNodes()) {
+				// Ignore reference node
+				if (node.getId() == 0)
+					continue;
+
+				Long nodeId = Long.parseLong((String) node.getProperty("name"));
+
+				memGraph.addNode(nodeId, (Integer) node.getProperty("color"));
+
+				for (Relationship rel : node
+						.getRelationships(Direction.OUTGOING)) {
+					MemRel memRel = new MemRel(rel.getEndNode().getId(),
+							(Double) rel.getProperty("weight"));
+
+					memGraph.getNode(nodeId).addNeighbour(memRel);
+				}
+
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			tx.finish();
+		}
+
+		// PRINTOUT
+		System.out.printf("%dms%n", System.currentTimeMillis() - time);
+
+		closeTransServices();
+		
+		return memGraph;
+	}
+
 	// PRIVATE METHODS
 
-	private ChacoWriter getWriter(ChacoType chacoType) {
+	private ChacoWriter getWriter(ChacoType chacoType) throws Exception {
 		switch (chacoType) {
 		case UNWEIGHTED:
 			return new ChacoWriterUnweighted();
 		case WEIGHTED_EDGES:
-			return null;
+			throw new Exception("ChacoType[WEIGHTED_EDGES] supported yet");
 		case WEIGHTED_NODES:
-			return null;
+			throw new Exception("ChacoType[WEIGHTED_NODES] supported yet");
 		case WEIGHTED:
-			return null;
+			throw new Exception("ChacoType[WEIGHTED] supported yet");
 		default:
-			return null;
+			throw new Exception("ChacoType not recognized");
 		}
 	}
 
@@ -362,55 +380,6 @@ public class NeoFromFile {
 			System.out.printf("\tFormat \t= Unweighted%n");
 			return new ChacoParserUnweighted(nodeCount, edgeCount);
 		}
-	}
-
-	private void storeNodesToNeo(File graphFile, ChacoParser parser)
-			throws FileNotFoundException {
-
-		Scanner scanner = new Scanner(graphFile);
-
-		// skip first line (file format)
-		scanner.nextLine();
-
-		long time = System.currentTimeMillis();
-
-		// PRINTOUT
-		System.out.printf("Reading & Indexing Nodes...");
-
-		ArrayList<NodeData> nodes = new ArrayList<NodeData>();
-
-		// read each line to extract node & relationship information
-		int nodeNumber = 0;
-		while (scanner.hasNextLine()) {
-			nodeNumber++;
-			NodeData node = parser.parseNode(scanner.nextLine(), nodeNumber);
-			node.getProperties().put("color", -1);
-			nodes.add(node);
-
-			if ((nodeNumber % NeoFromFile.NODE_STORE_BUF) == 0) {
-
-				// PRINTOUT
-				System.out.printf(".");
-
-				flushNodesBatch(nodes);
-				nodes.clear();
-			}
-		}
-
-		flushNodesBatch(nodes);
-		nodes.clear();
-
-		// PRINTOUT
-		System.out.printf("%dms%n", System.currentTimeMillis() - time);
-		time = System.currentTimeMillis();
-		System.out.printf("Optimizing Index...");
-
-		batchIndexService.optimize();
-
-		// PRINTOUT
-		System.out.printf("%dms%n", System.currentTimeMillis() - time);
-
-		scanner.close();
 	}
 
 	private void storePartitionedNodesAndRelsToNeo(GraphTopology topology,
@@ -600,6 +569,7 @@ public class NeoFromFile {
 		graphScanner.close();
 	}
 
+	// TODO encapsulate in class InitPartition, InitPartitionAsFile
 	private void initPtnAsFile(Scanner partitionScanner,
 			ArrayList<NodeData> nodes) {
 
@@ -610,6 +580,7 @@ public class NeoFromFile {
 
 	}
 
+	// TODO encapsulate in class InitPartition, InitPartitionAsRandom
 	private void initPtnAsRandom(ArrayList<NodeData> nodes, int maxPtn) {
 
 		Random rand = new Random(System.currentTimeMillis());
@@ -621,6 +592,7 @@ public class NeoFromFile {
 
 	}
 
+	// TODO encapsulate in class InitPartition, InitPartitionAsBalanced
 	private int initPtnAsBalanced(ArrayList<NodeData> nodes, int lastPtn,
 			int maxPtn) {
 
@@ -635,50 +607,13 @@ public class NeoFromFile {
 		return lastPtn;
 	}
 
+	// TODO encapsulate in class InitPartition, InitPartitionAsSingle
 	private void initPtnAsSingle(ArrayList<NodeData> nodes, Integer defaultPtn) {
 
 		for (NodeData tempNode : nodes) {
 			Integer color = new Integer(defaultPtn);
 			tempNode.getProperties().put("color", color);
 		}
-
-	}
-
-	private void storeRelsToNeo(File graphFile, ChacoParser parser)
-			throws FileNotFoundException {
-
-		// PRINTOUT
-		System.out.printf("Reading & Indexing Relationships...");
-
-		long time = System.currentTimeMillis();
-		Scanner scanner = new Scanner(graphFile);
-
-		// skip over first line
-		scanner.nextLine();
-
-		ArrayList<NodeData> nodesAndRels = new ArrayList<NodeData>();
-
-		// read each line to extract node & relationship information
-		int nodeNumber = 0;
-		while (scanner.hasNextLine()) {
-			nodeNumber++;
-			nodesAndRels.add(parser.parseNodeAndRels(scanner.nextLine(),
-					nodeNumber));
-
-			if ((nodeNumber % NeoFromFile.REL_STORE_BUF) == 0) {
-				System.out.printf(".");
-				flushRelsBatch(nodesAndRels);
-				nodesAndRels.clear();
-			}
-		}
-
-		flushRelsBatch(nodesAndRels);
-		nodesAndRels.clear();
-
-		scanner.close();
-
-		// PRINTOUT
-		System.out.printf("%dms%n", System.currentTimeMillis() - time);
 
 	}
 
@@ -773,16 +708,18 @@ public class NeoFromFile {
 							toName);
 					Integer toColor = (Integer) toNode.getProperty("color");
 
-					rel.put("name", fromName + "->" + toName);
+					Relationship neoRel = null;
 
 					if (fromColor == toColor) {
-						fromNode.createRelationshipTo(toNode,
+						neoRel = fromNode.createRelationshipTo(toNode,
 								DynamicRelationshipType.withName("INTERNAL"));
 					} else {
-						fromNode.createRelationshipTo(toNode,
+						neoRel = fromNode.createRelationshipTo(toNode,
 								DynamicRelationshipType.withName("EXTERNAL"));
 					}
 
+					neoRel.setProperty("name", fromName + "->" + toName);
+					neoRel.setProperty("weight", rel.get("weight"));
 				}
 			}
 
