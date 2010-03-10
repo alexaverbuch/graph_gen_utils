@@ -11,10 +11,10 @@ public class MemNode {
 	private ContinuousUniformGenerator randGen = null;
 
 	private HashMap<Long, MemRel> neighbours = null;
-	private Integer color = null;
-	private Long id = null;
+	private byte color = -1;
+	private long id = -1;
 
-	public MemNode(Long id, Integer color, Random rng) {
+	public MemNode(Long id, byte color, Random rng) {
 		this.neighbours = new HashMap<Long, MemRel>();
 		this.color = color;
 		this.id = id;
@@ -58,11 +58,11 @@ public class MemNode {
 		return this.neighbours.containsKey(id);
 	}
 
-	public Integer getColor() {
+	public Byte getColor() {
 		return color;
 	}
 
-	public void setColor(Integer color) {
+	public void setColor(Byte color) {
 		this.color = color;
 	}
 

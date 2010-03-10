@@ -20,7 +20,7 @@ public class MemGraph {
 		this.nodes = new HashMap<Long, MemNode>();
 	}
 
-	public void addNode(Long id, Integer color) {
+	public void addNode(Long id, Byte color) {
 		MemNode node = new MemNode(id, color, rng);
 		this.nodes.put(id, node);
 	}

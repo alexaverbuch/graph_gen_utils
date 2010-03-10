@@ -1,10 +1,10 @@
 package graph_gen_utils.graph;
 
 public class MemRel {
-	
+
 	private Long endNodeId = null;
-	private Double weight = null;
-	
+	private double weight = 1;
+
 	public MemRel(Long id, Double weight) {
 		super();
 		this.endNodeId = id;

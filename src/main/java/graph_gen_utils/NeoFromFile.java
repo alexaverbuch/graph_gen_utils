@@ -8,6 +8,8 @@ import graph_gen_utils.chaco.ChacoParserWeightedNodes;
 import graph_gen_utils.chaco.ChacoWriter;
 import graph_gen_utils.chaco.ChacoWriterUnweighted;
 import graph_gen_utils.general.NodeData;
+import graph_gen_utils.gml.GMLWriter;
+import graph_gen_utils.gml.GMLWriterUndirectedUnweightedColored;
 import graph_gen_utils.graph.MemGraph;
 import graph_gen_utils.graph.MemRel;
 import graph_gen_utils.metrics.MetricsWriterUnweighted;
@@ -63,7 +65,8 @@ public class NeoFromFile {
 
 		NeoFromFile neoCreator = new NeoFromFile("var/auto");
 
-		neoCreator.writeNeo("graphs/auto.graph", ClusterInitType.BALANCED, 2);
+		neoCreator.writeNeo("graphs/auto.graph", ClusterInitType.BALANCED,
+				(byte) 2);
 		neoCreator.writeChacoAndPtn("temp/auto.graph", ChacoType.UNWEIGHTED,
 				"temp/auto-IN-BAL.2.ptn");
 
@@ -89,25 +92,26 @@ public class NeoFromFile {
 
 	public void writeNeo(String graphPath) throws Exception {
 
-		writeNeo(graphPath, ClusterInitType.SINGLE, -1);
+		writeNeo(graphPath, ClusterInitType.SINGLE, (byte) -1);
 
 	}
 
 	public void writeNeo(GraphTopology topology) throws Exception {
 
-		storePartitionedNodesAndRelsToNeo(topology, ClusterInitType.SINGLE, -1);
+		storePartitionedNodesAndRelsToNeo(topology, ClusterInitType.SINGLE,
+				(byte) -1);
 
 	}
 
 	public void writeNeo(GraphTopology topology,
-			ClusterInitType clusterInitType, int ptnVal) throws Exception {
+			ClusterInitType clusterInitType, byte ptnVal) throws Exception {
 
 		storePartitionedNodesAndRelsToNeo(topology, clusterInitType, ptnVal);
 
 	}
 
 	public void writeNeo(String graphPath, ClusterInitType clusterInitType,
-			int ptnVal) throws Exception {
+			byte ptnVal) throws Exception {
 
 		openBatchServices();
 
@@ -213,6 +217,28 @@ public class NeoFromFile {
 		closeTransServices();
 	}
 
+	public void writeGML(String gmlPath) throws Exception {
+
+		openTransServices();
+
+		// PRINTOUT
+		long time = System.currentTimeMillis();
+		System.out.printf("Writing GML File...");
+
+		File gmlFile = null;
+		GMLWriter gmlWriter = new GMLWriterUndirectedUnweightedColored();
+
+		gmlFile = new File(gmlPath);
+
+		gmlWriter.write(transNeo, gmlFile);
+
+		// PRINTOUT
+		System.out.printf("%dms%n", System.currentTimeMillis() - time);
+
+		closeTransServices();
+
+	}
+
 	public void writeMetrics(String metricsPath) {
 
 		openTransServices();
@@ -286,7 +312,7 @@ public class NeoFromFile {
 
 				Long nodeId = Long.parseLong((String) node.getProperty("name"));
 
-				memGraph.addNode(nodeId, (Integer) node.getProperty("color"));
+				memGraph.addNode(nodeId, (Byte) node.getProperty("color"));
 
 				for (Relationship rel : node
 						.getRelationships(Direction.OUTGOING)) {
@@ -377,7 +403,7 @@ public class NeoFromFile {
 	}
 
 	private void storePartitionedNodesAndRelsToNeo(GraphTopology topology,
-			ClusterInitType clusterInitType, int ptnVal) throws Exception {
+			ClusterInitType clusterInitType, byte ptnVal) throws Exception {
 
 		openBatchServices();
 
@@ -393,7 +419,7 @@ public class NeoFromFile {
 			initPtnAsRandom(nodesAndRels, ptnVal);
 			break;
 		case BALANCED:
-			initPtnAsBalanced(nodesAndRels, -1, ptnVal);
+			initPtnAsBalanced(nodesAndRels, (byte) -1, ptnVal);
 			break;
 		case SINGLE:
 			initPtnAsSingle(nodesAndRels, ptnVal);
@@ -485,7 +511,7 @@ public class NeoFromFile {
 	}
 
 	private void storePartitionedNodesToNeo(File graphFile,
-			ClusterInitType clusterInitType, int ptnVal, ChacoParser parser)
+			ClusterInitType clusterInitType, byte ptnVal, ChacoParser parser)
 			throws Exception {
 
 		Scanner graphScanner = new Scanner(graphFile);
@@ -502,7 +528,7 @@ public class NeoFromFile {
 
 		// read each line to extract node & relationship information
 		int nodeNumber = 0;
-		int lastPtn = -1;
+		byte lastPtn = -1;
 		while (graphScanner.hasNextLine()) {
 			nodeNumber++;
 			nodes.add(parser.parseNode(graphScanner.nextLine(), nodeNumber));
@@ -568,33 +594,33 @@ public class NeoFromFile {
 			ArrayList<NodeData> nodes) {
 
 		for (NodeData tempNode : nodes) {
-			Integer color = Integer.parseInt(partitionScanner.nextLine());
+			Byte color = Byte.parseByte(partitionScanner.nextLine());
 			tempNode.getProperties().put("color", color);
 		}
 
 	}
 
 	// TODO encapsulate in class InitPartition, InitPartitionAsRandom
-	private void initPtnAsRandom(ArrayList<NodeData> nodes, int maxPtn) {
+	private void initPtnAsRandom(ArrayList<NodeData> nodes, byte maxPtn) {
 
 		Random rand = new Random(System.currentTimeMillis());
 
 		for (NodeData tempNode : nodes) {
-			Integer color = rand.nextInt(maxPtn);
+			Byte color = (byte) rand.nextInt(maxPtn);
 			tempNode.getProperties().put("color", color);
 		}
 
 	}
 
 	// TODO encapsulate in class InitPartition, InitPartitionAsBalanced
-	private int initPtnAsBalanced(ArrayList<NodeData> nodes, int lastPtn,
-			int maxPtn) {
+	private byte initPtnAsBalanced(ArrayList<NodeData> nodes, byte lastPtn,
+			byte maxPtn) {
 
 		for (NodeData tempNode : nodes) {
 			lastPtn++;
 			if (lastPtn >= maxPtn)
 				lastPtn = 0;
-			Integer color = lastPtn;
+			Byte color = lastPtn;
 			tempNode.getProperties().put("color", color);
 		}
 
@@ -602,10 +628,10 @@ public class NeoFromFile {
 	}
 
 	// TODO encapsulate in class InitPartition, InitPartitionAsSingle
-	private void initPtnAsSingle(ArrayList<NodeData> nodes, Integer defaultPtn) {
+	private void initPtnAsSingle(ArrayList<NodeData> nodes, byte defaultPtn) {
 
 		for (NodeData tempNode : nodes) {
-			Integer color = new Integer(defaultPtn);
+			Byte color = new Byte(defaultPtn);
 			tempNode.getProperties().put("color", color);
 		}
 
@@ -696,13 +722,13 @@ public class NeoFromFile {
 				fromName = (String) nodeAndRels.getProperties().get("name");
 				Node fromNode = transIndexService.getSingleNode("name",
 						fromName);
-				Integer fromColor = (Integer) fromNode.getProperty("color");
+				Byte fromColor = (Byte) fromNode.getProperty("color");
 
 				for (Map<String, Object> rel : nodeAndRels.getRelationships()) {
 					toName = (String) rel.get("name");
 					Node toNode = transIndexService.getSingleNode("name",
 							toName);
-					Integer toColor = (Integer) toNode.getProperty("color");
+					Byte toColor = (Byte) toNode.getProperty("color");
 
 					Relationship neoRel = null;
 

@@ -16,9 +16,9 @@ public class MetricsReader {
 		ALL, GRAPH, CLUSTERING
 	}
 
-	private HashMap<Integer, Long> clusterNodes = new HashMap<Integer, Long>();
-	private HashMap<Integer, Long> clusterExtDeg = new HashMap<Integer, Long>();
-	private HashMap<Integer, Long> clusterIntDeg = new HashMap<Integer, Long>();
+	private HashMap<Byte, Long> clusterNodes = new HashMap<Byte, Long>();
+	private HashMap<Byte, Long> clusterExtDeg = new HashMap<Byte, Long>();
+	private HashMap<Byte, Long> clusterIntDeg = new HashMap<Byte, Long>();
 	private long nodeCount = 0;
 	private long edgeCount = 0;
 	private long edgeCut = 0;
@@ -110,7 +110,7 @@ public class MetricsReader {
 
 	public String clustersToString() {
 		String result = "";
-		for (Entry<Integer, Long> clusterNodesEntry : clusterNodes.entrySet()) {
+		for (Entry<Byte, Long> clusterNodesEntry : clusterNodes.entrySet()) {
 			result = String.format("%s[%d=%d]", result, clusterNodesEntry
 					.getKey(), clusterNodesEntry.getValue());
 		}
@@ -127,7 +127,7 @@ public class MetricsReader {
 
 					nodeCount++;
 
-					Integer vColor = (Integer) v.getProperty("color");
+					Byte vColor = (Byte) v.getProperty("color");
 
 					if (clusterNodes.containsKey(vColor))
 						clusterNodes.put(vColor, clusterNodes.get(vColor) + 1);
@@ -146,7 +146,7 @@ public class MetricsReader {
 						edgeCount++;
 
 						Node u = e.getEndNode();
-						Integer uColor = (Integer) u.getProperty("color");
+						Byte uColor = (Byte) u.getProperty("color");
 						if (vColor == uColor) {
 							if (clusterIntDeg.containsKey(vColor))
 								clusterIntDeg.put(vColor, clusterIntDeg
@@ -204,10 +204,10 @@ public class MetricsReader {
 		edgeCount = edgeCount / 2; // Undirected
 
 		// Make sure all colours are represented in both HashMaps
-		for (Entry<Integer, Long> extDegEntry : clusterExtDeg.entrySet())
+		for (Entry<Byte, Long> extDegEntry : clusterExtDeg.entrySet())
 			if (clusterIntDeg.containsKey(extDegEntry.getKey()) == false)
 				clusterIntDeg.put(extDegEntry.getKey(), new Long(0));
-		for (Entry<Integer, Long> intDegEntry : clusterIntDeg.entrySet()) {
+		for (Entry<Byte, Long> intDegEntry : clusterIntDeg.entrySet()) {
 			if (clusterExtDeg.containsKey(intDegEntry.getKey()) == false)
 				clusterExtDeg.put(intDegEntry.getKey(), new Long(0));
 			// clusterIntDeg.put(intDegEntry.getKey(), intDegEntry.getValue() /
@@ -231,7 +231,7 @@ public class MetricsReader {
 
 					nodeCount++;
 
-					Integer vColor = (Integer) v.getProperty("color");
+					Byte vColor = (Byte) v.getProperty("color");
 
 					// Used for Clustering Coefficient
 					double nodeDegree = edgeCount;
@@ -296,7 +296,7 @@ public class MetricsReader {
 
 					nodeCount++;
 
-					Integer vColor = (Integer) v.getProperty("color");
+					Byte vColor = (Byte) v.getProperty("color");
 
 					if (clusterNodes.containsKey(vColor))
 						clusterNodes.put(vColor, clusterNodes.get(vColor) + 1);
@@ -309,7 +309,7 @@ public class MetricsReader {
 						edgeCount++;
 
 						Node u = e.getEndNode();
-						Integer uColor = (Integer) u.getProperty("color");
+						Byte uColor = (Byte) u.getProperty("color");
 						if (vColor == uColor) {
 							if (clusterIntDeg.containsKey(vColor))
 								clusterIntDeg.put(vColor, clusterIntDeg
@@ -337,10 +337,10 @@ public class MetricsReader {
 		edgeCount = edgeCount / 2; // Undirected
 
 		// Make sure all colours are represented in both HashMaps
-		for (Entry<Integer, Long> extDegEntry : clusterExtDeg.entrySet())
+		for (Entry<Byte, Long> extDegEntry : clusterExtDeg.entrySet())
 			if (clusterIntDeg.containsKey(extDegEntry.getKey()) == false)
 				clusterIntDeg.put(extDegEntry.getKey(), new Long(0));
-		for (Entry<Integer, Long> intDegEntry : clusterIntDeg.entrySet()) {
+		for (Entry<Byte, Long> intDegEntry : clusterIntDeg.entrySet()) {
 			if (clusterExtDeg.containsKey(intDegEntry.getKey()) == false)
 				clusterExtDeg.put(intDegEntry.getKey(), new Long(0));
 			// clusterIntDeg.put(intDegEntry.getKey(), intDegEntry.getValue() /
@@ -356,7 +356,7 @@ public class MetricsReader {
 
 	private void calcEdgCutMetric() {
 		edgeCut = 0;
-		for (Entry<Integer, Long> extDeg : clusterExtDeg.entrySet()) {
+		for (Entry<Byte, Long> extDeg : clusterExtDeg.entrySet()) {
 			edgeCut += extDeg.getValue();
 		}
 
@@ -367,7 +367,7 @@ public class MetricsReader {
 		minClusterSize = clusterNodes.entrySet().iterator().next().getValue();
 		maxClusterSize = minClusterSize;
 
-		for (Entry<Integer, Long> nodes : clusterNodes.entrySet()) {
+		for (Entry<Byte, Long> nodes : clusterNodes.entrySet()) {
 			long size = nodes.getValue();
 
 			meanClusterSize += size;
@@ -382,7 +382,7 @@ public class MetricsReader {
 	}
 
 	private void calcModularity() {
-		for (Entry<Integer, Long> intDegEntry : clusterIntDeg.entrySet()) {
+		for (Entry<Byte, Long> intDegEntry : clusterIntDeg.entrySet()) {
 			long intDeg = intDegEntry.getValue();
 			long extDeg = clusterExtDeg.get(intDegEntry.getKey());
 

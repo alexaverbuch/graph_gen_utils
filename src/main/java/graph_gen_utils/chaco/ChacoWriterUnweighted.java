@@ -124,7 +124,7 @@ public class ChacoWriterUnweighted extends ChacoWriter {
 
 					String line = "0";
 					if (node.hasProperty("color")) {
-						Integer color = (Integer) node.getProperty("color");
+						Byte color = (Byte) node.getProperty("color");
 						line = color.toString();
 					}
 
