@@ -45,21 +45,28 @@ public class GMLWriterUndirectedUnweightedColored extends GMLWriter {
 
 			bufferedWriter.flush();
 
-			for (Node node : transNeo.getAllNodes()) {
-				if (node.getId() == 0)
+			for (Node fromNode : transNeo.getAllNodes()) {
+				if (fromNode.getId() == 0)
 					continue;
 
-				Long fromId = node.getId();
+				Long fromId = fromNode.getId();
 
-				for (Relationship rel : node
+				for (Relationship rel : fromNode
 						.getRelationships(Direction.OUTGOING)) {
 
-					Long toId = rel.getEndNode().getId();
+					Node toNode = rel.getEndNode();
+					Long toId = toNode.getId();
 
 					// Only count each edge once. Underlying neo4j
 					// graph has 2 directed edges for each undirected edge
 					if (fromId > toId)
 						continue;
+
+					Byte edgeColor = -1;
+
+					if ((Byte) (fromNode.getProperty("color")) == (Byte) (toNode
+							.getProperty("color")))
+						edgeColor = (Byte) (fromNode.getProperty("color"));
 
 					bufferedWriter.write("\tedge\n");
 					bufferedWriter.write("\t[\n");
@@ -67,6 +74,8 @@ public class GMLWriterUndirectedUnweightedColored extends GMLWriter {
 							fromId));
 					bufferedWriter
 							.write(String.format("\t\ttarget %d\n", toId));
+					bufferedWriter.write(String.format("\t\tcolor %d\n",
+							edgeColor));
 					bufferedWriter.write("\t]\n");
 
 				}
