@@ -8,6 +8,7 @@ import graph_gen_utils.chaco.ChacoParserWeightedNodes;
 import graph_gen_utils.chaco.ChacoWriter;
 import graph_gen_utils.chaco.ChacoWriterUnweighted;
 import graph_gen_utils.general.NodeData;
+import graph_gen_utils.gml.GMLParser;
 import graph_gen_utils.gml.GMLWriter;
 import graph_gen_utils.gml.GMLWriterUndirectedUnweightedColored;
 import graph_gen_utils.graph.MemGraph;
@@ -23,6 +24,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Scanner;
 import java.util.StringTokenizer;
+import java.util.Map.Entry;
 
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.DynamicRelationshipType;
@@ -63,12 +65,13 @@ public class NeoFromFile {
 
 		long time = System.currentTimeMillis();
 
-		NeoFromFile neoCreator = new NeoFromFile("var/auto");
+		NeoFromFile neoCreator = new NeoFromFile("var/m14b");
 
-		neoCreator.writeNeo("graphs/auto.graph", ClusterInitType.BALANCED,
-				(byte) 2);
-		neoCreator.writeChacoAndPtn("temp/auto.graph", ChacoType.UNWEIGHTED,
-				"temp/auto-IN-BAL.2.ptn");
+		MemGraph memGraph = neoCreator.readMemGraph();
+		// neoCreator.writeNeo("graphs/m14b.graph", ClusterInitType.RANDOM,
+		// (byte) 2);
+		// neoCreator.writeChacoAndPtn("temp/m14b.graph", ChacoType.UNWEIGHTED,
+		// "temp/m14b-IN-RAND.2.ptn");
 
 		// PRINTOUT
 		System.out.printf("--------------------%n");
@@ -125,7 +128,7 @@ public class NeoFromFile {
 		// PRINTOUT
 		System.out.printf("%dms%n", System.currentTimeMillis() - time);
 
-		ChacoParser parser = getParser(graphFile);
+		ChacoParser parser = getChacoParser(graphFile);
 
 		storePartitionedNodesToNeo(graphFile, clusterInitType, ptnVal, parser);
 
@@ -155,7 +158,7 @@ public class NeoFromFile {
 		// PRINTOUT
 		System.out.printf("%dms%n", System.currentTimeMillis() - time);
 
-		ChacoParser parser = getParser(graphFile);
+		ChacoParser parser = getChacoParser(graphFile);
 
 		storePartitionedNodesToNeo(graphFile, partitionFile, parser);
 
@@ -179,7 +182,7 @@ public class NeoFromFile {
 		System.out.printf("Writing Chaco File...");
 
 		File chacoFile = null;
-		ChacoWriter chacoWriter = getWriter(chacoType);
+		ChacoWriter chacoWriter = getChacoWriter(chacoType);
 
 		chacoFile = new File(chacoPath);
 
@@ -204,7 +207,7 @@ public class NeoFromFile {
 		File chacoFile = null;
 		File ptnFile = null;
 
-		ChacoWriter chacoWriter = getWriter(chacoType);
+		ChacoWriter chacoWriter = getChacoWriter(chacoType);
 
 		chacoFile = new File(chacoPath);
 		ptnFile = new File(ptnPath);
@@ -339,7 +342,7 @@ public class NeoFromFile {
 
 	// PRIVATE METHODS
 
-	private ChacoWriter getWriter(ChacoType chacoType) throws Exception {
+	private ChacoWriter getChacoWriter(ChacoType chacoType) throws Exception {
 		switch (chacoType) {
 		case UNWEIGHTED:
 			return new ChacoWriterUnweighted();
@@ -354,7 +357,8 @@ public class NeoFromFile {
 		}
 	}
 
-	private ChacoParser getParser(File graphFile) throws FileNotFoundException {
+	private ChacoParser getChacoParser(File graphFile)
+			throws FileNotFoundException {
 
 		Scanner scanner = new Scanner(graphFile);
 
@@ -680,12 +684,21 @@ public class NeoFromFile {
 		for (NodeData nodeAndRels : nodes) {
 			long nodeID = batchNeo.createNode(nodeAndRels.getProperties());
 
-			batchIndexService.index(nodeID, "name", nodeAndRels.getProperties()
-					.get("name"));
-			batchIndexService.index(nodeID, "weight", nodeAndRels
-					.getProperties().get("weight"));
-			batchIndexService.index(nodeID, "color", nodeAndRels
-					.getProperties().get("color"));
+			for (Entry<String, Object> nodeProp : nodeAndRels.getProperties()
+					.entrySet()) {
+
+				batchIndexService.index(nodeID, nodeProp.getKey(), nodeProp
+						.getValue());
+
+			}
+
+			// batchIndexService.index(nodeID, "name",
+			// nodeAndRels.getProperties()
+			// .get("name"));
+			// batchIndexService.index(nodeID, "weight", nodeAndRels
+			// .getProperties().get("weight"));
+			// batchIndexService.index(nodeID, "color", nodeAndRels
+			// .getProperties().get("color"));
 		}
 	}
 
@@ -741,7 +754,20 @@ public class NeoFromFile {
 					}
 
 					neoRel.setProperty("name", fromName + "->" + toName);
-					neoRel.setProperty("weight", rel.get("weight"));
+
+					for (Entry<String, Object> relProp : rel.entrySet()) {
+
+						String relPropKey = relProp.getKey();
+
+						if (relPropKey.equals("name"))
+							continue;
+
+						neoRel.setProperty(relPropKey, relProp.getValue());
+
+					}
+
+					// neoRel.setProperty("weight", rel.get("weight"));
+
 				}
 			}
 
