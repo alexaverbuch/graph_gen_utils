@@ -11,13 +11,11 @@ import graph_gen_utils.general.NodeData;
 import graph_gen_utils.gml.GMLParser;
 import graph_gen_utils.gml.GMLParserUndirected;
 import graph_gen_utils.gml.GMLWriter;
-import graph_gen_utils.gml.GMLWriterUndirectedUnweightedColored;
+import graph_gen_utils.gml.GMLWriterUndirected;
 import graph_gen_utils.graph.MemGraph;
 import graph_gen_utils.graph.MemRel;
 import graph_gen_utils.metrics.MetricsWriterUnweighted;
 import graph_gen_utils.topology.GraphTopology;
-import graph_gen_utils.topology.GraphTopologyFullyConnected;
-import graph_gen_utils.topology.GraphTopologyRandom;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -66,13 +64,21 @@ public class NeoFromFile {
 
 		long time = System.currentTimeMillis();
 
-		NeoFromFile neoCreator = new NeoFromFile("var/m14b");
+		NeoFromFile neoCreator = new NeoFromFile("var/big-random");
 
-		MemGraph memGraph = neoCreator.readMemGraph();
-		// neoCreator.writeNeo("graphs/m14b.graph", ClusterInitType.RANDOM,
-		// (byte) 2);
-		// neoCreator.writeChacoAndPtn("temp/m14b.graph", ChacoType.UNWEIGHTED,
-		// "temp/m14b-IN-RAND.2.ptn");
+		neoCreator.writeNeoFromGML("temp/big-random.gml");
+		neoCreator.writeChaco("temp/big-random.graph", ChacoType.UNWEIGHTED);
+
+		// NeoFromFile neoCreatorBefore = new NeoFromFile("var/test0-before");
+		// NeoFromFile neoCreatorAfter = new NeoFromFile("var/test0-after");
+		//
+		// neoCreatorBefore.writeNeoFromChaco("graphs/test0.graph");
+		// neoCreatorBefore.writeGML("temp/test0-before.gml");
+		//
+		// neoCreatorAfter.writeNeoFromGML("temp/test0-before.gml");
+		// neoCreatorAfter.writeGML("temp/test0-after.gen.gml");
+		// neoCreatorAfter.writeChaco("temp/test0-after.graph",
+		// ChacoType.UNWEIGHTED);
 
 		// PRINTOUT
 		System.out.printf("--------------------%n");
@@ -96,12 +102,6 @@ public class NeoFromFile {
 	// PUBLIC METHODS
 	// **************
 
-	public void writeNeoFromChaco(String graphPath) throws Exception {
-
-		writeNeoFromChaco(graphPath, ClusterInitType.SINGLE, (byte) -1);
-
-	}
-
 	public void writeNeoFromTopology(GraphTopology topology) throws Exception {
 
 		storePartitionedNodesAndRelsToNeo(topology, ClusterInitType.SINGLE,
@@ -113,6 +113,12 @@ public class NeoFromFile {
 			ClusterInitType clusterInitType, byte ptnVal) throws Exception {
 
 		storePartitionedNodesAndRelsToNeo(topology, clusterInitType, ptnVal);
+
+	}
+
+	public void writeNeoFromChaco(String graphPath) throws Exception {
+
+		writeNeoFromChaco(graphPath, ClusterInitType.SINGLE, (byte) -1);
 
 	}
 
@@ -178,18 +184,8 @@ public class NeoFromFile {
 	public void writeNeoFromGML(String gmlPath) throws Exception {
 
 		GMLParser parser = new GMLParserUndirected(new File(gmlPath));
-		
-		storePartitionedNodesAndRelsToNeo(parser, ClusterInitType.SINGLE,
-				(byte) -1);
-		
-	}
 
-	public void writeNeoFromGML(String gmlPath,
-			ClusterInitType clusterInitType, byte ptnVal) throws Exception {
-
-		GMLParser parser = new GMLParserUndirected(new File(gmlPath));
-		
-		storePartitionedNodesAndRelsToNeo(parser, clusterInitType, ptnVal);
+		storeNodesAndRelsToNeo(parser);
 
 	}
 
@@ -250,7 +246,7 @@ public class NeoFromFile {
 		System.out.printf("Writing GML File...");
 
 		File gmlFile = null;
-		GMLWriter gmlWriter = new GMLWriterUndirectedUnweightedColored();
+		GMLWriter gmlWriter = new GMLWriterUndirected();
 
 		gmlFile = new File(gmlPath);
 
@@ -485,8 +481,7 @@ public class NeoFromFile {
 		closeTransServices();
 	}
 
-	private void storePartitionedNodesAndRelsToNeo(GMLParser parser,
-			ClusterInitType clusterInitType, byte ptnVal) throws Exception {
+	private void storeNodesAndRelsToNeo(GMLParser parser) throws Exception {
 
 		openBatchServices();
 
@@ -494,28 +489,13 @@ public class NeoFromFile {
 
 		// PRINTOUT
 		System.out.printf("Reading & Indexing Nodes...");
-		
+
 		ArrayList<NodeData> nodesAndRels = new ArrayList<NodeData>();
-		
+
 		for (NodeData nodeData : parser.getNodes()) {
 			nodesAndRels.add(nodeData);
-			
-			if ((nodesAndRels.size() % NeoFromFile.NODE_STORE_BUF) == 0) {
 
-				switch (clusterInitType) {
-				case RANDOM:
-					initPtnAsRandom(nodesAndRels, ptnVal);
-					break;
-				case BALANCED:
-					initPtnAsBalanced(nodesAndRels, (byte) -1, ptnVal);
-					break;
-				case SINGLE:
-					initPtnAsSingle(nodesAndRels, ptnVal);
-					break;
-				default:
-					System.err.println("ClusterInitType not supported");
-					throw new Exception("ClusterInitType not supported");
-				}
+			if ((nodesAndRels.size() % NeoFromFile.NODE_STORE_BUF) == 0) {
 
 				// PRINTOUT
 				System.out.printf(".");
@@ -525,24 +505,9 @@ public class NeoFromFile {
 			}
 		}
 
-		switch (clusterInitType) {
-		case RANDOM:
-			initPtnAsRandom(nodesAndRels, ptnVal);
-			break;
-		case BALANCED:
-			initPtnAsBalanced(nodesAndRels, (byte) -1, ptnVal);
-			break;
-		case SINGLE:
-			initPtnAsSingle(nodesAndRels, ptnVal);
-			break;
-		default:
-			System.err.println("ClusterInitType not supported");
-			throw new Exception("ClusterInitType not supported");
-		}
-
 		flushNodesBatch(nodesAndRels);
 		nodesAndRels.clear();
-		
+
 		// PRINTOUT
 		System.out.printf("%dms%n", System.currentTimeMillis() - time);
 		time = System.currentTimeMillis();
@@ -561,26 +526,11 @@ public class NeoFromFile {
 		System.out.printf("Reading & Indexing Relationships...");
 
 		time = System.currentTimeMillis();
-		
+
 		for (NodeData nodeData : parser.getRels()) {
 			nodesAndRels.add(nodeData);
-			
-			if ((nodesAndRels.size() % NeoFromFile.REL_STORE_BUF) == 0) {
 
-				switch (clusterInitType) {
-				case RANDOM:
-					initPtnAsRandom(nodesAndRels, ptnVal);
-					break;
-				case BALANCED:
-					initPtnAsBalanced(nodesAndRels, (byte) -1, ptnVal);
-					break;
-				case SINGLE:
-					initPtnAsSingle(nodesAndRels, ptnVal);
-					break;
-				default:
-					System.err.println("ClusterInitType not supported");
-					throw new Exception("ClusterInitType not supported");
-				}
+			if ((nodesAndRels.size() % NeoFromFile.REL_STORE_BUF) == 0) {
 
 				// PRINTOUT
 				System.out.printf(".");
@@ -588,21 +538,6 @@ public class NeoFromFile {
 				flushRelsTrans(nodesAndRels);
 				nodesAndRels.clear();
 			}
-		}
-
-		switch (clusterInitType) {
-		case RANDOM:
-			initPtnAsRandom(nodesAndRels, ptnVal);
-			break;
-		case BALANCED:
-			initPtnAsBalanced(nodesAndRels, (byte) -1, ptnVal);
-			break;
-		case SINGLE:
-			initPtnAsSingle(nodesAndRels, ptnVal);
-			break;
-		default:
-			System.err.println("ClusterInitType not supported");
-			throw new Exception("ClusterInitType not supported");
 		}
 
 		flushRelsTrans(nodesAndRels);
@@ -844,13 +779,6 @@ public class NeoFromFile {
 
 			}
 
-			// batchIndexService.index(nodeID, "name",
-			// nodeAndRels.getProperties()
-			// .get("name"));
-			// batchIndexService.index(nodeID, "weight", nodeAndRels
-			// .getProperties().get("weight"));
-			// batchIndexService.index(nodeID, "color", nodeAndRels
-			// .getProperties().get("color"));
 		}
 	}
 
@@ -891,6 +819,11 @@ public class NeoFromFile {
 
 				for (Map<String, Object> rel : nodeAndRels.getRelationships()) {
 					toName = (String) rel.get("name");
+
+					// System.out.printf("%nfromName[%s] toName[%s]%n",
+					// fromName,
+					// toName);
+
 					Node toNode = transIndexService.getSingleNode("name",
 							toName);
 					Byte toColor = (Byte) toNode.getProperty("color");
@@ -905,7 +838,7 @@ public class NeoFromFile {
 								DynamicRelationshipType.withName("EXTERNAL"));
 					}
 
-					neoRel.setProperty("name", fromName + "->" + toName);
+					// neoRel.setProperty("name", fromName + "->" + toName);
 
 					for (Entry<String, Object> relProp : rel.entrySet()) {
 
@@ -918,13 +851,12 @@ public class NeoFromFile {
 
 					}
 
-					// neoRel.setProperty("weight", rel.get("weight"));
-
 				}
 			}
 
 			tx.success();
 		} catch (Exception e) {
+			System.out.printf("%nfromName[%s] toName[%s]%n", fromName, toName);
 			e.printStackTrace();
 		} finally {
 			tx.finish();

@@ -4,10 +4,13 @@ import graph_gen_utils.general.NodeData;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
 import java.util.StringTokenizer;
+import java.util.Map.Entry;
 
 public class GMLParserUndirected extends GMLParser {
 
@@ -32,26 +35,34 @@ public class GMLParserUndirected extends GMLParser {
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 			return null;
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
 		}
 	}
 
-	private class GmlNodeIterator implements Iterator<NodeData>, Iterable<NodeData> {
+	private class GmlNodeIterator implements Iterator<NodeData>,
+			Iterable<NodeData> {
 
 		private NodeData nextNodeData = null;
-		private Integer entityNumber = 0;
 		private Scanner gmlScanner = null;
 
 		public GmlNodeIterator(File gmlFile) throws FileNotFoundException {
 			this.gmlScanner = new Scanner(gmlFile);
+
 			// skip line, "Creator"
 			gmlScanner.nextLine();
+
 			// skip line, "Version"
 			gmlScanner.nextLine();
+
 			// skip line, "graph"
 			gmlScanner.nextLine();
+
 			// skip line, "["
 			gmlScanner.nextLine();
-			// skip line, "directed"
+
+			// skip line, "directed"s
 			gmlScanner.nextLine();
 		}
 
@@ -65,7 +76,7 @@ public class GMLParserUndirected extends GMLParser {
 			if (nextNodeData != null)
 				return true;
 
-			nextNodeData = parseEntity(gmlScanner.nextLine());
+			nextNodeData = parseEntity();
 
 			return (nextNodeData != null);
 		}
@@ -80,7 +91,7 @@ public class GMLParserUndirected extends GMLParser {
 				return nodeData;
 			}
 
-			nextNodeData = parseEntity(gmlScanner.nextLine());
+			nextNodeData = parseEntity();
 
 			if (nextNodeData != null) {
 				nodeData = nextNodeData;
@@ -96,11 +107,11 @@ public class GMLParserUndirected extends GMLParser {
 			throw new UnsupportedOperationException();
 		}
 
-		private NodeData parseEntity(String aLine) {
+		private NodeData parseEntity() {
 			if (gmlScanner.hasNextLine() == false)
 				return null;
 
-			StringTokenizer st = new StringTokenizer(gmlScanner.nextLine(), " ");
+			StringTokenizer st = new StringTokenizer(gmlScanner.nextLine());
 			String entityStr = st.nextToken();
 
 			if (entityStr.equals("edge"))
@@ -112,9 +123,11 @@ public class GMLParserUndirected extends GMLParser {
 			if (entityStr.equals("node"))
 				return parseNode();
 
-			System.out.printf(String.format(
-					"Unable to parse entity number: %d%n%n%s", entityNumber,
-					aLine));
+			System.err
+					.printf(String
+							.format(
+									"GmlNodeIterator.parseEntity(): Unable to parse line: %n%s",
+									entityStr));
 
 			return null;
 		}
@@ -127,7 +140,7 @@ public class GMLParserUndirected extends GMLParser {
 
 				StringTokenizer st = null;
 
-				st = new StringTokenizer(gmlScanner.nextLine(), " ");
+				st = new StringTokenizer(gmlScanner.nextLine());
 				if (st.nextToken().equals("[") == false)
 					throw new Exception("'[' not found!");
 
@@ -135,7 +148,7 @@ public class GMLParserUndirected extends GMLParser {
 
 				while (gmlScanner.hasNextLine()) {
 
-					st = new StringTokenizer(gmlScanner.nextLine(), " ");
+					st = new StringTokenizer(gmlScanner.nextLine());
 
 					String tokenKey = st.nextToken();
 					Object tokenVal = null;
@@ -147,7 +160,9 @@ public class GMLParserUndirected extends GMLParser {
 
 					if (tokenKey.equals("id")) {
 						tokenKey = "name";
-						tokenVal = Integer.parseInt(st.nextToken()) + 1;
+						String tokenValStr = st.nextToken();
+						tokenVal = Integer.toString(Integer
+								.parseInt(tokenValStr) + 1);
 						hasId = true;
 						node.getProperties().put(tokenKey, tokenVal);
 						continue;
@@ -165,6 +180,9 @@ public class GMLParserUndirected extends GMLParser {
 						continue;
 					}
 
+					if (tokenKey.equals("name"))
+						continue;
+
 					tokenVal = st.nextToken();
 					node.getProperties().put(tokenKey, tokenVal);
 
@@ -173,12 +191,14 @@ public class GMLParserUndirected extends GMLParser {
 				if (succeeded == false)
 					throw new Exception("Unable to parse node!");
 
+				if (node.getProperties().containsKey("color") == false)
+					node.getProperties().put("color", (byte) -1);
+
 				return node;
 
 			} catch (Exception e) {
 
-				System.err.printf("Could not parse line %d%n%n%s",
-						entityNumber, e.toString());
+				System.err.printf("Could not parse line: %n%s", e.toString());
 
 				return null;
 
@@ -187,25 +207,32 @@ public class GMLParserUndirected extends GMLParser {
 
 	}
 
-	private class GmlRelIterator implements Iterator<NodeData>, Iterable<NodeData> {
+	private class GmlRelIterator implements Iterator<NodeData>,
+			Iterable<NodeData> {
 
-		private NodeData nextNodeData = null;
-		private Integer entityNumber = 0;
+		private NodeData nextNodeDataTo = null;
+		private NodeData nextNodeDataFrom = null;
 		private Scanner gmlScanner = null;
 
-		public GmlRelIterator(File gmlFile) throws FileNotFoundException {
+		public GmlRelIterator(File gmlFile) throws Exception {
 			this.gmlScanner = new Scanner(gmlFile);
+
 			// skip line, "Creator"
 			gmlScanner.nextLine();
+
 			// skip line, "Version"
 			gmlScanner.nextLine();
+
 			// skip line, "graph"
 			gmlScanner.nextLine();
+
 			// skip line, "["
 			gmlScanner.nextLine();
+
 			// skip line, "directed"
 			gmlScanner.nextLine();
-			// skip line, "directed"
+
+			// skip lines, all nodes
 			advanceToRels();
 		}
 
@@ -216,29 +243,72 @@ public class GMLParserUndirected extends GMLParser {
 
 		@Override
 		public boolean hasNext() {
-			if (nextNodeData != null)
+			if (nextNodeDataTo != null)
 				return true;
 
-			nextNodeData = parseEntity(gmlScanner.nextLine());
+			if (nextNodeDataFrom != null)
+				return true;
 
-			return (nextNodeData != null);
+			do {
+				nextNodeDataTo = parseEntity();
+
+				if (nextNodeDataTo == null)
+					break;
+
+				String source = (String) nextNodeDataTo.getProperties().get(
+						"name");
+				String target = (String) nextNodeDataTo.getRelationships().get(
+						0).get("name");
+
+				if (source.equals(target) == false)
+					break;
+
+				// System.out.println("\n Source = Target!");
+			} while (true);
+
+			if (nextNodeDataTo != null)
+				nextNodeDataFrom = reverseRel(nextNodeDataTo);
+
+			return (nextNodeDataTo != null);
 		}
 
 		@Override
 		public NodeData next() {
 			NodeData nodeData = null;
 
-			if (nextNodeData != null) {
-				nodeData = nextNodeData;
-				nextNodeData = null;
+			if (nextNodeDataTo != null) {
+				nodeData = nextNodeDataTo;
+				nextNodeDataTo = null;
 				return nodeData;
 			}
 
-			nextNodeData = parseEntity(gmlScanner.nextLine());
+			if (nextNodeDataFrom != null) {
+				nodeData = nextNodeDataFrom;
+				nextNodeDataFrom = null;
+				return nodeData;
+			}
 
-			if (nextNodeData != null) {
-				nodeData = nextNodeData;
-				nextNodeData = null;
+			do {
+				nextNodeDataTo = parseEntity();
+
+				if (nextNodeDataTo == null)
+					break;
+
+				String source = (String) nextNodeDataTo.getProperties().get(
+						"name");
+				String target = (String) nextNodeDataTo.getRelationships().get(
+						0).get("name");
+
+				if (source.equals(target) == false)
+					break;
+
+				// System.out.println("\n Source = Target!");
+			} while (true);
+
+			if (nextNodeDataTo != null) {
+				nextNodeDataFrom = reverseRel(nextNodeDataTo);
+				nodeData = nextNodeDataTo;
+				nextNodeDataTo = null;
 				return nodeData;
 			}
 
@@ -250,15 +320,12 @@ public class GMLParserUndirected extends GMLParser {
 			throw new UnsupportedOperationException();
 		}
 
-		private NodeData parseEntity(String aLine) {
+		private NodeData parseEntity() {
 			if (gmlScanner.hasNextLine() == false)
 				return null;
 
-			StringTokenizer st = new StringTokenizer(gmlScanner.nextLine(), " ");
+			StringTokenizer st = new StringTokenizer(gmlScanner.nextLine());
 			String entityStr = st.nextToken();
-
-			if (entityStr.equals("node"))
-				return null;
 
 			if (entityStr.equals("]"))
 				return null;
@@ -266,9 +333,11 @@ public class GMLParserUndirected extends GMLParser {
 			if (entityStr.equals("edge"))
 				return parseRel();
 
+			// FIXME remove
 			System.out.printf(String.format(
-					"Unable to parse entity number: %d%n%n%s", entityNumber,
-					aLine));
+					// System.err.printf(String.format(
+					"GmlRelIterator.parseEntity(): Unable to parse line: %n%s",
+					entityStr));
 
 			return null;
 		}
@@ -277,84 +346,98 @@ public class GMLParserUndirected extends GMLParser {
 			try {
 
 				boolean succeeded = false;
-				boolean hasId = false;
+				boolean hasSource = false;
+				boolean hasTarget = false;
 
 				StringTokenizer st = null;
 
-				st = new StringTokenizer(gmlScanner.nextLine(), " ");
+				st = new StringTokenizer(gmlScanner.nextLine());
+
 				if (st.nextToken().equals("[") == false)
 					throw new Exception("'[' not found!");
 
 				NodeData node = new NodeData();
+				Map<String, Object> rel = new HashMap<String, Object>();
 
 				while (gmlScanner.hasNextLine()) {
-
-					st = new StringTokenizer(gmlScanner.nextLine(), " ");
+					st = new StringTokenizer(gmlScanner.nextLine());
 
 					String tokenKey = st.nextToken();
 					Object tokenVal = null;
 
 					if (tokenKey.equals("]")) {
-						succeeded = hasId;
+						succeeded = hasSource && hasTarget;
 						break;
 					}
 
-					if (tokenKey.equals("id")) {
+					if (tokenKey.equals("source")) {
 						tokenKey = "name";
-						tokenVal = Integer.parseInt(st.nextToken()) + 1;
-						hasId = true;
+						tokenVal = Integer.toString(Integer.parseInt(st
+								.nextToken()) + 1);
+						hasSource = true;
 						node.getProperties().put(tokenKey, tokenVal);
 						continue;
 					}
 
-					if (tokenKey.equals("weight")) {
+					if (tokenKey.equals("target")) {
+						tokenKey = "name";
+						tokenVal = Integer.toString(Integer.parseInt(st
+								.nextToken()) + 1);
+						hasTarget = true;
+						rel.put(tokenKey, tokenVal);
+						continue;
+					}
+
+					if (tokenKey.equals("name"))
+						continue;
+
+					else if (tokenKey.equals("weight")) {
 						tokenVal = Double.parseDouble(st.nextToken());
-						node.getProperties().put(tokenKey, tokenVal);
+						rel.put(tokenKey, tokenVal);
 						continue;
 					}
 
-					if (tokenKey.equals("color")) {
+					else if (tokenKey.equals("color")) {
 						tokenVal = Byte.parseByte(st.nextToken());
-						node.getProperties().put(tokenKey, tokenVal);
+						rel.put(tokenKey, tokenVal);
 						continue;
 					}
 
 					tokenVal = st.nextToken();
-					node.getProperties().put(tokenKey, tokenVal);
+					rel.put(tokenKey, tokenVal);
 
 				}
 
 				if (succeeded == false)
-					throw new Exception("Unable to parse node!");
+					throw new Exception("Unable to parse rel!");
 
+				node.getRelationships().add(rel);
 				return node;
 
 			} catch (Exception e) {
 
-				System.err.printf("Could not parse line %d%n%n%s",
-						entityNumber, e.toString());
+				System.err.printf("Could not parse line: %n%s", e.toString());
 
 				return null;
 
 			}
 		}
 
-		private void advanceToRels() {
+		private void advanceToRels() throws Exception {
 			StringTokenizer st = null;
 
-			st = new StringTokenizer(gmlScanner.nextLine(), " ");
-			if (st.nextToken().equals("]"))
-				return;
-
 			while (gmlScanner.hasNextLine()) {
-				st = new StringTokenizer(gmlScanner.nextLine(), " ");
+				st = new StringTokenizer(gmlScanner.nextLine());
 
 				String tokenStr = st.nextToken();
+
+				if (tokenStr.equals("]"))
+					return;
 
 				if (tokenStr.equals("node")) {
 
 					while (gmlScanner.hasNextLine()) {
-						st = new StringTokenizer(gmlScanner.nextLine(), " ");
+						st = new StringTokenizer(gmlScanner.nextLine());
 						if (st.nextToken().equals("]"))
 							break;
 					}
@@ -363,10 +446,60 @@ public class GMLParserUndirected extends GMLParser {
 
 				}
 
-				if (tokenStr.equals("edge"))
-					nextNodeData = parseRel();
+				if (tokenStr.equals("edge")) {
+					nextNodeDataTo = parseRel();
+					if (nextNodeDataTo != null)
+						nextNodeDataFrom = reverseRel(nextNodeDataTo);
+					return;
+				}
+
+				String errMsg = String.format(
+						"Unexpected file format in advanceToRels: %n%s%n",
+						tokenStr);
+				throw new Exception(errMsg);
 
 			}
+		}
+
+		private NodeData reverseRel(NodeData from) {
+			NodeData to = new NodeData();
+			String toTarget = null;
+			String toSource = null;
+
+			for (Entry<String, Object> fromProp : from.getProperties()
+					.entrySet()) {
+
+				if (fromProp.getKey().equals("name")) {
+					toTarget = (String) fromProp.getValue();
+					continue;
+				}
+
+				to.getProperties().put(fromProp.getKey(), fromProp.getValue());
+
+			}
+
+			for (Map<String, Object> fromRel : from.getRelationships()) {
+
+				Map<String, Object> toRel = new HashMap<String, Object>();
+
+				for (Entry<String, Object> fromRelProp : fromRel.entrySet()) {
+
+					if (fromRelProp.getKey().equals("name")) {
+						toSource = (String) fromRelProp.getValue();
+						toRel.put(fromRelProp.getKey(), toTarget);
+						continue;
+					}
+
+					toRel.put(fromRelProp.getKey(), fromRelProp.getValue());
+
+				}
+
+				to.getRelationships().add(toRel);
+			}
+
+			to.getProperties().put("name", toSource);
+
+			return to;
 		}
 
 	}
