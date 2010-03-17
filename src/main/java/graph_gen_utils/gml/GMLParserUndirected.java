@@ -447,9 +447,31 @@ public class GMLParserUndirected extends GMLParser {
 				}
 
 				if (tokenStr.equals("edge")) {
+
 					nextNodeDataTo = parseRel();
+
+					while (true) {
+						if (nextNodeDataTo == null)
+							break;
+
+						String source = (String) nextNodeDataTo.getProperties()
+								.get("name");
+						String target = (String) nextNodeDataTo
+								.getRelationships().get(0).get("name");
+
+						if (source.equals(target) == false)
+							break;
+
+						nextNodeDataTo = parseEntity();
+					}
+
 					if (nextNodeDataTo != null)
 						nextNodeDataFrom = reverseRel(nextNodeDataTo);
+
+					// nextNodeDataTo = parseRel();
+					//					
+					// if (nextNodeDataTo != null)
+					// nextNodeDataFrom = reverseRel(nextNodeDataTo);
 					return;
 				}
 

@@ -97,18 +97,6 @@ public class GMLWriterUndirected extends GMLWriter {
 					// if (Long.parseLong(fromId) > Long.parseLong(toId))
 					// continue;
 
-					Byte edgeColor = -1;
-
-					if (fromNode.hasProperty("color")
-							&& toNode.hasProperty("color")) {
-
-						Byte fromColor = (Byte) fromNode.getProperty("color");
-						Byte toColor = (Byte) toNode.getProperty("color");
-
-						if (fromColor == toColor)
-							edgeColor = fromColor;
-					}
-
 					bufferedWriter.write("\tedge\n");
 					bufferedWriter.write("\t[\n");
 					bufferedWriter.write(String.format("\t\tsource %s\n",
@@ -120,12 +108,25 @@ public class GMLWriterUndirected extends GMLWriter {
 					for (String propKey : rel.getPropertyKeys()) {
 						Object propVal = rel.getProperty(propKey);
 
-						if (propKey.equals("color"))
-							propVal = edgeColor;
-
 						bufferedWriter.write(String.format("\t\t%s %s\n",
 								propKey, propVal));
 					}
+
+					if (fromNode.hasProperty("color")
+							&& toNode.hasProperty("color")) {
+
+						Byte edgeColor = -1;
+
+						Byte fromColor = (Byte) fromNode.getProperty("color");
+						Byte toColor = (Byte) toNode.getProperty("color");
+
+						if (fromColor == toColor)
+							edgeColor = fromColor;
+
+						bufferedWriter.write(String.format("\t\t%s %d\n",
+								"color", edgeColor));
+					}
+
 					// NOTE old
 					// bufferedWriter.write(String.format("\t\tcolor %d\n",
 					// edgeColor));
