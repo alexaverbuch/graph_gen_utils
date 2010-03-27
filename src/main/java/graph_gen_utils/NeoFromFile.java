@@ -64,21 +64,46 @@ public class NeoFromFile {
 
 		long time = System.currentTimeMillis();
 
-		NeoFromFile neoCreator = new NeoFromFile("var/big-random");
+		String gmlPath = "temp/test.gml";
+		String graphName = "tree-4000-20";
 
-		neoCreator.writeNeoFromGML("temp/big-random.gml");
-		neoCreator.writeChaco("temp/big-random.graph", ChacoType.UNWEIGHTED);
+		String chacoPath = String.format("temp/%s.graph", graphName);
+		String ptnPath = null;
 
-		// NeoFromFile neoCreatorBefore = new NeoFromFile("var/test0-before");
-		// NeoFromFile neoCreatorAfter = new NeoFromFile("var/test0-after");
-		//
-		// neoCreatorBefore.writeNeoFromChaco("graphs/test0.graph");
-		// neoCreatorBefore.writeGML("temp/test0-before.gml");
-		//
-		// neoCreatorAfter.writeNeoFromGML("temp/test0-before.gml");
-		// neoCreatorAfter.writeGML("temp/test0-after.gen.gml");
-		// neoCreatorAfter.writeChaco("temp/test0-after.graph",
-		// ChacoType.UNWEIGHTED);
+		NeoFromFile neoCreatorBefore = new NeoFromFile(String.format(
+				"var/%s-before", graphName));
+		neoCreatorBefore.writeNeoFromGML(gmlPath);
+		neoCreatorBefore.writeChaco(chacoPath, ChacoType.UNWEIGHTED);
+
+		Byte[] ptnVals = new Byte[] { 2, 4, 8, 16 };
+
+		for (int i = 0; i < ptnVals.length; i++) {
+
+			NeoFromFile neoCreatorAfter = new NeoFromFile(String.format(
+					"var/%s-bal-%d", graphName, ptnVals[i]));
+			neoCreatorAfter.writeNeoFromChaco(chacoPath,
+					ClusterInitType.BALANCED, ptnVals[i]);
+
+			ptnPath = String.format("temp/%s-IN-BAL.%d.ptn", graphName,
+					ptnVals[i]);
+
+			neoCreatorAfter.writeChacoAndPtn(chacoPath, ChacoType.UNWEIGHTED,
+					ptnPath);
+		}
+
+		for (int i = 0; i < ptnVals.length; i++) {
+
+			NeoFromFile neoCreatorAfter = new NeoFromFile(String.format(
+					"var/%s-rand-%d", graphName, ptnVals[i]));
+			neoCreatorAfter.writeNeoFromChaco(chacoPath,
+					ClusterInitType.RANDOM, ptnVals[i]);
+
+			ptnPath = String.format("temp/%s-IN-RAND.%d.ptn", graphName,
+					ptnVals[i]);
+
+			neoCreatorAfter.writeChacoAndPtn(chacoPath, ChacoType.UNWEIGHTED,
+					ptnPath);
+		}
 
 		// PRINTOUT
 		System.out.printf("--------------------%n");
