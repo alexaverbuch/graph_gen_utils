@@ -125,6 +125,8 @@ public class MetricsReader {
 			for (Node v : transNeo.getAllNodes()) {
 				if (v.getId() != 0) {
 
+					System.out.println(v.getId());
+
 					nodeCount++;
 
 					Byte vColor = (Byte) v.getProperty("color");
@@ -364,6 +366,13 @@ public class MetricsReader {
 	}
 
 	private void calcClusterSizeMetrics() {
+		if (clusterNodes.entrySet().iterator().hasNext() == false) {
+			minClusterSize = 0;
+			maxClusterSize = 0;
+			meanClusterSize = 0;
+			return;
+		}
+
 		minClusterSize = clusterNodes.entrySet().iterator().next().getValue();
 		maxClusterSize = minClusterSize;
 
