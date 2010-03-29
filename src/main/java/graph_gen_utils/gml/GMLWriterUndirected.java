@@ -108,6 +108,10 @@ public class GMLWriterUndirected extends GMLWriter {
 					for (String propKey : rel.getPropertyKeys()) {
 						Object propVal = rel.getProperty(propKey);
 
+						// NOTE Temp? Ignore _IsHalf because its an array
+						if (propKey.equals("_IsHalf"))
+							continue;
+
 						bufferedWriter.write(String.format("\t\t%s %s\n",
 								propKey, propVal));
 					}
