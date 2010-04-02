@@ -13,8 +13,8 @@ public class MetricsWriterUnweighted {
 	public static void writeMetrics(GraphDatabaseService transNeo,
 			File metricsFile) {
 
-		MetricsReader metricsReader = new MetricsReader(transNeo,
-				MetricsReader.MetricsType.ALL);
+		MetricsReaderUndirected metricsReader = new MetricsReaderUndirected(
+				transNeo);
 
 		BufferedWriter bufferedWriter = null;
 		try {
@@ -102,8 +102,8 @@ public class MetricsWriterUnweighted {
 		if (timeStep != null)
 			timeStepStr = timeStep.toString();
 
-		MetricsReader metricsReader = new MetricsReader(transNeo,
-				MetricsReader.MetricsType.ALL);
+		MetricsReaderUndirected metricsReader = new MetricsReaderUndirected(
+				transNeo);
 
 		BufferedWriter bufferedWriter = null;
 		try {
@@ -163,8 +163,8 @@ public class MetricsWriterUnweighted {
 		if (timeStep != null)
 			timeStepStr = timeStep.toString();
 
-		MetricsReader metricsReader = new MetricsReader(transNeo,
-				MetricsReader.MetricsType.CLUSTERING);
+		MetricsReaderUndirected metricsReader = new MetricsReaderUndirected(
+				transNeo);
 
 		BufferedWriter bufferedWriter = null;
 		try {
