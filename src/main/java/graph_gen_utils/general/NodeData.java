@@ -22,10 +22,11 @@ public class NodeData {
 		return relationships;
 	}
 
-	// FIXME Inefficient! relationships as HashMap may be better
+	// FIXME (Low Priority)
+	// Inefficient! Relationships as HashMap would be better
 	public boolean containsRelation(String nodeName) {
 		for (Map<String, Object> rel : relationships) {
-			if (rel.get("name").equals(nodeName))
+			if (rel.get(PropNames.NAME).equals(nodeName))
 				return true;
 		}
 
