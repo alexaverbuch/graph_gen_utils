@@ -1,6 +1,8 @@
-package graph_gen_utils.gml;
+package graph_gen_utils.reader.gml;
 
 import graph_gen_utils.general.NodeData;
+import graph_gen_utils.general.PropNames;
+import graph_gen_utils.reader.GraphReader;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -12,16 +14,18 @@ import java.util.Scanner;
 import java.util.StringTokenizer;
 import java.util.Map.Entry;
 
-public class GMLParserUndirected extends GMLParser {
+public class GMLParserUndirected implements GraphReader {
 
-	public GMLParserUndirected(File gmlFile) throws FileNotFoundException {
-		super(gmlFile);
+	private File graphFile = null;
+
+	public GMLParserUndirected(File gmlFile) {
+		this.graphFile = gmlFile;
 	}
 
 	@Override
 	public Iterable<NodeData> getNodes() {
 		try {
-			return new GmlNodeIterator(gmlFile);
+			return new GmlNodeIterator(graphFile);
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 			return null;
@@ -31,7 +35,7 @@ public class GMLParserUndirected extends GMLParser {
 	@Override
 	public Iterable<NodeData> getRels() {
 		try {
-			return new GmlRelIterator(gmlFile);
+			return new GmlRelIterator(graphFile);
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 			return null;
@@ -158,32 +162,37 @@ public class GMLParserUndirected extends GMLParser {
 						break;
 					}
 
-					if (tokenKey.equals("id")) {
-						tokenKey = "name";
+					if (tokenKey.equals(PropNames.ID)) {
+						tokenKey = PropNames.NAME;
 						String tokenValStr = st.nextToken();
 						tokenVal = Integer.toString(Integer
-								.parseInt(tokenValStr) + 1);
+								.parseInt(tokenValStr));
 						hasId = true;
 						node.getProperties().put(tokenKey, tokenVal);
 						continue;
 					}
 
-					if (tokenKey.equals("weight")) {
+					if (tokenKey.equals(PropNames.WEIGHT)) {
 						tokenVal = Double.parseDouble(st.nextToken());
 						node.getProperties().put(tokenKey, tokenVal);
 						continue;
 					}
 
-					if (tokenKey.equals("color")) {
+					if (tokenKey.equals(PropNames.COLOR)) {
 						tokenVal = Byte.parseByte(st.nextToken());
 						node.getProperties().put(tokenKey, tokenVal);
 						continue;
 					}
 
-					if (tokenKey.equals("name"))
+					if (tokenKey.equals(PropNames.NAME))
 						continue;
 
-					tokenVal = st.nextToken();
+					// NOTE Not fully tested
+					// Read entire line, including spaces
+					while (st.hasMoreTokens())
+						tokenVal = String.format("%s %s", tokenVal, st
+								.nextToken());
+
 					node.getProperties().put(tokenKey, tokenVal);
 
 				}
@@ -191,8 +200,8 @@ public class GMLParserUndirected extends GMLParser {
 				if (succeeded == false)
 					throw new Exception("Unable to parse node!");
 
-				if (node.getProperties().containsKey("color") == false)
-					node.getProperties().put("color", (byte) -1);
+				if (node.getProperties().containsKey(PropNames.COLOR) == false)
+					node.getProperties().put(PropNames.COLOR, (byte) -1);
 
 				return node;
 
@@ -256,14 +265,13 @@ public class GMLParserUndirected extends GMLParser {
 					break;
 
 				String source = (String) nextNodeDataTo.getProperties().get(
-						"name");
+						PropNames.NAME);
 				String target = (String) nextNodeDataTo.getRelationships().get(
-						0).get("name");
+						0).get(PropNames.NAME);
 
 				if (source.equals(target) == false)
 					break;
 
-				// System.out.println("\n Source = Target!");
 			} while (true);
 
 			if (nextNodeDataTo != null)
@@ -295,14 +303,13 @@ public class GMLParserUndirected extends GMLParser {
 					break;
 
 				String source = (String) nextNodeDataTo.getProperties().get(
-						"name");
+						PropNames.NAME);
 				String target = (String) nextNodeDataTo.getRelationships().get(
-						0).get("name");
+						0).get(PropNames.NAME);
 
 				if (source.equals(target) == false)
 					break;
 
-				// System.out.println("\n Source = Target!");
 			} while (true);
 
 			if (nextNodeDataTo != null) {
@@ -333,9 +340,7 @@ public class GMLParserUndirected extends GMLParser {
 			if (entityStr.equals("edge"))
 				return parseRel();
 
-			// FIXME remove
-			System.out.printf(String.format(
-					// System.err.printf(String.format(
+			System.err.printf(String.format(
 					"GmlRelIterator.parseEntity(): Unable to parse line: %n%s",
 					entityStr));
 
@@ -370,40 +375,45 @@ public class GMLParserUndirected extends GMLParser {
 						break;
 					}
 
-					if (tokenKey.equals("source")) {
-						tokenKey = "name";
+					if (tokenKey.equals(PropNames.GML_SOURCE)) {
+						tokenKey = PropNames.NAME;
 						tokenVal = Integer.toString(Integer.parseInt(st
-								.nextToken()) + 1);
+								.nextToken()));
 						hasSource = true;
 						node.getProperties().put(tokenKey, tokenVal);
 						continue;
 					}
 
-					if (tokenKey.equals("target")) {
-						tokenKey = "name";
+					if (tokenKey.equals(PropNames.GML_TARGET)) {
+						tokenKey = PropNames.NAME;
 						tokenVal = Integer.toString(Integer.parseInt(st
-								.nextToken()) + 1);
+								.nextToken()));
 						hasTarget = true;
 						rel.put(tokenKey, tokenVal);
 						continue;
 					}
 
-					if (tokenKey.equals("name"))
+					if (tokenKey.equals(PropNames.NAME))
 						continue;
 
-					else if (tokenKey.equals("weight")) {
+					else if (tokenKey.equals(PropNames.WEIGHT)) {
 						tokenVal = Double.parseDouble(st.nextToken());
 						rel.put(tokenKey, tokenVal);
 						continue;
 					}
 
-					else if (tokenKey.equals("color")) {
+					else if (tokenKey.equals(PropNames.COLOR)) {
 						tokenVal = Byte.parseByte(st.nextToken());
 						rel.put(tokenKey, tokenVal);
 						continue;
 					}
 
-					tokenVal = st.nextToken();
+					// NOTE Not fully tested
+					// Read entire line, including spaces
+					while (st.hasMoreTokens())
+						tokenVal = String.format("%s %s", tokenVal, st
+								.nextToken());
+
 					rel.put(tokenKey, tokenVal);
 
 				}
@@ -455,9 +465,9 @@ public class GMLParserUndirected extends GMLParser {
 							break;
 
 						String source = (String) nextNodeDataTo.getProperties()
-								.get("name");
+								.get(PropNames.NAME);
 						String target = (String) nextNodeDataTo
-								.getRelationships().get(0).get("name");
+								.getRelationships().get(0).get(PropNames.NAME);
 
 						if (source.equals(target) == false)
 							break;
@@ -468,17 +478,12 @@ public class GMLParserUndirected extends GMLParser {
 					if (nextNodeDataTo != null)
 						nextNodeDataFrom = reverseRel(nextNodeDataTo);
 
-					// nextNodeDataTo = parseRel();
-					//					
-					// if (nextNodeDataTo != null)
-					// nextNodeDataFrom = reverseRel(nextNodeDataTo);
 					return;
 				}
 
-				String errMsg = String.format(
+				throw new Exception(String.format(
 						"Unexpected file format in advanceToRels: %n%s%n",
-						tokenStr);
-				throw new Exception(errMsg);
+						tokenStr));
 
 			}
 		}
@@ -491,7 +496,7 @@ public class GMLParserUndirected extends GMLParser {
 			for (Entry<String, Object> fromProp : from.getProperties()
 					.entrySet()) {
 
-				if (fromProp.getKey().equals("name")) {
+				if (fromProp.getKey().equals(PropNames.NAME)) {
 					toTarget = (String) fromProp.getValue();
 					continue;
 				}
@@ -506,7 +511,7 @@ public class GMLParserUndirected extends GMLParser {
 
 				for (Entry<String, Object> fromRelProp : fromRel.entrySet()) {
 
-					if (fromRelProp.getKey().equals("name")) {
+					if (fromRelProp.getKey().equals(PropNames.NAME)) {
 						toSource = (String) fromRelProp.getValue();
 						toRel.put(fromRelProp.getKey(), toTarget);
 						continue;
@@ -519,7 +524,7 @@ public class GMLParserUndirected extends GMLParser {
 				to.getRelationships().add(toRel);
 			}
 
-			to.getProperties().put("name", toSource);
+			to.getProperties().put(PropNames.NAME, toSource);
 
 			return to;
 		}
