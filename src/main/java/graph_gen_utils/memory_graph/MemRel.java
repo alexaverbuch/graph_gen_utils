@@ -1,9 +1,9 @@
-package graph_gen_utils.graph;
+package graph_gen_utils.memory_graph;
 
 public class MemRel {
 
 	private Long endNodeId = null;
-	private double weight = 1;
+	private double weight = 1.0;
 
 	public MemRel(Long id, Double weight) {
 		super();

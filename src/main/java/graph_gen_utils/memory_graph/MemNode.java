@@ -1,4 +1,4 @@
-package graph_gen_utils.graph;
+package graph_gen_utils.memory_graph;
 
 import java.util.Collection;
 import java.util.HashMap;
