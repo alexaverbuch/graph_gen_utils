@@ -6,7 +6,6 @@ import graph_gen_utils.memory_graph.MemGraph;
 import graph_gen_utils.memory_graph.MemRel;
 import graph_gen_utils.metrics.MetricsWriterUnweighted;
 import graph_gen_utils.partitioner.Partitioner;
-import graph_gen_utils.partitioner.PartitionerAsBalanced;
 import graph_gen_utils.partitioner.PartitionerAsFile;
 import graph_gen_utils.partitioner.PartitionerAsSingle;
 import graph_gen_utils.reader.GraphReader;
@@ -64,12 +63,10 @@ public class NeoFromFile {
 
 	public static void main(String[] args) throws Exception {
 
-		// READ from original Chaco
-		NeoFromFile neoFromFile = new NeoFromFile("var/test");
-
-		neoFromFile.writeNeoFromChaco("graphs/test0.graph");
-		neoFromFile.applyPtnToNeo(new PartitionerAsBalanced((byte) 2));
-		neoFromFile.writeChaco("var/test0.graph", ChacoType.UNWEIGHTED);
+		NeoFromFile neoFromFile = new NeoFromFile("var/romania");
+		Partitioner partitioner = new PartitionerAsSingle((byte) -1);
+		neoFromFile.applyPtnToNeo(partitioner);
+		neoFromFile.writeChaco("var/romania.graph", ChacoType.UNWEIGHTED);
 
 	}
 
@@ -97,20 +94,33 @@ public class NeoFromFile {
 
 		openTransServices();
 
-		ArrayList<NodeData> nodes = new ArrayList<NodeData>();
+		// PRINTOUT
+		long time = System.currentTimeMillis();
+		System.out.printf("Loading Neo4j instance...");
+
+		ArrayList<ArrayList<NodeData>> nodesCollection = new ArrayList<ArrayList<NodeData>>();
+		ArrayList<NodeData> nodes = null;
 
 		Transaction tx = transNeo.beginTx();
 
 		try {
 
 			Integer nodeNumber = 0;
+			Integer buffSize = STORE_BUF * 10;
 
 			for (Node node : transNeo.getAllNodes()) {
+
+				if ((nodes == null) || (nodes.size() % buffSize == 0)) {
+					nodes = new ArrayList<NodeData>();
+					nodesCollection.add(nodes);
+					System.out.printf(".");
+				}
 
 				nodeNumber++;
 
 				NodeData nodeData = new NodeData();
 
+				nodeData.getProperties().put(PropNames.ID, node.getId());
 				nodeData.getProperties().put(PropNames.NAME,
 						nodeNumber.toString());
 
@@ -124,9 +134,22 @@ public class NeoFromFile {
 			tx.finish();
 		}
 
-		nodes = partitioner.applyPartitioning(nodes);
+		// PRINTOUT
+		System.out.printf("%dms%n", System.currentTimeMillis() - time);
+		time = System.currentTimeMillis();
+		System.out.printf("Partitioning Neo4j instance...");
 
-		applyNodeProps(nodes);
+		for (ArrayList<NodeData> nodesBuff : nodesCollection) {
+
+			nodesBuff = partitioner.applyPartitioning(nodesBuff);
+
+			applyNodeProps(nodesBuff);
+
+			System.out.printf(".");
+		}
+
+		// PRINTOUT
+		System.out.printf("%dms%n", System.currentTimeMillis() - time);
 
 		closeTransServices();
 
@@ -709,12 +732,15 @@ public class NeoFromFile {
 		try {
 
 			for (NodeData nodeAndRels : nodes) {
-				Long nodeId = Long.parseLong((String) nodeAndRels
-						.getProperties().get(PropNames.NAME));
+				Long nodeId = (Long) nodeAndRels.getProperties().get(
+						PropNames.ID);
 				Node node = transNeo.getNodeById(nodeId);
 
 				for (Entry<String, Object> prop : nodeAndRels.getProperties()
 						.entrySet()) {
+
+					if (prop.getKey().equals(PropNames.ID))
+						continue;
 
 					node.setProperty(prop.getKey(), prop.getValue());
 
