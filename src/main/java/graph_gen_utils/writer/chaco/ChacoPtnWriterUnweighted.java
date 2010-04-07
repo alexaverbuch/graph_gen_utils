@@ -1,6 +1,6 @@
 package graph_gen_utils.writer.chaco;
 
-import graph_gen_utils.general.PropNames;
+import graph_gen_utils.general.Consts;
 import graph_gen_utils.writer.GraphWriter;
 
 import java.io.BufferedWriter;
@@ -55,7 +55,11 @@ public class ChacoPtnWriterUnweighted implements GraphWriter {
 
 			boolean firstPtnLine = true;
 
+			int flushBuffer = 0;
+
 			for (Node node : transNeo.getAllNodes()) {
+
+				flushBuffer++;
 
 				bufferedChacoWriter.newLine();
 
@@ -63,7 +67,7 @@ public class ChacoPtnWriterUnweighted implements GraphWriter {
 				for (Relationship rel : node.getRelationships(Direction.BOTH)) {
 
 					String name = (String) rel.getOtherNode(node).getProperty(
-							PropNames.NAME);
+							Consts.NAME);
 					bufferedChacoWriter.write(" " + name);
 
 				}
@@ -74,12 +78,18 @@ public class ChacoPtnWriterUnweighted implements GraphWriter {
 					firstPtnLine = false;
 
 				String line = "-1";
-				if (node.hasProperty(PropNames.COLOR)) {
-					Byte color = (Byte) node.getProperty(PropNames.COLOR);
+				if (node.hasProperty(Consts.COLOR)) {
+					Byte color = (Byte) node.getProperty(Consts.COLOR);
 					line = color.toString();
 				}
 
 				bufferedPtnWriter.write(line);
+
+				// Temporary flush to reduce memory consumption
+				if (flushBuffer % Consts.STORE_BUF == 0) {
+					bufferedChacoWriter.flush();
+					bufferedPtnWriter.flush();
+				}
 
 			}
 

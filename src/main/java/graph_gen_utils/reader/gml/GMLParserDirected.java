@@ -1,7 +1,7 @@
 package graph_gen_utils.reader.gml;
 
 import graph_gen_utils.general.NodeData;
-import graph_gen_utils.general.PropNames;
+import graph_gen_utils.general.Consts;
 import graph_gen_utils.reader.GraphReader;
 
 import java.io.File;
@@ -161,8 +161,8 @@ public class GMLParserDirected implements GraphReader {
 						break;
 					}
 
-					if (tokenKey.equals(PropNames.ID)) {
-						tokenKey = PropNames.NAME;
+					if (tokenKey.equals(Consts.ID)) {
+						tokenKey = Consts.NAME;
 						String tokenValStr = st.nextToken();
 						tokenVal = Integer.toString(Integer
 								.parseInt(tokenValStr));
@@ -171,19 +171,19 @@ public class GMLParserDirected implements GraphReader {
 						continue;
 					}
 
-					if (tokenKey.equals(PropNames.WEIGHT)) {
+					if (tokenKey.equals(Consts.WEIGHT)) {
 						tokenVal = Double.parseDouble(st.nextToken());
 						node.getProperties().put(tokenKey, tokenVal);
 						continue;
 					}
 
-					if (tokenKey.equals(PropNames.COLOR)) {
+					if (tokenKey.equals(Consts.COLOR)) {
 						tokenVal = Byte.parseByte(st.nextToken());
 						node.getProperties().put(tokenKey, tokenVal);
 						continue;
 					}
 
-					if (tokenKey.equals(PropNames.NAME))
+					if (tokenKey.equals(Consts.NAME))
 						continue;
 
 					// NOTE Not fully tested
@@ -199,8 +199,8 @@ public class GMLParserDirected implements GraphReader {
 				if (succeeded == false)
 					throw new Exception("Unable to parse node!");
 
-				if (node.getProperties().containsKey(PropNames.COLOR) == false)
-					node.getProperties().put(PropNames.COLOR, (byte) -1);
+				if (node.getProperties().containsKey(Consts.COLOR) == false)
+					node.getProperties().put(Consts.COLOR, (byte) -1);
 
 				return node;
 
@@ -260,9 +260,9 @@ public class GMLParserDirected implements GraphReader {
 					break;
 
 				String source = (String) nextNodeData.getProperties().get(
-						PropNames.NAME);
+						Consts.NAME);
 				String target = (String) nextNodeData.getRelationships().get(0)
-						.get(PropNames.NAME);
+						.get(Consts.NAME);
 
 				if (source.equals(target) == false)
 					break;
@@ -288,9 +288,9 @@ public class GMLParserDirected implements GraphReader {
 					break;
 
 				String source = (String) nextNodeData.getProperties().get(
-						PropNames.NAME);
+						Consts.NAME);
 				String target = (String) nextNodeData.getRelationships().get(0)
-						.get(PropNames.NAME);
+						.get(Consts.NAME);
 
 				if (source.equals(target) == false)
 					break;
@@ -358,8 +358,8 @@ public class GMLParserDirected implements GraphReader {
 						break;
 					}
 
-					if (tokenKey.equals(PropNames.GML_SOURCE)) {
-						tokenKey = PropNames.NAME;
+					if (tokenKey.equals(Consts.GML_SOURCE)) {
+						tokenKey = Consts.NAME;
 						tokenVal = Integer.toString(Integer.parseInt(st
 								.nextToken()));
 						hasSource = true;
@@ -367,8 +367,8 @@ public class GMLParserDirected implements GraphReader {
 						continue;
 					}
 
-					if (tokenKey.equals(PropNames.GML_TARGET)) {
-						tokenKey = PropNames.NAME;
+					if (tokenKey.equals(Consts.GML_TARGET)) {
+						tokenKey = Consts.NAME;
 						tokenVal = Integer.toString(Integer.parseInt(st
 								.nextToken()));
 						hasTarget = true;
@@ -376,16 +376,16 @@ public class GMLParserDirected implements GraphReader {
 						continue;
 					}
 
-					if (tokenKey.equals(PropNames.NAME))
+					if (tokenKey.equals(Consts.NAME))
 						continue;
 
-					else if (tokenKey.equals(PropNames.WEIGHT)) {
+					else if (tokenKey.equals(Consts.WEIGHT)) {
 						tokenVal = Double.parseDouble(st.nextToken());
 						rel.put(tokenKey, tokenVal);
 						continue;
 					}
 
-					else if (tokenKey.equals(PropNames.COLOR)) {
+					else if (tokenKey.equals(Consts.COLOR)) {
 						tokenVal = Byte.parseByte(st.nextToken());
 						rel.put(tokenKey, tokenVal);
 						continue;
@@ -448,9 +448,9 @@ public class GMLParserDirected implements GraphReader {
 							break;
 
 						String source = (String) nextNodeData.getProperties()
-								.get(PropNames.NAME);
+								.get(Consts.NAME);
 						String target = (String) nextNodeData
-								.getRelationships().get(0).get(PropNames.NAME);
+								.getRelationships().get(0).get(Consts.NAME);
 
 						if (source.equals(target) == false)
 							break;

@@ -1,6 +1,6 @@
 package graph_gen_utils.writer.gml;
 
-import graph_gen_utils.general.PropNames;
+import graph_gen_utils.general.Consts;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -44,15 +44,15 @@ public class GMLWriterUndirectedFull extends GMLWriter {
 				bufferedWriter.write("\t[\n");
 
 				Long nodeId = Long.parseLong((String) node
-						.getProperty(PropNames.NAME));
+						.getProperty(Consts.NAME));
 
-				bufferedWriter.write(String.format("\t\t%s %s\n", PropNames.ID,
+				bufferedWriter.write(String.format("\t\t%s %s\n", Consts.ID,
 						valueToStr(nodeId)));
 
 				for (String propKey : node.getPropertyKeys()) {
 					Object propVal = node.getProperty(propKey);
 
-					if (propKey.equals(PropNames.NAME))
+					if (propKey.equals(Consts.NAME))
 						propVal = nodeId;
 
 					bufferedWriter.write(String.format("\t\t%s %s\n", propKey,
@@ -67,7 +67,7 @@ public class GMLWriterUndirectedFull extends GMLWriter {
 			for (Node fromNode : transNeo.getAllNodes()) {
 
 				Long fromId = Long.parseLong((String) fromNode
-						.getProperty(PropNames.NAME));
+						.getProperty(Consts.NAME));
 
 				for (Relationship rel : fromNode
 						.getRelationships(Direction.OUTGOING)) {
@@ -75,14 +75,14 @@ public class GMLWriterUndirectedFull extends GMLWriter {
 					Node toNode = rel.getEndNode();
 
 					Long toId = Long.parseLong((String) toNode
-							.getProperty(PropNames.NAME));
+							.getProperty(Consts.NAME));
 
 					bufferedWriter.write("\tedge\n");
 					bufferedWriter.write("\t[\n");
 					bufferedWriter.write(String.format("\t\t%s %s\n",
-							PropNames.GML_SOURCE, valueToStr(fromId)));
+							Consts.GML_SOURCE, valueToStr(fromId)));
 					bufferedWriter.write(String.format("\t\t%s %s\n",
-							PropNames.GML_TARGET, valueToStr(toId)));
+							Consts.GML_TARGET, valueToStr(toId)));
 
 					for (String propKey : rel.getPropertyKeys()) {
 						Object propVal = rel.getProperty(propKey);
@@ -93,13 +93,13 @@ public class GMLWriterUndirectedFull extends GMLWriter {
 
 					Byte edgeColor = -1;
 
-					if (fromNode.hasProperty(PropNames.COLOR)
-							&& toNode.hasProperty(PropNames.COLOR)) {
+					if (fromNode.hasProperty(Consts.COLOR)
+							&& toNode.hasProperty(Consts.COLOR)) {
 
 						Byte fromColor = (Byte) fromNode
-								.getProperty(PropNames.COLOR);
+								.getProperty(Consts.COLOR);
 						Byte toColor = (Byte) toNode
-								.getProperty(PropNames.COLOR);
+								.getProperty(Consts.COLOR);
 
 						if (fromColor == toColor)
 							edgeColor = fromColor;
@@ -107,7 +107,7 @@ public class GMLWriterUndirectedFull extends GMLWriter {
 					}
 
 					bufferedWriter.write(String.format("\t\t%s %s\n",
-							PropNames.COLOR, valueToStr(edgeColor)));
+							Consts.COLOR, valueToStr(edgeColor)));
 
 					bufferedWriter.write("\t]\n");
 

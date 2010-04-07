@@ -1,6 +1,6 @@
 package graph_gen_utils.metrics;
 
-import graph_gen_utils.general.PropNames;
+import graph_gen_utils.general.Consts;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -151,7 +151,7 @@ public class MetricsReaderUndirected {
 
 				nodeCount++;
 
-				Byte vColor = (Byte) v.getProperty(PropNames.COLOR);
+				Byte vColor = (Byte) v.getProperty(Consts.COLOR);
 
 				if (clusterNodes.containsKey(vColor))
 					clusterNodes.put(vColor, clusterNodes.get(vColor) + 1);
@@ -172,7 +172,7 @@ public class MetricsReaderUndirected {
 					nodeDegree++;
 
 					Node u = e.getOtherNode(v);
-					Byte uColor = (Byte) u.getProperty(PropNames.COLOR);
+					Byte uColor = (Byte) u.getProperty(Consts.COLOR);
 
 					if (vColor == uColor) {
 						if (clusterIntDeg.containsKey(vColor))

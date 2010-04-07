@@ -1,7 +1,7 @@
 package graph_gen_utils.partitioner;
 
 import graph_gen_utils.general.NodeData;
-import graph_gen_utils.general.PropNames;
+import graph_gen_utils.general.Consts;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -22,7 +22,7 @@ public class PartitionerAsFile implements Partitioner {
 
 		for (NodeData tempNode : nodes) {
 			Byte color = Byte.parseByte(partitionScanner.nextLine());
-			tempNode.getProperties().put(PropNames.COLOR, color);
+			tempNode.getProperties().put(Consts.COLOR, color);
 		}
 
 		return nodes;

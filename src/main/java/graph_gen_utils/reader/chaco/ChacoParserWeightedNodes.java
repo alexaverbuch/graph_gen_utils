@@ -1,7 +1,7 @@
 package graph_gen_utils.reader.chaco;
 
 import graph_gen_utils.general.NodeData;
-import graph_gen_utils.general.PropNames;
+import graph_gen_utils.general.Consts;
 import graph_gen_utils.reader.GraphReader;
 
 import java.io.File;
@@ -114,10 +114,10 @@ public class ChacoParserWeightedNodes implements GraphReader {
 
 				StringTokenizer st = new StringTokenizer(aLine, " ");
 
-				node.getProperties().put(PropNames.NAME, Integer.toString(nodeNumber));
-				node.getProperties().put(PropNames.WEIGHT,
+				node.getProperties().put(Consts.NAME, Integer.toString(nodeNumber));
+				node.getProperties().put(Consts.WEIGHT,
 						Double.parseDouble(st.nextToken()));
-				node.getProperties().put(PropNames.COLOR, (byte) -1);
+				node.getProperties().put(Consts.COLOR, (byte) -1);
 
 				return node;
 
@@ -201,8 +201,8 @@ public class ChacoParserWeightedNodes implements GraphReader {
 
 				StringTokenizer st = new StringTokenizer(aLine, " ");
 
-				node.getProperties().put(PropNames.NAME, Integer.toString(nodeNumber));
-				node.getProperties().put(PropNames.WEIGHT,
+				node.getProperties().put(Consts.NAME, Integer.toString(nodeNumber));
+				node.getProperties().put(Consts.WEIGHT,
 						Double.parseDouble(st.nextToken()));
 
 				// Don't read in edges twice
@@ -213,8 +213,8 @@ public class ChacoParserWeightedNodes implements GraphReader {
 					if (toNode <= nodeNumber)
 						continue;
 
-					rel.put(PropNames.NAME, toNode.toString());
-					rel.put(PropNames.WEIGHT, 1.0);
+					rel.put(Consts.NAME, toNode.toString());
+					rel.put(Consts.WEIGHT, 1.0);
 					node.getRelationships().add(rel);
 				}
 

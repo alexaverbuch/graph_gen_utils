@@ -1,6 +1,7 @@
 package graph_gen_utils.writer.chaco;
 
-import graph_gen_utils.general.PropNames;
+import graph_gen_utils.general.Consts;
+import graph_gen_utils.general.NodeData;
 import graph_gen_utils.writer.GraphWriter;
 
 import java.io.BufferedWriter;
@@ -8,6 +9,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
 
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.GraphDatabaseService;
@@ -50,7 +52,11 @@ public class ChacoWriterUnweighted implements GraphWriter {
 					edgeCount * 2);
 			bufferedWriter.write(firstLine);
 
+			int flushBuffer = 0;
+
 			for (Node node : transNeo.getAllNodes()) {
+
+				flushBuffer++;
 
 				bufferedWriter.newLine();
 
@@ -58,9 +64,14 @@ public class ChacoWriterUnweighted implements GraphWriter {
 				for (Relationship rel : node.getRelationships(Direction.BOTH)) {
 
 					String name = (String) rel.getOtherNode(node).getProperty(
-							PropNames.NAME);
+							Consts.NAME);
 					bufferedWriter.write(" " + name);
 
+				}
+
+				// Temporary flush to reduce memory consumption
+				if (flushBuffer % Consts.STORE_BUF == 0) {
+					bufferedWriter.flush();
 				}
 
 			}

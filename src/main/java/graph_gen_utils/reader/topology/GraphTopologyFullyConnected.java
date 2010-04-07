@@ -1,7 +1,7 @@
 package graph_gen_utils.reader.topology;
 
 import graph_gen_utils.general.NodeData;
-import graph_gen_utils.general.PropNames;
+import graph_gen_utils.general.Consts;
 
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
@@ -23,17 +23,17 @@ public class GraphTopologyFullyConnected extends GraphTopology {
 
 			NodeData node = new NodeData();
 
-			node.getProperties().put(PropNames.NAME, Integer.toString(nodeNumber));
-			node.getProperties().put(PropNames.WEIGHT, 1.0);
-			node.getProperties().put(PropNames.COLOR, (byte) -1);
+			node.getProperties().put(Consts.NAME, Integer.toString(nodeNumber));
+			node.getProperties().put(Consts.WEIGHT, 1.0);
+			node.getProperties().put(Consts.COLOR, (byte) -1);
 
 			for (int relNumber = 1; relNumber <= nodeCount; relNumber++) {
 				if (relNumber <= nodeNumber)
 					continue;
 
 				Map<String, Object> rel = new HashMap<String, Object>();
-				rel.put(PropNames.NAME, Integer.toString(relNumber));
-				rel.put(PropNames.WEIGHT, 1.0);
+				rel.put(Consts.NAME, Integer.toString(relNumber));
+				rel.put(Consts.WEIGHT, 1.0);
 				node.getRelationships().add(rel);
 			}
 

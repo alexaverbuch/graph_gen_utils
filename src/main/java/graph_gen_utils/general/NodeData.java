@@ -26,7 +26,7 @@ public class NodeData {
 	// Inefficient! Relationships as HashMap would be better
 	public boolean containsRelation(String nodeName) {
 		for (Map<String, Object> rel : relationships) {
-			if (rel.get(PropNames.NAME).equals(nodeName))
+			if (rel.get(Consts.NAME).equals(nodeName))
 				return true;
 		}
 

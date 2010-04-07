@@ -1,7 +1,7 @@
 package graph_gen_utils;
 
 import graph_gen_utils.general.NodeData;
-import graph_gen_utils.general.PropNames;
+import graph_gen_utils.general.Consts;
 import graph_gen_utils.memory_graph.MemGraph;
 import graph_gen_utils.memory_graph.MemRel;
 import graph_gen_utils.metrics.MetricsWriterUnweighted;
@@ -53,8 +53,6 @@ public class NeoFromFile {
 		UNWEIGHTED, WEIGHTED_EDGES, WEIGHTED_NODES, WEIGHTED
 	}
 
-	private static final int STORE_BUF = 10000;
-
 	private String databaseDir;
 	private BatchInserter batchNeo = null;
 	private LuceneIndexBatchInserter batchIndexService = null;
@@ -82,9 +80,9 @@ public class NeoFromFile {
 	 * Allocates nodes of a Neo4j instance to clusters/partitions. Allocation
 	 * scheme is defined by the {@link Partitioner} parameter.
 	 * 
-	 * Method writes {@link PropNames#COLOR} property to all nodes of an
-	 * existing Neo4j instance. {@link PropNames#NAME} property is also written
-	 * to all nodes and set to {@link Node#getId()}.
+	 * Method writes {@link Consts#COLOR} property to all nodes of an existing
+	 * Neo4j instance. {@link Consts#NAME} property is also written to all nodes
+	 * and set to {@link Node#getId()}.
 	 * 
 	 * @param partitioner
 	 *            implementation of {@link Partitioner} that defines
@@ -106,7 +104,7 @@ public class NeoFromFile {
 		try {
 
 			Integer nodeNumber = 0;
-			Integer buffSize = STORE_BUF * 10;
+			Integer buffSize = Consts.STORE_BUF;
 
 			for (Node node : transNeo.getAllNodes()) {
 
@@ -120,9 +118,9 @@ public class NeoFromFile {
 
 				NodeData nodeData = new NodeData();
 
-				nodeData.getProperties().put(PropNames.ID, node.getId());
-				nodeData.getProperties().put(PropNames.NAME,
-						nodeNumber.toString());
+				nodeData.getProperties().put(Consts.ID, node.getId());
+				nodeData.getProperties()
+						.put(Consts.NAME, nodeNumber.toString());
 
 				nodes.add(nodeData);
 
@@ -358,8 +356,8 @@ public class NeoFromFile {
 	 * current Neo4j instance.
 	 * 
 	 * Only certain {@link Node} and {@link Relationship} properties are written
-	 * to the GML file. {@link PropNames#COLOR}, {@link PropNames#WEIGHT},
-	 * {@link PropNames#NAME}, and {@link PropNames#ID}.
+	 * to the GML file. {@link Consts#COLOR}, {@link Consts#WEIGHT},
+	 * {@link Consts#NAME}, and {@link Consts#ID}.
 	 * 
 	 * @param gmlPath
 	 *            {@link String} representing path to .gml file
@@ -470,19 +468,18 @@ public class NeoFromFile {
 			for (Node node : this.transNeo.getAllNodes()) {
 
 				Long nodeId = Long.parseLong((String) node
-						.getProperty(PropNames.NAME));
+						.getProperty(Consts.NAME));
 
-				memGraph.addNode(nodeId, (Byte) node
-						.getProperty(PropNames.COLOR));
+				memGraph.addNode(nodeId, (Byte) node.getProperty(Consts.COLOR));
 
 				for (Relationship rel : node
 						.getRelationships(Direction.OUTGOING)) {
 
 					Long endNodeId = Long.parseLong((String) rel.getEndNode()
-							.getProperty(PropNames.NAME));
+							.getProperty(Consts.NAME));
 
 					MemRel memRel = new MemRel(endNodeId, (Double) rel
-							.getProperty(PropNames.WEIGHT));
+							.getProperty(Consts.WEIGHT));
 
 					memGraph.getNode(nodeId).addNeighbour(memRel);
 				}
@@ -526,20 +523,19 @@ public class NeoFromFile {
 			for (Node node : this.transNeo.getAllNodes()) {
 
 				Long nodeId = Long.parseLong((String) node
-						.getProperty(PropNames.NAME));
+						.getProperty(Consts.NAME));
 
-				memGraph.addNode(nodeId, (Byte) node
-						.getProperty(PropNames.COLOR));
+				memGraph.addNode(nodeId, (Byte) node.getProperty(Consts.COLOR));
 
 				// TODO Test
 				for (Relationship rel : node.getRelationships(Direction.BOTH)) {
 
 					double weight = 1.0;
-					if (rel.hasProperty(PropNames.WEIGHT))
-						weight = (Double) rel.getProperty(PropNames.WEIGHT);
+					if (rel.hasProperty(Consts.WEIGHT))
+						weight = (Double) rel.getProperty(Consts.WEIGHT);
 
 					Long endNodeId = Long.parseLong((String) rel.getOtherNode(
-							node).getProperty(PropNames.NAME));
+							node).getProperty(Consts.NAME));
 
 					MemRel memRel = new MemRel(endNodeId, weight);
 
@@ -597,7 +593,7 @@ public class NeoFromFile {
 		for (NodeData nodeData : parser.getNodes()) {
 			nodesAndRels.add(nodeData);
 
-			if ((nodesAndRels.size() % NeoFromFile.STORE_BUF) == 0) {
+			if ((nodesAndRels.size() % Consts.STORE_BUF) == 0) {
 
 				// PRINTOUT
 				System.out.printf(".");
@@ -634,7 +630,7 @@ public class NeoFromFile {
 		for (NodeData nodeData : parser.getRels()) {
 			nodesAndRels.add(nodeData);
 
-			if ((nodesAndRels.size() % NeoFromFile.STORE_BUF) == 0) {
+			if ((nodesAndRels.size() % Consts.STORE_BUF) == 0) {
 
 				// PRINTOUT
 				System.out.printf(".");
@@ -680,18 +676,18 @@ public class NeoFromFile {
 		try {
 
 			for (NodeData nodeAndRels : nodes) {
-				fromName = (String) nodeAndRels.getProperties().get(
-						PropNames.NAME);
-				Node fromNode = transIndexService.getSingleNode(PropNames.NAME,
+				fromName = (String) nodeAndRels.getProperties()
+						.get(Consts.NAME);
+				Node fromNode = transIndexService.getSingleNode(Consts.NAME,
 						fromName);
-				Byte fromColor = (Byte) fromNode.getProperty(PropNames.COLOR);
+				Byte fromColor = (Byte) fromNode.getProperty(Consts.COLOR);
 
 				for (Map<String, Object> rel : nodeAndRels.getRelationships()) {
-					toName = (String) rel.get(PropNames.NAME);
+					toName = (String) rel.get(Consts.NAME);
 
-					Node toNode = transIndexService.getSingleNode(
-							PropNames.NAME, toName);
-					Byte toColor = (Byte) toNode.getProperty(PropNames.COLOR);
+					Node toNode = transIndexService.getSingleNode(Consts.NAME,
+							toName);
+					Byte toColor = (Byte) toNode.getProperty(Consts.COLOR);
 
 					Relationship neoRel = null;
 
@@ -707,7 +703,7 @@ public class NeoFromFile {
 
 						String relPropKey = relProp.getKey();
 
-						if (relPropKey.equals(PropNames.NAME))
+						if (relPropKey.equals(Consts.NAME))
 							continue;
 
 						neoRel.setProperty(relPropKey, relProp.getValue());
@@ -732,14 +728,13 @@ public class NeoFromFile {
 		try {
 
 			for (NodeData nodeAndRels : nodes) {
-				Long nodeId = (Long) nodeAndRels.getProperties().get(
-						PropNames.ID);
+				Long nodeId = (Long) nodeAndRels.getProperties().get(Consts.ID);
 				Node node = transNeo.getNodeById(nodeId);
 
 				for (Entry<String, Object> prop : nodeAndRels.getProperties()
 						.entrySet()) {
 
-					if (prop.getKey().equals(PropNames.ID))
+					if (prop.getKey().equals(Consts.ID))
 						continue;
 
 					node.setProperty(prop.getKey(), prop.getValue());

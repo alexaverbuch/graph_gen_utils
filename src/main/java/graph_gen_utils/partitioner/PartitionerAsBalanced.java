@@ -1,7 +1,7 @@
 package graph_gen_utils.partitioner;
 
 import graph_gen_utils.general.NodeData;
-import graph_gen_utils.general.PropNames;
+import graph_gen_utils.general.Consts;
 
 import java.util.ArrayList;
 
@@ -23,7 +23,7 @@ public class PartitionerAsBalanced implements Partitioner {
 			if (lastPtn >= maxPtn)
 				lastPtn = 0;
 			Byte color = lastPtn;
-			tempNode.getProperties().put(PropNames.COLOR, color);
+			tempNode.getProperties().put(Consts.COLOR, color);
 		}
 
 		return nodes;
