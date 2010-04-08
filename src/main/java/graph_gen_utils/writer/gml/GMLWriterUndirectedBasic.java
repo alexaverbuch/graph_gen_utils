@@ -38,7 +38,11 @@ public class GMLWriterUndirectedBasic extends GMLWriter {
 			// TODO Check if "directed 1" affects visualizations
 			bufferedWriter.write("\tdirected 0\n");
 
+			int flushBuffer = 0;
+
 			for (Node node : transNeo.getAllNodes()) {
+
+				flushBuffer++;
 
 				bufferedWriter.write("\tnode\n");
 				bufferedWriter.write("\t[\n");
@@ -66,9 +70,17 @@ public class GMLWriterUndirectedBasic extends GMLWriter {
 				}
 
 				bufferedWriter.write("\t]\n");
+
+				// Temporary flush to reduce memory consumption
+				if (flushBuffer % Consts.STORE_BUF == 0) {
+					bufferedWriter.flush();
+				}
+
 			}
 
 			bufferedWriter.flush();
+
+			flushBuffer = 0;
 
 			for (Node fromNode : transNeo.getAllNodes()) {
 
@@ -77,6 +89,8 @@ public class GMLWriterUndirectedBasic extends GMLWriter {
 
 				for (Relationship rel : fromNode
 						.getRelationships(Direction.OUTGOING)) {
+
+					flushBuffer++;
 
 					Node toNode = rel.getEndNode();
 
@@ -107,8 +121,7 @@ public class GMLWriterUndirectedBasic extends GMLWriter {
 
 						Byte fromColor = (Byte) fromNode
 								.getProperty(Consts.COLOR);
-						Byte toColor = (Byte) toNode
-								.getProperty(Consts.COLOR);
+						Byte toColor = (Byte) toNode.getProperty(Consts.COLOR);
 
 						if (fromColor == toColor)
 							edgeColor = fromColor;
@@ -119,6 +132,11 @@ public class GMLWriterUndirectedBasic extends GMLWriter {
 							Consts.COLOR, valueToStr(edgeColor)));
 
 					bufferedWriter.write("\t]\n");
+
+					// Temporary flush to reduce memory consumption
+					if (flushBuffer % Consts.STORE_BUF == 0) {
+						bufferedWriter.flush();
+					}
 
 				}
 

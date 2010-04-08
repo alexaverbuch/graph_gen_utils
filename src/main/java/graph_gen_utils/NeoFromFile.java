@@ -64,6 +64,7 @@ public class NeoFromFile {
 		NeoFromFile neoFromFile = new NeoFromFile("var/romania");
 		Partitioner partitioner = new PartitionerAsSingle((byte) -1);
 		neoFromFile.applyPtnToNeo(partitioner);
+		neoFromFile.writeGMLFull("var/romania.gml");
 		neoFromFile.writeChaco("var/romania.graph", ChacoType.UNWEIGHTED);
 
 	}
@@ -104,14 +105,13 @@ public class NeoFromFile {
 		try {
 
 			Integer nodeNumber = 0;
-			Integer buffSize = Consts.STORE_BUF;
 
 			for (Node node : transNeo.getAllNodes()) {
 
-				if ((nodes == null) || (nodes.size() % buffSize == 0)) {
+				if ((nodes == null) || (nodes.size() % Consts.STORE_BUF == 0)) {
 					nodes = new ArrayList<NodeData>();
 					nodesCollection.add(nodes);
-					System.out.printf(".");
+					// System.out.printf(".");
 				}
 
 				nodeNumber++;
@@ -133,21 +133,18 @@ public class NeoFromFile {
 		}
 
 		// PRINTOUT
-		System.out.printf("%dms%n", System.currentTimeMillis() - time);
+		System.out.printf("%s", getTimeStr(System.currentTimeMillis() - time));
 		time = System.currentTimeMillis();
 		System.out.printf("Partitioning Neo4j instance...");
 
 		for (ArrayList<NodeData> nodesBuff : nodesCollection) {
-
 			nodesBuff = partitioner.applyPartitioning(nodesBuff);
-
 			applyNodeProps(nodesBuff);
-
-			System.out.printf(".");
+			// System.out.printf(".");
 		}
 
 		// PRINTOUT
-		System.out.printf("%dms%n", System.currentTimeMillis() - time);
+		System.out.printf("%s", getTimeStr(System.currentTimeMillis() - time));
 
 		closeTransServices();
 
@@ -391,7 +388,7 @@ public class NeoFromFile {
 		MetricsWriterUnweighted.writeMetrics(transNeo, metricsFile);
 
 		// PRINTOUT
-		System.out.printf("%dms%n", System.currentTimeMillis() - time);
+		System.out.printf("%s", getTimeStr(System.currentTimeMillis() - time));
 
 		closeTransServices();
 
@@ -415,7 +412,7 @@ public class NeoFromFile {
 		MetricsWriterUnweighted.writeMetricsCSV(transNeo, metricsFile, null);
 
 		// PRINTOUT
-		System.out.printf("%dms%n", System.currentTimeMillis() - time);
+		System.out.printf("%s", getTimeStr(System.currentTimeMillis() - time));
 
 		closeTransServices();
 	}
@@ -440,7 +437,7 @@ public class NeoFromFile {
 				timeStep);
 
 		// PRINTOUT
-		System.out.printf("%dms%n", System.currentTimeMillis() - time);
+		System.out.printf("%s", getTimeStr(System.currentTimeMillis() - time));
 
 		closeTransServices();
 
@@ -492,7 +489,7 @@ public class NeoFromFile {
 		}
 
 		// PRINTOUT
-		System.out.printf("%dms%n", System.currentTimeMillis() - time);
+		System.out.printf("%s", getTimeStr(System.currentTimeMillis() - time));
 
 		closeTransServices();
 
@@ -550,7 +547,7 @@ public class NeoFromFile {
 		}
 
 		// PRINTOUT
-		System.out.printf("%dms%n", System.currentTimeMillis() - time);
+		System.out.printf("%s", getTimeStr(System.currentTimeMillis() - time));
 
 		closeTransServices();
 
@@ -572,7 +569,7 @@ public class NeoFromFile {
 		graphWriter.write(transNeo);
 
 		// PRINTOUT
-		System.out.printf("%dms%n", System.currentTimeMillis() - time);
+		System.out.printf("%s", getTimeStr(System.currentTimeMillis() - time));
 
 		closeTransServices();
 
@@ -609,14 +606,14 @@ public class NeoFromFile {
 		nodesAndRels.clear();
 
 		// PRINTOUT
-		System.out.printf("%dms%n", System.currentTimeMillis() - time);
+		System.out.printf("%s", getTimeStr(System.currentTimeMillis() - time));
 		time = System.currentTimeMillis();
 		System.out.printf("Optimizing Index...");
 
 		batchIndexService.optimize();
 
 		// PRINTOUT
-		System.out.printf("%dms%n", System.currentTimeMillis() - time);
+		System.out.printf("%s", getTimeStr(System.currentTimeMillis() - time));
 
 		closeBatchServices();
 
@@ -646,7 +643,7 @@ public class NeoFromFile {
 		removeReferenceNode();
 
 		// PRINTOUT
-		System.out.printf("%dms%n", System.currentTimeMillis() - time);
+		System.out.printf("%s", getTimeStr(System.currentTimeMillis() - time));
 
 		closeTransServices();
 	}
@@ -785,7 +782,7 @@ public class NeoFromFile {
 		batchIndexService = new LuceneIndexBatchInserterImpl(batchNeo);
 
 		// PRINTOUT
-		System.out.printf("%dms%n", System.currentTimeMillis() - time);
+		System.out.printf("%s", getTimeStr(System.currentTimeMillis() - time));
 	}
 
 	private void closeBatchServices() {
@@ -798,7 +795,7 @@ public class NeoFromFile {
 		batchNeo.shutdown();
 
 		// PRINTOUT
-		System.out.printf("%dms%n", System.currentTimeMillis() - time);
+		System.out.printf("%s", getTimeStr(System.currentTimeMillis() - time));
 	}
 
 	private void openTransServices() {
@@ -811,7 +808,7 @@ public class NeoFromFile {
 		transIndexService = new LuceneIndexService(transNeo);
 
 		// PRINTOUT
-		System.out.printf("%dms%n", System.currentTimeMillis() - time);
+		System.out.printf("%s", getTimeStr(System.currentTimeMillis() - time));
 	}
 
 	private void closeTransServices() {
@@ -824,7 +821,15 @@ public class NeoFromFile {
 		transNeo.shutdown();
 
 		// PRINTOUT
-		System.out.printf("%dms%n", System.currentTimeMillis() - time);
+		System.out.printf("%s", getTimeStr(System.currentTimeMillis() - time));
+	}
+
+	protected String getTimeStr(long msTotal) {
+		long ms = msTotal % 1000;
+		long s = (msTotal / 1000) % 60;
+		long m = (msTotal / 1000) / 60;
+
+		return String.format("%d(m):%d(s):%d(ms)%n", m, s, ms);
 	}
 
 }
