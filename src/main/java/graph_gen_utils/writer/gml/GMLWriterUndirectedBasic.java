@@ -51,13 +51,15 @@ public class GMLWriterUndirectedBasic extends GMLWriter {
 						.getProperty(Consts.NAME));
 
 				bufferedWriter.write(String.format("\t\t%s %s\n", Consts.ID,
-						valueToStr(nodeId)));
+						valToStr(nodeId)));
 
 				for (String propKey : node.getPropertyKeys()) {
 
 					if ((propKey.equals(Consts.NAME) == false)
 							&& (propKey.equals(Consts.COLOR) == false)
-							&& (propKey.equals(Consts.WEIGHT) == false))
+							&& (propKey.equals(Consts.WEIGHT) == false)
+							&& (propKey.equals(Consts.LATITUDE) == false)
+							&& (propKey.equals(Consts.LONGITUDE) == false))
 						continue;
 
 					Object propVal = node.getProperty(propKey);
@@ -65,8 +67,8 @@ public class GMLWriterUndirectedBasic extends GMLWriter {
 					if (propKey.equals(Consts.NAME))
 						propVal = nodeId;
 
-					bufferedWriter.write(String.format("\t\t%s %s\n", propKey,
-							valueToStr(propVal)));
+					bufferedWriter.write(String.format("\t\t%s %s\n",
+							removeIllegalKeyChars(propKey), valToStr(propVal)));
 				}
 
 				bufferedWriter.write("\t]\n");
@@ -100,9 +102,9 @@ public class GMLWriterUndirectedBasic extends GMLWriter {
 					bufferedWriter.write("\tedge\n");
 					bufferedWriter.write("\t[\n");
 					bufferedWriter.write(String.format("\t\t%s %s\n",
-							Consts.GML_SOURCE, valueToStr(fromId)));
+							Consts.GML_SOURCE, valToStr(fromId)));
 					bufferedWriter.write(String.format("\t\t%s %s\n",
-							Consts.GML_TARGET, valueToStr(toId)));
+							Consts.GML_TARGET, valToStr(toId)));
 
 					for (String propKey : rel.getPropertyKeys()) {
 						if (propKey != Consts.WEIGHT)
@@ -111,7 +113,8 @@ public class GMLWriterUndirectedBasic extends GMLWriter {
 						Object propVal = rel.getProperty(propKey);
 
 						bufferedWriter.write(String.format("\t\t%s %s\n",
-								propKey, valueToStr(propVal)));
+								removeIllegalKeyChars(propKey),
+								valToStr(propVal)));
 					}
 
 					Byte edgeColor = -1;
@@ -129,7 +132,7 @@ public class GMLWriterUndirectedBasic extends GMLWriter {
 					}
 
 					bufferedWriter.write(String.format("\t\t%s %s\n",
-							Consts.COLOR, valueToStr(edgeColor)));
+							Consts.COLOR, valToStr(edgeColor)));
 
 					bufferedWriter.write("\t]\n");
 
@@ -164,5 +167,4 @@ public class GMLWriterUndirectedBasic extends GMLWriter {
 		}
 
 	}
-
 }
