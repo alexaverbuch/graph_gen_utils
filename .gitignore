@@ -10,8 +10,7 @@
 !test10.graph
 !test11.graph
 !.gitignore 
-!test11.2.ptn
-!test11.met
+!test0.2.ptn
 
 # Directories
 target/
