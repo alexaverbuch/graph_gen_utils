@@ -778,6 +778,10 @@ public class NeoFromFile {
 			GraphDatabaseService transNeo, GraphReader parser,
 			Partitioner partitioner) throws Exception {
 
+		if (isSupportedGraphDatabaseService(transNeo) == false)
+			throw new UnsupportedOperationException(
+					"GraphDatabaseService implementation not supported");
+
 		long time = System.currentTimeMillis();
 
 		// PRINTOUT
