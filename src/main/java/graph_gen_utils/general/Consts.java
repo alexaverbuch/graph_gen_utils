@@ -1,15 +1,27 @@
 package graph_gen_utils.general;
 
+import org.neo4j.graphdb.RelationshipType;
+
 public abstract class Consts {
 
-	public static String ID = "id";
-	public static String NAME = "name";
-	public static String COLOR = "color";
-	public static String WEIGHT = "weight";
-	public static String LATITUDE = "lat";
-	public static String LONGITUDE = "lon";
+	// GML property names
+	public static String GML_ID = "id";
 	public static String GML_SOURCE = "source";
 	public static String GML_TARGET = "target";
 
+	// Neo4j property names
+	public static String LID = "_id";
+	public static String GID = "_name";
+	public static String COLOR = "_color";
+	public static String WEIGHT = "_weight";
+	public static String LATITUDE = "_lat";
+	public static String LONGITUDE = "_lon";
+
+	// General
 	public static int STORE_BUF = 10000;
+
+	// Must be in range [0-1]
+	public static double MIN_EDGE_WEIGHT = 0.05;
+
+	public static RelationshipType DEFAULT_REL_TYPE = null;
 }

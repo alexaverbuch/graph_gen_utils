@@ -8,13 +8,12 @@ import java.io.IOException;
 
 import org.neo4j.graphdb.GraphDatabaseService;
 
-public class MetricsWriterUnweighted {
+public class MetricsWriterUndirected {
 
 	public static void writeMetrics(GraphDatabaseService transNeo,
-			File metricsFile) {
+			File metricsFile) throws Exception {
 
-		MetricsReaderUndirected metricsReader = new MetricsReaderUndirected(
-				transNeo);
+		MetricsReader metricsReader = new MetricsReaderUndirected(transNeo);
 
 		BufferedWriter bufferedWriter = null;
 		try {
@@ -96,14 +95,13 @@ public class MetricsWriterUnweighted {
 	}
 
 	public static void writeMetricsCSV(GraphDatabaseService transNeo,
-			File metricsFile, Long timeStep) {
+			File metricsFile, Long timeStep) throws Exception {
+
+		MetricsReader metricsReader = new MetricsReaderUndirected(transNeo);
 
 		String timeStepStr = "-";
 		if (timeStep != null)
 			timeStepStr = timeStep.toString();
-
-		MetricsReaderUndirected metricsReader = new MetricsReaderUndirected(
-				transNeo);
 
 		BufferedWriter bufferedWriter = null;
 		try {
@@ -157,14 +155,13 @@ public class MetricsWriterUnweighted {
 	}
 
 	public static void appendMetricsCSV(GraphDatabaseService transNeo,
-			File metricsFile, Long timeStep) {
+			File metricsFile, Long timeStep) throws Exception {
+
+		MetricsReader metricsReader = new MetricsReaderUndirected(transNeo);
 
 		String timeStepStr = "-";
 		if (timeStep != null)
 			timeStepStr = timeStep.toString();
-
-		MetricsReaderUndirected metricsReader = new MetricsReaderUndirected(
-				transNeo);
 
 		BufferedWriter bufferedWriter = null;
 		try {

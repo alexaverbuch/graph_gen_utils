@@ -161,8 +161,8 @@ public class GMLParserDirected implements GraphReader {
 						break;
 					}
 
-					if (tokenKey.equals(Consts.ID)) {
-						tokenKey = Consts.NAME;
+					if (tokenKey.equals(Consts.GML_ID)) {
+						tokenKey = Consts.GID;
 						String tokenValStr = st.nextToken();
 						tokenVal = Integer.toString(Integer
 								.parseInt(tokenValStr));
@@ -183,7 +183,7 @@ public class GMLParserDirected implements GraphReader {
 						continue;
 					}
 
-					if (tokenKey.equals(Consts.NAME))
+					if (tokenKey.equals(Consts.GID))
 						continue;
 
 					// NOTE Not fully tested
@@ -260,9 +260,9 @@ public class GMLParserDirected implements GraphReader {
 					break;
 
 				String source = (String) nextNodeData.getProperties().get(
-						Consts.NAME);
+						Consts.GID);
 				String target = (String) nextNodeData.getRelationships().get(0)
-						.get(Consts.NAME);
+						.get(Consts.GID);
 
 				if (source.equals(target) == false)
 					break;
@@ -288,9 +288,9 @@ public class GMLParserDirected implements GraphReader {
 					break;
 
 				String source = (String) nextNodeData.getProperties().get(
-						Consts.NAME);
+						Consts.GID);
 				String target = (String) nextNodeData.getRelationships().get(0)
-						.get(Consts.NAME);
+						.get(Consts.GID);
 
 				if (source.equals(target) == false)
 					break;
@@ -359,7 +359,7 @@ public class GMLParserDirected implements GraphReader {
 					}
 
 					if (tokenKey.equals(Consts.GML_SOURCE)) {
-						tokenKey = Consts.NAME;
+						tokenKey = Consts.GID;
 						tokenVal = Integer.toString(Integer.parseInt(st
 								.nextToken()));
 						hasSource = true;
@@ -368,7 +368,7 @@ public class GMLParserDirected implements GraphReader {
 					}
 
 					if (tokenKey.equals(Consts.GML_TARGET)) {
-						tokenKey = Consts.NAME;
+						tokenKey = Consts.GID;
 						tokenVal = Integer.toString(Integer.parseInt(st
 								.nextToken()));
 						hasTarget = true;
@@ -376,7 +376,7 @@ public class GMLParserDirected implements GraphReader {
 						continue;
 					}
 
-					if (tokenKey.equals(Consts.NAME))
+					if (tokenKey.equals(Consts.GID))
 						continue;
 
 					else if (tokenKey.equals(Consts.WEIGHT)) {
@@ -448,9 +448,9 @@ public class GMLParserDirected implements GraphReader {
 							break;
 
 						String source = (String) nextNodeData.getProperties()
-								.get(Consts.NAME);
+								.get(Consts.GID);
 						String target = (String) nextNodeData
-								.getRelationships().get(0).get(Consts.NAME);
+								.getRelationships().get(0).get(Consts.GID);
 
 						if (source.equals(target) == false)
 							break;

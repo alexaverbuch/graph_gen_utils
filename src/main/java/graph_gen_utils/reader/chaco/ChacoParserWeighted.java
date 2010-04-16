@@ -114,7 +114,7 @@ public class ChacoParserWeighted implements GraphReader {
 
 				StringTokenizer st = new StringTokenizer(aLine, " ");
 
-				node.getProperties().put(Consts.NAME, Integer.toString(nodeNumber));
+				node.getProperties().put(Consts.GID, Integer.toString(nodeNumber));
 				node.getProperties().put(Consts.WEIGHT,
 						Double.parseDouble(st.nextToken()));
 				node.getProperties().put(Consts.COLOR, (byte) -1);
@@ -201,7 +201,7 @@ public class ChacoParserWeighted implements GraphReader {
 
 				StringTokenizer st = new StringTokenizer(aLine, " ");
 
-				node.getProperties().put(Consts.NAME, Integer.toString(nodeNumber));
+				node.getProperties().put(Consts.GID, Integer.toString(nodeNumber));
 				node.getProperties().put(Consts.WEIGHT,
 						Double.parseDouble(st.nextToken()));
 				node.getProperties().put(Consts.COLOR, (byte) -1);
@@ -216,7 +216,7 @@ public class ChacoParserWeighted implements GraphReader {
 						continue;
 					}
 
-					rel.put(Consts.NAME, toNode.toString());
+					rel.put(Consts.GID, toNode.toString());
 					rel.put(Consts.WEIGHT, Double.parseDouble(st.nextToken()));
 					node.getRelationships().add(rel);
 				}

@@ -23,7 +23,7 @@ public class GraphTopologyFullyConnected extends GraphTopology {
 
 			NodeData node = new NodeData();
 
-			node.getProperties().put(Consts.NAME, Integer.toString(nodeNumber));
+			node.getProperties().put(Consts.GID, Integer.toString(nodeNumber));
 			node.getProperties().put(Consts.WEIGHT, 1.0);
 			node.getProperties().put(Consts.COLOR, (byte) -1);
 
@@ -32,7 +32,7 @@ public class GraphTopologyFullyConnected extends GraphTopology {
 					continue;
 
 				Map<String, Object> rel = new HashMap<String, Object>();
-				rel.put(Consts.NAME, Integer.toString(relNumber));
+				rel.put(Consts.GID, Integer.toString(relNumber));
 				rel.put(Consts.WEIGHT, 1.0);
 				node.getRelationships().add(rel);
 			}

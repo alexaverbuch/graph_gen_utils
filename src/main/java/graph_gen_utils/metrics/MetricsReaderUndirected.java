@@ -12,7 +12,7 @@ import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.Transaction;
 
-public class MetricsReaderUndirected {
+public class MetricsReaderUndirected implements MetricsReader {
 
 	// Number of nodes in each cluster
 	private HashMap<Byte, Long> clusterNodes = new HashMap<Byte, Long>();

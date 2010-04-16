@@ -67,7 +67,7 @@ public class ChacoPtnWriterUnweighted implements GraphWriter {
 				for (Relationship rel : node.getRelationships(Direction.BOTH)) {
 
 					String name = (String) rel.getOtherNode(node).getProperty(
-							Consts.NAME);
+							Consts.GID);
 					bufferedChacoWriter.write(" " + name);
 
 				}
