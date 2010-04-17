@@ -35,7 +35,7 @@ import org.neo4j.graphdb.Transaction;
 import org.neo4j.index.IndexService;
 import org.neo4j.index.lucene.LuceneIndexService;
 
-import pGraphService.PGraphDatabaseService;
+import p_graph_service.PGraphDatabaseService;
 
 /**
  * Provides easy means of creating a Neo4j instance from various graph file
@@ -58,74 +58,6 @@ public class NeoFromFile {
 	// **************
 	// PUBLIC METHODS
 	// **************
-
-	/**
-	 * Allocates nodes of a Neo4j instance to clusters/partitions. Allocation is
-	 * defined by the allocation of the {@link MemGraph} input parameter.
-	 * 
-	 * @param transNeo
-	 *            {@link GraphDatabaseService} representing a Neo4j instance
-	 * 
-	 * @param memGraph
-	 *            instance of {@link MemGraph} that contains cluster/partition
-	 *            allocation details
-	 */
-	public static void updateNeoPtnFromMemGraph(GraphDatabaseService transNeo,
-			MemGraph memGraph) {
-
-		// PRINTOUT
-		long time = System.currentTimeMillis();
-		System.out.printf("Updating Neo4j instance...");
-
-		int lastVisitedIndex = -1;
-		int datasetSize = 0;
-		for (Node tempNode : memGraph.getAllNodes())
-			datasetSize++;
-
-		while (lastVisitedIndex < datasetSize - 1) {
-
-			Transaction tx = transNeo.beginTx();
-
-			try {
-
-				int currentIndex = -1;
-				int transBuffer = 0;
-
-				for (Node memV : memGraph.getAllNodes()) {
-
-					currentIndex++;
-
-					if (currentIndex < lastVisitedIndex)
-						continue;
-
-					lastVisitedIndex = currentIndex;
-					transBuffer++;
-
-					Node v = transNeo.getNodeById((Long) memV
-							.getProperty(Consts.LID));
-
-					v.setProperty(Consts.COLOR, memV.getProperty(Consts.COLOR));
-
-					// Periodic flush to reduce memory consumption
-					if (transBuffer % Consts.STORE_BUF == 0) {
-						// Commit transaction
-						break;
-					}
-
-				}
-
-				tx.success();
-
-			} catch (Exception e) {
-				e.printStackTrace();
-			} finally {
-				tx.finish();
-			}
-		}
-
-		System.out.printf("%s", getTimeStr(System.currentTimeMillis() - time));
-
-	}
 
 	/**
 	 * Allocates nodes of a Neo4j instance to clusters/partitions. Allocation
