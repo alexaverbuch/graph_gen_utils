@@ -31,6 +31,7 @@ import org.neo4j.graphdb.DynamicRelationshipType;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
+import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.index.IndexService;
 import org.neo4j.index.lucene.LuceneIndexService;
@@ -626,8 +627,12 @@ public class NeoFromFile {
 					if (memRel == null) {
 						MemNode endNode = (MemNode) memGraph
 								.getNodeById(endNodeId);
+
+						RelationshipType relType = DynamicRelationshipType
+								.withName(Consts.DEFAULT_REL_TYPE_STR);
+
 						memRel = (MemRel) memNode.createRelationshipTo(endNode,
-								Consts.DEFAULT_REL_TYPE);
+								relType);
 						memRel.setProperty(Consts.WEIGHT, weight);
 					} else {
 						weight = weight

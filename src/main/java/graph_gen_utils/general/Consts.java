@@ -17,11 +17,13 @@ public abstract class Consts {
 	public static String LATITUDE = "_lat";
 	public static String LONGITUDE = "_lon";
 
+	// Neo4j Relationship types
+	public static String DEFAULT_REL_TYPE_STR = "default";
+
 	// General
 	public static int STORE_BUF = 10000;
 
 	// Must be in range [0-1]
 	public static double MIN_EDGE_WEIGHT = 0.05;
 
-	public static RelationshipType DEFAULT_REL_TYPE = null;
 }
