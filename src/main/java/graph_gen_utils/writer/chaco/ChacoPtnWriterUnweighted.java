@@ -66,9 +66,9 @@ public class ChacoPtnWriterUnweighted implements GraphWriter {
 				// Chaco files assumed to be undirected. Edges are bidirectional
 				for (Relationship rel : node.getRelationships(Direction.BOTH)) {
 
-					String name = (String) rel.getOtherNode(node).getProperty(
-							Consts.GID);
-					bufferedChacoWriter.write(" " + name);
+					Long gId = (Long) rel.getOtherNode(node).getProperty(
+							Consts.NODE_GID);
+					bufferedChacoWriter.write(" " + gId.toString());
 
 				}
 

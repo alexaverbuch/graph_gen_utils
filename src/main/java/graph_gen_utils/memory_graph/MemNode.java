@@ -1,7 +1,11 @@
 package graph_gen_utils.memory_graph;
 
-import java.util.ArrayList;
+import graph_gen_utils.general.Consts;
+
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.NoSuchElementException;
 import java.util.Random;
 
 import org.neo4j.graphdb.Direction;
@@ -18,14 +22,15 @@ import org.uncommons.maths.random.ContinuousUniformGenerator;
 public class MemNode implements Node {
 
 	private ContinuousUniformGenerator randGen = null;
-	private ArrayList<Relationship> relationships = null;
+	private LinkedHashMap<Long, Relationship> relationships = null;
 	private HashMap<String, Object> properties = null;
 	private MemGraph memGraph = null;
 	private long id = -1;
+	private long nextRelId = -1;
 
 	public MemNode(Long id, Random rng, MemGraph memGraph) {
 		this.randGen = new ContinuousUniformGenerator(0.0, 1.0, rng);
-		this.relationships = new ArrayList<Relationship>();
+		this.relationships = new LinkedHashMap<Long, Relationship>();
 		this.properties = new HashMap<String, Object>();
 		this.memGraph = memGraph;
 		this.id = id;
@@ -49,46 +54,46 @@ public class MemNode implements Node {
 					"randIndex[%d] >= neighbourSize[%d]\n", randIndex,
 					neighboursSize));
 
-		return this.relationships.get(randIndex).getEndNode();
-	}
+		int currIndex = 0;
+		for (Relationship rel : relationships.values()) {
+			if (currIndex == randIndex)
+				return rel.getEndNode();
+			currIndex++;
+		}
 
-	public Relationship tryGetRelationship(long startNodeId, long endNodeId) {
-		for (Relationship rel : relationships)
-			if ((rel.getStartNode().getId() == startNodeId)
-					&& (rel.getEndNode().getId() == endNodeId))
-				return rel;
-
-		return null;
+		throw new Exception("Unable to retrieve random node");
 	}
 
 	public void removeRelationship(MemRel memRel) {
-		long memRelStartNodeId = memRel.getStartNode().getId();
-		long memRelEndNodeId = memRel.getEndNode().getId();
-
-		if (tryGetRelationship(memRelStartNodeId, memRelEndNodeId) != null) {
-			relationships.remove(memRelEndNodeId);
+		if (relationships.containsKey(memRel.getId()) == true) {
+			relationships.remove(memRel.getId());
+			if (memRel.getStartNode().getId() == getId())
+				memGraph.removeRelationship(memRel.getId());
 			return;
 		}
 
-		String errStr = String.format(
-				"Relationship[%d->%d] not found in Node[%d]",
-				memRelStartNodeId, memRelEndNodeId, getId());
+		String errStr = String.format("Relationship[%d] not found in Node[%d]",
+				memRel.getId(), getId());
 
 		throw new NotFoundException(errStr);
 	}
 
-	public Relationship addRelationship(MemRel memRel) {
-		long memRelStartNodeId = memRel.getStartNode().getId();
-		long memRelEndNodeId = memRel.getEndNode().getId();
+	// NOTE Needed because no IdGenerator is used
+	// ID must be set before createRelationship() is called
+	public void setNextRelId(long nextRelId) {
+		this.nextRelId = nextRelId;
+	}
 
-		if (tryGetRelationship(memRelStartNodeId, memRelEndNodeId) == null) {
-			relationships.add(memRel);
+	public Relationship addRelationship(MemRel memRel) {
+		if (relationships.containsKey(memRel.getId()) == false) {
+			relationships.put(memRel.getId(), memRel);
+			if (memRel.getStartNode().getId() == getId())
+				memGraph.addRelationship(memRel);
 			return memRel;
 		}
 
 		String errStr = String.format(
-				"Relationship[%d->%d] already exists in Node[%d]", memRel
-						.getStartNode().getId(), memRel.getEndNode().getId(),
+				"Relationship[%d] already exists in Node[%d]", memRel.getId(),
 				getId());
 
 		throw new NotFoundException(errStr);
@@ -101,39 +106,102 @@ public class MemNode implements Node {
 
 	@Override
 	public Iterable<Relationship> getRelationships() {
-		return relationships;
+		return new RelationshipIterator(Direction.BOTH);
 	}
 
 	@Override
 	// TODO implement with iterator later
 	public Iterable<Relationship> getRelationships(Direction dir) {
+		return new RelationshipIterator(dir);
+	}
 
-		Iterable<Relationship> result = null;
-		ArrayList<Relationship> dirRels = null;
+	@Override
+	public Relationship createRelationshipTo(Node otherNode,
+			RelationshipType type) {
+		if (nextRelId == -1) {
+			// NOTE Exception not thrown due to GraphDatabaseService interface
+			throw new Error("NextRelId has not been set");
+		}
 
+		MemRel memRel = new MemRel(nextRelId, this, (MemNode) otherNode);
+		memRel.setProperty(Consts.REL_GID, memRel.getId());
+		nextRelId = -1;
+		((MemNode) otherNode).addRelationship(memRel);
+		return addRelationship(memRel);
+	}
+
+	@Override
+	public void delete() {
+		if (relationships.size() > 0) {
+			System.out.println(relationships.toString());
+			String errStr = String.format(
+					"Node[%d] deleted but still has Relationships", getId());
+			// NOTE Not possible to throw Exception here due to Node interface
+			throw new Error(errStr);
+		}
+		memGraph.removeNode(getId());
+	}
+
+	@Override
+	public boolean hasRelationship() {
+		return relationships.size() > 1;
+	}
+
+	@Override
+	public boolean hasRelationship(Direction dir) {
 		switch (dir) {
 		case BOTH:
-			return getRelationships();
+			return hasRelationship();
 
 		case INCOMING:
-			dirRels = new ArrayList<Relationship>();
-			for (Relationship rel : relationships)
+			for (Relationship rel : relationships.values())
 				if (rel.getEndNode().getId() == getId())
-					dirRels.add(rel);
-			result = dirRels;
+					return true;
 			break;
 
 		case OUTGOING:
-			dirRels = new ArrayList<Relationship>();
-			for (Relationship rel : relationships)
+			for (Relationship rel : relationships.values())
 				if (rel.getEndNode().getId() != getId())
-					dirRels.add(rel);
-			result = dirRels;
+					return true;
 			break;
 		}
 
-		return result;
+		return false;
 	}
+
+	@Override
+	public Iterable<String> getPropertyKeys() {
+		return properties.keySet();
+	}
+
+	@Override
+	public Object getProperty(String key) {
+		return properties.get(key);
+	}
+
+	@Override
+	public Iterable<Object> getPropertyValues() {
+		return properties.values();
+	}
+
+	@Override
+	public boolean hasProperty(String key) {
+		return properties.containsKey(key);
+	}
+
+	@Override
+	public Object removeProperty(String key) {
+		return properties.remove(key);
+	}
+
+	@Override
+	public void setProperty(String key, Object value) {
+		properties.put(key, value);
+	}
+
+	// **********************
+	// Unsupported Operations
+	// **********************
 
 	@Override
 	public Iterable<Relationship> getRelationships(RelationshipType type,
@@ -149,25 +217,6 @@ public class MemNode implements Node {
 	}
 
 	@Override
-	public Relationship createRelationshipTo(Node otherNode,
-			RelationshipType type) {
-		MemRel memRel = new MemRel(this, (MemNode) otherNode);
-		((MemNode) otherNode).addRelationship(memRel);
-		return addRelationship(memRel);
-	}
-
-	@Override
-	public void delete() {
-		if (relationships.size() > 0) {
-			String errStr = String.format(
-					"Node[%d] deleted but still has Relationships", getId());
-			// NOTE Not possible to throw Exception here due to Node interface
-			throw new Error(errStr);
-		}
-		memGraph.removeNode(getId());
-	}
-
-	@Override
 	public Relationship getSingleRelationship(RelationshipType type,
 			Direction dir) {
 		// NOTE Not Supported
@@ -175,36 +224,9 @@ public class MemNode implements Node {
 	}
 
 	@Override
-	public boolean hasRelationship() {
-		return relationships.size() > 1;
-	}
-
-	@Override
 	public boolean hasRelationship(RelationshipType... types) {
 		// NOTE Not Supported
 		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public boolean hasRelationship(Direction dir) {
-		switch (dir) {
-		case BOTH:
-			return hasRelationship();
-
-		case INCOMING:
-			for (Relationship rel : relationships)
-				if (rel.getEndNode().getId() == getId())
-					return true;
-			break;
-
-		case OUTGOING:
-			for (Relationship rel : relationships)
-				if (rel.getEndNode().getId() != getId())
-					return true;
-			break;
-		}
-
-		return false;
 	}
 
 	@Override
@@ -242,39 +264,74 @@ public class MemNode implements Node {
 	}
 
 	@Override
-	public Object getProperty(String key) {
-		return properties.get(key);
-	}
-
-	@Override
 	public Object getProperty(String key, Object defaultValue) {
 		// NOTE Not Supported
 		throw new UnsupportedOperationException();
 	}
 
-	@Override
-	public Iterable<String> getPropertyKeys() {
-		return properties.keySet();
-	}
+	private class RelationshipIterator implements Iterator<Relationship>,
+			Iterable<Relationship> {
 
-	@Override
-	public Iterable<Object> getPropertyValues() {
-		return properties.values();
-	}
+		private Direction direction = null;
+		private Iterator<Relationship> relationshipIter = null;
+		private Relationship nextRelationship = null;
 
-	@Override
-	public boolean hasProperty(String key) {
-		return properties.containsKey(key);
-	}
+		public RelationshipIterator(Direction direction) {
+			this.direction = direction;
+			this.relationshipIter = relationships.values().iterator();
+			this.nextRelationship = null;
+		}
 
-	@Override
-	public Object removeProperty(String key) {
-		return properties.remove(key);
-	}
+		@Override
+		public boolean hasNext() {
+			while (relationshipIter.hasNext()) {
+				if (nextRelationship == null)
+					nextRelationship = relationshipIter.next();
 
-	@Override
-	public void setProperty(String key, Object value) {
-		properties.put(key, value);
+				if (direction == Direction.BOTH)
+					return true;
+
+				if ((direction == Direction.INCOMING)
+						&& (nextRelationship.getEndNode().getId() == getId()))
+					return true;
+
+				if ((direction == Direction.OUTGOING)
+						&& (nextRelationship.getStartNode().getId() == getId()))
+					return true;
+
+				nextRelationship = null;
+			}
+
+			return false;
+		}
+
+		@Override
+		public Relationship next() {
+			if (nextRelationship != null) {
+				Relationship tempNextRelationship = nextRelationship;
+				nextRelationship = null;
+				return tempNextRelationship;
+			}
+
+			if (hasNext()) {
+				Relationship tempNextRelationship = nextRelationship;
+				nextRelationship = null;
+				return tempNextRelationship;
+			}
+
+			throw new NoSuchElementException();
+		}
+
+		@Override
+		public void remove() {
+			throw new UnsupportedOperationException();
+		}
+
+		@Override
+		public Iterator<Relationship> iterator() {
+			return this;
+		}
+
 	}
 
 }

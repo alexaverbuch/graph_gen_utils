@@ -25,7 +25,7 @@ public class GraphTopologyRandom extends GraphTopology {
 
 			NodeData node = new NodeData();
 
-			node.getProperties().put(Consts.GID, Integer.toString(nodeId));
+			node.getProperties().put(Consts.NODE_GID, (long) nodeId);
 			node.getProperties().put(Consts.WEIGHT, 1.0);
 			node.getProperties().put(Consts.COLOR, (byte) -1);
 
@@ -48,14 +48,14 @@ public class GraphTopologyRandom extends GraphTopology {
 
 			// No duplicate relations
 			// NOTE May relax to only 1-directed check in future
-			if ((node1.containsRelation((String) node2.getProperties().get(
-					Consts.GID)))
-					|| (node2.containsRelation((String) node1.getProperties()
-							.get(Consts.GID))))
+			if ((node1.containsRelation((Long) node2.getProperties().get(
+					Consts.NODE_GID)))
+					|| (node2.containsRelation((Long) node1.getProperties()
+							.get(Consts.NODE_GID))))
 				continue;
 
 			Map<String, Object> rel = new HashMap<String, Object>();
-			rel.put(Consts.GID, node2.getProperties().get(Consts.GID));
+			rel.put(Consts.NODE_GID, node2.getProperties().get(Consts.NODE_GID));
 			rel.put(Consts.WEIGHT, 1.0);
 			node1.getRelationships().add(rel);
 
@@ -67,11 +67,11 @@ public class GraphTopologyRandom extends GraphTopology {
 
 	@Override
 	public Iterable<NodeData> getNodes() {
-		return this.nodesAndRels;
+		return nodesAndRels;
 	}
 
 	@Override
 	public Iterable<NodeData> getRels() {
-		return this.nodesAndRels;
+		return nodesAndRels;
 	}
 }

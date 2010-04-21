@@ -163,7 +163,7 @@ public class GMLParserUndirected implements GraphReader {
 					}
 
 					if (tokenKey.equals(Consts.GML_ID)) {
-						tokenKey = Consts.GID;
+						tokenKey = Consts.NODE_GID;
 						String tokenValStr = st.nextToken();
 						tokenVal = Integer.toString(Integer
 								.parseInt(tokenValStr));
@@ -184,7 +184,7 @@ public class GMLParserUndirected implements GraphReader {
 						continue;
 					}
 
-					if (tokenKey.equals(Consts.GID))
+					if (tokenKey.equals(Consts.NODE_GID))
 						continue;
 
 					// NOTE Not fully tested
@@ -265,9 +265,9 @@ public class GMLParserUndirected implements GraphReader {
 					break;
 
 				String source = (String) nextNodeDataTo.getProperties().get(
-						Consts.GID);
+						Consts.NODE_GID);
 				String target = (String) nextNodeDataTo.getRelationships().get(
-						0).get(Consts.GID);
+						0).get(Consts.NODE_GID);
 
 				if (source.equals(target) == false)
 					break;
@@ -303,9 +303,9 @@ public class GMLParserUndirected implements GraphReader {
 					break;
 
 				String source = (String) nextNodeDataTo.getProperties().get(
-						Consts.GID);
+						Consts.NODE_GID);
 				String target = (String) nextNodeDataTo.getRelationships().get(
-						0).get(Consts.GID);
+						0).get(Consts.NODE_GID);
 
 				if (source.equals(target) == false)
 					break;
@@ -376,25 +376,29 @@ public class GMLParserUndirected implements GraphReader {
 					}
 
 					if (tokenKey.equals(Consts.GML_SOURCE)) {
-						tokenKey = Consts.GID;
-						tokenVal = Integer.toString(Integer.parseInt(st
-								.nextToken()));
+						tokenKey = Consts.NODE_GID;
+						tokenVal = Long.parseLong(st.nextToken());
 						hasSource = true;
 						node.getProperties().put(tokenKey, tokenVal);
 						continue;
 					}
 
 					if (tokenKey.equals(Consts.GML_TARGET)) {
-						tokenKey = Consts.GID;
-						tokenVal = Integer.toString(Integer.parseInt(st
-								.nextToken()));
+						tokenKey = Consts.NODE_GID;
+						tokenVal = Long.parseLong(st.nextToken());
 						hasTarget = true;
 						rel.put(tokenKey, tokenVal);
 						continue;
 					}
 
-					if (tokenKey.equals(Consts.GID))
+					if (tokenKey.equals(Consts.NODE_GID))
 						continue;
+
+					if (tokenKey.equals(Consts.REL_GID)) {
+						tokenVal = Long.parseLong(st.nextToken());
+						rel.put(tokenKey, tokenVal);
+						continue;
+					}
 
 					else if (tokenKey.equals(Consts.WEIGHT)) {
 						tokenVal = Double.parseDouble(st.nextToken());
@@ -465,9 +469,9 @@ public class GMLParserUndirected implements GraphReader {
 							break;
 
 						String source = (String) nextNodeDataTo.getProperties()
-								.get(Consts.GID);
+								.get(Consts.NODE_GID);
 						String target = (String) nextNodeDataTo
-								.getRelationships().get(0).get(Consts.GID);
+								.getRelationships().get(0).get(Consts.NODE_GID);
 
 						if (source.equals(target) == false)
 							break;
@@ -496,7 +500,7 @@ public class GMLParserUndirected implements GraphReader {
 			for (Entry<String, Object> fromProp : from.getProperties()
 					.entrySet()) {
 
-				if (fromProp.getKey().equals(Consts.GID)) {
+				if (fromProp.getKey().equals(Consts.NODE_GID)) {
 					toTarget = (String) fromProp.getValue();
 					continue;
 				}
@@ -511,7 +515,7 @@ public class GMLParserUndirected implements GraphReader {
 
 				for (Entry<String, Object> fromRelProp : fromRel.entrySet()) {
 
-					if (fromRelProp.getKey().equals(Consts.GID)) {
+					if (fromRelProp.getKey().equals(Consts.NODE_GID)) {
 						toSource = (String) fromRelProp.getValue();
 						toRel.put(fromRelProp.getKey(), toTarget);
 						continue;
@@ -524,7 +528,7 @@ public class GMLParserUndirected implements GraphReader {
 				to.getRelationships().add(toRel);
 			}
 
-			to.getProperties().put(Consts.GID, toSource);
+			to.getProperties().put(Consts.NODE_GID, toSource);
 
 			return to;
 		}

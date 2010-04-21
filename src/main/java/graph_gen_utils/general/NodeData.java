@@ -24,9 +24,9 @@ public class NodeData {
 
 	// FIXME (Low Priority)
 	// Inefficient! Relationships as HashMap would be better
-	public boolean containsRelation(String nodeName) {
+	public boolean containsRelation(Long nodeId) {
 		for (Map<String, Object> rel : relationships) {
-			if (rel.get(Consts.GID).equals(nodeName))
+			if (rel.get(Consts.NODE_GID).equals(nodeId))
 				return true;
 		}
 

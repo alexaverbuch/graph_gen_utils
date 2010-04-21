@@ -65,8 +65,9 @@ public class NeoFromFile {
 	 * scheme is defined by the {@link Partitioner} parameter.
 	 * 
 	 * Method writes {@link Consts#COLOR} property to all nodes of an existing
-	 * Neo4j instance. {@link Consts#GID} property is also written to all nodes
-	 * and set to {@link Node#getId()}.
+	 * Neo4j instance. {@link Consts#NODE_LID}, {@link Consts#NODE_GID},
+	 * {@link Consts#LATITUDE},{@link Consts#LONGITUDE} properties are also
+	 * written to all nodes.
 	 * 
 	 * @param transNeo
 	 *            {@link GraphDatabaseService} representing a Neo4j instance
@@ -91,7 +92,7 @@ public class NeoFromFile {
 
 		try {
 
-			Integer nodeNumber = 0;
+			Long nodeNumber = new Long(0);
 
 			for (Node node : transNeo.getAllNodes()) {
 
@@ -114,8 +115,8 @@ public class NeoFromFile {
 
 				nodeData.getProperties().put(Consts.LATITUDE, lat);
 				nodeData.getProperties().put(Consts.LONGITUDE, lon);
-				nodeData.getProperties().put(Consts.LID, node.getId());
-				nodeData.getProperties().put(Consts.GID, nodeNumber.toString());
+				nodeData.getProperties().put(Consts.NODE_LID, node.getId());
+				nodeData.getProperties().put(Consts.NODE_GID, nodeNumber);
 
 				nodes.add(nodeData);
 
@@ -435,7 +436,7 @@ public class NeoFromFile {
 	 * 
 	 * Only certain {@link Node} and {@link Relationship} properties are written
 	 * to the GML file. {@link Consts#COLOR}, {@link Consts#WEIGHT},
-	 * {@link Consts#GID}, and {@link Consts#LID}.
+	 * {@link Consts#NODE_GID}, and {@link Consts#NODE_LID}.
 	 * 
 	 * @param transNeo
 	 *            {@link GraphDatabaseService} representing a Neo4j instance
@@ -558,15 +559,17 @@ public class NeoFromFile {
 
 		Transaction tx = transNeo.beginTx();
 
+		long nodeCount = 0;
 		long edgeCount = 0;
 		double minWeight = Double.MAX_VALUE;
 		double maxWeight = Double.MIN_VALUE;
-		double totalWeight = 0.0;
 		double normalizedMinWeight = Consts.MIN_EDGE_WEIGHT;
 		double normalizedMaxWeight = Double.MIN_VALUE;
 
 		try {
 			for (Node node : transNeo.getAllNodes()) {
+
+				nodeCount++;
 
 				for (Relationship rel : node
 						.getRelationships(Direction.OUTGOING)) {
@@ -579,7 +582,6 @@ public class NeoFromFile {
 							maxWeight = weight;
 						if (weight < minWeight)
 							minWeight = weight;
-						totalWeight += weight;
 					}
 
 				}
@@ -589,59 +591,53 @@ public class NeoFromFile {
 			normalizedMinWeight = minWeight / maxWeight;
 
 			for (Node node : transNeo.getAllNodes()) {
-				Long nodeId = Long.parseLong((String) node
-						.getProperty(Consts.GID));
+				Long nodeGID = (Long) node.getProperty(Consts.NODE_GID);
 
-				memGraph.setNextId(nodeId);
+				memGraph.setNextNodeId(nodeGID);
 				MemNode memNode = (MemNode) memGraph.createNode();
-				memNode.setProperty(Consts.GID, nodeId.toString());
+				memNode.setProperty(Consts.NODE_GID, nodeGID);
+				memNode.setProperty(Consts.NODE_LID, node.getId());
 				memNode.setProperty(Consts.COLOR, (Byte) node
 						.getProperty(Consts.COLOR));
-				memNode.setProperty(Consts.LID, node.getId());
 
 			}
 
 			for (Node node : transNeo.getAllNodes()) {
 
-				Long nodeId = Long.parseLong((String) node
-						.getProperty(Consts.GID));
+				Long nodeGID = (Long) node.getProperty(Consts.NODE_GID);
 
-				MemNode memNode = (MemNode) memGraph.getNodeById(nodeId);
+				MemNode memNode = (MemNode) memGraph.getNodeById(nodeGID);
 
 				for (Relationship rel : node
 						.getRelationships(Direction.OUTGOING)) {
 
 					// Store normalized edge weight, [0,1]
 					double weight = normalizedMinWeight;
-					if (rel.hasProperty(Consts.WEIGHT))
+					if (rel.hasProperty(Consts.WEIGHT)) {
 						weight = (Double) rel.getProperty(Consts.WEIGHT)
 								/ maxWeight;
 
-					Long startNodeId = Long.parseLong((String) rel
-							.getStartNode().getProperty(Consts.GID));
-					Long endNodeId = Long.parseLong((String) rel.getEndNode()
-							.getProperty(Consts.GID));
+						if (weight > normalizedMaxWeight)
+							normalizedMaxWeight = weight;
 
-					MemRel memRel = (MemRel) memNode.tryGetRelationship(
-							startNodeId, endNodeId);
-					if (memRel == null) {
-						MemNode endNode = (MemNode) memGraph
-								.getNodeById(endNodeId);
-
-						RelationshipType relType = DynamicRelationshipType
-								.withName(Consts.DEFAULT_REL_TYPE_STR);
-
-						memRel = (MemRel) memNode.createRelationshipTo(endNode,
-								relType);
-						memRel.setProperty(Consts.WEIGHT, weight);
-					} else {
-						weight = weight
-								+ (Double) memRel.getProperty(Consts.WEIGHT);
-						memRel.setProperty(Consts.WEIGHT, weight);
 					}
 
-					if (weight > normalizedMaxWeight)
-						normalizedMaxWeight = weight;
+					Long endNodeId = (Long) rel.getEndNode().getProperty(
+							Consts.NODE_GID);
+
+					MemNode endNode = (MemNode) memGraph.getNodeById(endNodeId);
+
+					RelationshipType relType = DynamicRelationshipType
+							.withName(Consts.DEFAULT_REL_TYPE_STR);
+
+					Long relGID = rel.getId();
+					if (rel.hasProperty(Consts.REL_GID))
+						relGID = (Long) rel.getProperty(Consts.REL_GID);
+
+					memNode.setNextRelId(relGID);
+					MemRel memRel = (MemRel) memNode.createRelationshipTo(
+							endNode, relType);
+					memRel.setProperty(Consts.WEIGHT, weight);
 				}
 
 			}
@@ -651,43 +647,13 @@ public class NeoFromFile {
 			tx.finish();
 		}
 
-		// TODO For prinout only. Remove later!
-		minWeight = Double.MAX_VALUE;
-		maxWeight = Double.MIN_VALUE;
-		edgeCount = 0;
-		long nodeCount = 0;
-
-		// Normalize edge weights again
-		// If multiple edges exist between same 2 vertices, weight>1 is possible
-		for (Node memV : memGraph.getAllNodes()) {
-			nodeCount++;
-			for (Relationship memR : memV.getRelationships(Direction.OUTGOING)) {
-
-				double weight = (Double) memR.getProperty(Consts.WEIGHT)
-						/ normalizedMaxWeight;
-
-				// Consider all edges to a certain extent
-				if (weight < Consts.MIN_EDGE_WEIGHT)
-					weight = Consts.MIN_EDGE_WEIGHT;
-
-				memR.setProperty(Consts.WEIGHT, weight);
-
-				// TODO For prinout only. Remove later!
-				if (weight > maxWeight)
-					maxWeight = weight;
-				if (weight < minWeight)
-					minWeight = weight;
-				edgeCount++;
-			}
-		}
-
 		// PRINTOUT
 		System.out.printf("%s", getTimeStr(System.currentTimeMillis() - time));
 
 		System.out.printf("\tNode Count = %d\n", nodeCount);
 		System.out.printf("\tEdge Count = %d\n", edgeCount);
-		System.out.printf("\tMin Edge Weight = %f\n", minWeight);
-		System.out.printf("\tMax Edge Weight = %f\n", maxWeight);
+		System.out.printf("\tMin Edge Weight = %f\n", normalizedMinWeight);
+		System.out.printf("\tMax Edge Weight = %f\n", normalizedMaxWeight);
 
 		return memGraph;
 
@@ -798,7 +764,7 @@ public class NeoFromFile {
 
 					node.setProperty(nodeProp.getKey(), nodeProp.getValue());
 					transIndexService.index(node, nodeProp.getKey(), nodeProp
-							.getValue());
+							.getValue());										
 
 				}
 
@@ -818,44 +784,56 @@ public class NeoFromFile {
 
 		Transaction tx = transNeo.beginTx();
 
-		String fromName = null;
-		String toName = null;
+		Long fromId = null;
+		Long toId = null;
 
 		try {
 
 			for (NodeData nodeAndRels : nodes) {
-				fromName = (String) nodeAndRels.getProperties().get(Consts.GID);
-				Node fromNode = transIndexService.getSingleNode(Consts.GID,
-						fromName);
+				fromId = (Long) nodeAndRels.getProperties()
+						.get(Consts.NODE_GID);
+				Node fromNode = transIndexService.getSingleNode(
+						Consts.NODE_GID, fromId);
 				Byte fromColor = (Byte) fromNode.getProperty(Consts.COLOR);
 
 				for (Map<String, Object> rel : nodeAndRels.getRelationships()) {
-					toName = (String) rel.get(Consts.GID);
+					toId = (Long) rel.get(Consts.NODE_GID);
 
-					Node toNode = transIndexService.getSingleNode(Consts.GID,
-							toName);
+					Node toNode = transIndexService.getSingleNode(
+							Consts.NODE_GID, toId);
 					Byte toColor = (Byte) toNode.getProperty(Consts.COLOR);
 
 					Relationship neoRel = null;
 
 					if (fromColor == toColor) {
 						neoRel = fromNode.createRelationshipTo(toNode,
-								DynamicRelationshipType.withName("INTERNAL"));
+								DynamicRelationshipType
+										.withName(Consts.INT_REL_TYPE_STR));
 					} else {
 						neoRel = fromNode.createRelationshipTo(toNode,
-								DynamicRelationshipType.withName("EXTERNAL"));
+								DynamicRelationshipType
+										.withName(Consts.EXT_REL_TYPE_STR));
 					}
+
+					Long relGID = neoRel.getId();
 
 					for (Entry<String, Object> relProp : rel.entrySet()) {
 
 						String relPropKey = relProp.getKey();
 
-						if (relPropKey.equals(Consts.GID))
+						if (relPropKey.equals(Consts.NODE_GID))
 							continue;
+
+						if (relPropKey.equals(Consts.REL_GID)) {
+							relGID = (Long) relProp.getValue();
+							continue;
+						}
 
 						neoRel.setProperty(relPropKey, relProp.getValue());
 
 					}
+
+					neoRel.setProperty(Consts.REL_GID, relGID);
 
 				}
 			}
@@ -863,7 +841,7 @@ public class NeoFromFile {
 			tx.success();
 		} catch (Exception e) {
 			e.printStackTrace();
-			System.err.printf("%nfromName[%s] toName[%s]%n", fromName, toName);
+			System.err.printf("%nfromId[%d] toId[%d]%n", fromId, toId);
 		} finally {
 			tx.finish();
 		}
@@ -876,14 +854,14 @@ public class NeoFromFile {
 		try {
 
 			for (NodeData nodeAndRels : nodes) {
-				Long nodeId = (Long) nodeAndRels.getProperties()
-						.get(Consts.LID);
+				Long nodeId = (Long) nodeAndRels.getProperties().get(
+						Consts.NODE_LID);
 				Node node = transNeo.getNodeById(nodeId);
 
 				for (Entry<String, Object> prop : nodeAndRels.getProperties()
 						.entrySet()) {
 
-					if (prop.getKey().equals(Consts.LID))
+					if (prop.getKey().equals(Consts.NODE_LID))
 						continue;
 
 					node.setProperty(prop.getKey(), prop.getValue());

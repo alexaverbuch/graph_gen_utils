@@ -47,15 +47,14 @@ public class GMLWriterUndirectedBasic extends GMLWriter {
 				bufferedWriter.write("\tnode\n");
 				bufferedWriter.write("\t[\n");
 
-				Long nodeId = Long.parseLong((String) node
-						.getProperty(Consts.GID));
+				Long nodeId = (Long) node.getProperty(Consts.NODE_GID);
 
 				bufferedWriter.write(String.format("\t\t%s %s\n",
 						Consts.GML_ID, valToStr(nodeId)));
 
 				for (String propKey : node.getPropertyKeys()) {
 
-					if ((propKey.equals(Consts.GID) == false)
+					if ((propKey.equals(Consts.NODE_GID) == false)
 							&& (propKey.equals(Consts.COLOR) == false)
 							&& (propKey.equals(Consts.WEIGHT) == false)
 							&& (propKey.equals(Consts.LATITUDE) == false)
@@ -64,7 +63,7 @@ public class GMLWriterUndirectedBasic extends GMLWriter {
 
 					Object propVal = node.getProperty(propKey);
 
-					if (propKey.equals(Consts.GID))
+					if (propKey.equals(Consts.NODE_GID))
 						propVal = nodeId;
 
 					bufferedWriter.write(String.format("\t\t%s %s\n",
@@ -86,8 +85,7 @@ public class GMLWriterUndirectedBasic extends GMLWriter {
 
 			for (Node fromNode : transNeo.getAllNodes()) {
 
-				Long fromId = Long.parseLong((String) fromNode
-						.getProperty(Consts.GID));
+				Long fromId = (Long) fromNode.getProperty(Consts.NODE_GID);
 
 				for (Relationship rel : fromNode
 						.getRelationships(Direction.OUTGOING)) {
@@ -96,8 +94,7 @@ public class GMLWriterUndirectedBasic extends GMLWriter {
 
 					Node toNode = rel.getEndNode();
 
-					Long toId = Long.parseLong((String) toNode
-							.getProperty(Consts.GID));
+					Long toId = (Long) toNode.getProperty(Consts.NODE_GID);
 
 					bufferedWriter.write("\tedge\n");
 					bufferedWriter.write("\t[\n");
@@ -107,11 +104,9 @@ public class GMLWriterUndirectedBasic extends GMLWriter {
 							Consts.GML_TARGET, valToStr(toId)));
 
 					for (String propKey : rel.getPropertyKeys()) {
-						if (propKey != Consts.WEIGHT)
+						if ((propKey.equals(Consts.WEIGHT) == false)
+								&& (propKey.equals(Consts.REL_GID) == false))
 							continue;
-
-						// if (propKey.equals(Consts.COLOR))
-						// continue;
 
 						Object propVal = rel.getProperty(propKey);
 

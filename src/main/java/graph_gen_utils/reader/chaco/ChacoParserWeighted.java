@@ -49,7 +49,7 @@ public class ChacoParserWeighted implements GraphReader {
 
 		private NodeData nextNodeData = null;
 		private Scanner chacoScanner = null;
-		private Integer nodeNumber = 0;
+		private Long nodeNumber = new Long(0);
 
 		public ChacoWeightedNodeIterator(File chacolFile)
 				throws FileNotFoundException {
@@ -114,7 +114,7 @@ public class ChacoParserWeighted implements GraphReader {
 
 				StringTokenizer st = new StringTokenizer(aLine, " ");
 
-				node.getProperties().put(Consts.GID, Integer.toString(nodeNumber));
+				node.getProperties().put(Consts.NODE_GID, nodeNumber);
 				node.getProperties().put(Consts.WEIGHT,
 						Double.parseDouble(st.nextToken()));
 				node.getProperties().put(Consts.COLOR, (byte) -1);
@@ -137,7 +137,7 @@ public class ChacoParserWeighted implements GraphReader {
 
 		private NodeData nextNodeData = null;
 		private Scanner chacoScanner = null;
-		private Integer nodeNumber = 0;
+		private Long nodeNumber = new Long(0);
 
 		public ChacoWeightedRelIterator(File gmlFile) throws Exception {
 			this.chacoScanner = new Scanner(gmlFile);
@@ -201,7 +201,7 @@ public class ChacoParserWeighted implements GraphReader {
 
 				StringTokenizer st = new StringTokenizer(aLine, " ");
 
-				node.getProperties().put(Consts.GID, Integer.toString(nodeNumber));
+				node.getProperties().put(Consts.NODE_GID, nodeNumber);
 				node.getProperties().put(Consts.WEIGHT,
 						Double.parseDouble(st.nextToken()));
 				node.getProperties().put(Consts.COLOR, (byte) -1);
@@ -210,13 +210,13 @@ public class ChacoParserWeighted implements GraphReader {
 				while (st.hasMoreTokens()) {
 					Map<String, Object> rel = new HashMap<String, Object>();
 
-					Integer toNode = Integer.parseInt(st.nextToken());
+					Long toNode = Long.parseLong(st.nextToken());
 					if (toNode <= nodeNumber) {
 						st.nextToken();
 						continue;
 					}
 
-					rel.put(Consts.GID, toNode.toString());
+					rel.put(Consts.NODE_GID, toNode);
 					rel.put(Consts.WEIGHT, Double.parseDouble(st.nextToken()));
 					node.getRelationships().add(rel);
 				}

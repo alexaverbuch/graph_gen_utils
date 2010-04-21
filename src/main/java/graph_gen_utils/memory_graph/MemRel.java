@@ -11,18 +11,23 @@ import org.neo4j.graphdb.RelationshipType;
 
 public class MemRel implements Relationship {
 
-	private final double DEFAULT_WEIGHT = 1.0;
-
 	private MemNode startNode = null;
 	private MemNode endNode = null;
 	private HashMap<String, Object> properties = null;
+	private long id = -1;
 
-	public MemRel(MemNode startNode, MemNode endNode) {
+	public MemRel(long id, MemNode startNode, MemNode endNode) {
 		super();
 		this.startNode = startNode;
 		this.endNode = endNode;
 		this.properties = new HashMap<String, Object>();
-		this.properties.put(Consts.WEIGHT, DEFAULT_WEIGHT);
+		this.properties.put(Consts.WEIGHT, Consts.DEFAULT_REL_WEIGHT);
+		this.id = id;
+	}
+
+	@Override
+	public long getId() {
+		return id;
 	}
 
 	@Override
@@ -32,14 +37,24 @@ public class MemRel implements Relationship {
 	}
 
 	@Override
+	public Node getStartNode() {
+		return startNode;
+	}
+
+	@Override
 	public Node getEndNode() {
 		return endNode;
 	}
 
 	@Override
-	public long getId() {
-		// NOTE Not Supported
-		throw new UnsupportedOperationException();
+	public Node getOtherNode(Node node) {
+		if (node.getId() == endNode.getId())
+			return startNode;
+		else if (node.getId() == startNode.getId())
+			return endNode;
+
+		throw new NotFoundException("Node[" + node.getId()
+				+ "] not connected to this Relationship[" + getId() + "]");
 	}
 
 	@Override
@@ -48,42 +63,8 @@ public class MemRel implements Relationship {
 	}
 
 	@Override
-	public Node getOtherNode(Node node) {
-		if (node == endNode)
-			return startNode;
-		else if (node == startNode)
-			return endNode;
-
-		throw new NotFoundException("Node[" + node.getId()
-				+ "] not connected to this relationship[" + getId() + "]");
-	}
-
-	@Override
-	public Node getStartNode() {
-		return startNode;
-	}
-
-	@Override
-	public RelationshipType getType() {
-		// NOTE Not Supported
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public boolean isType(RelationshipType type) {
-		// NOTE Not Supported
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
 	public Object getProperty(String key) {
 		return properties.get(key);
-	}
-
-	@Override
-	public Object getProperty(String key, Object defaultValue) {
-		// NOTE Not Supported
-		throw new UnsupportedOperationException();
 	}
 
 	@Override
@@ -109,6 +90,28 @@ public class MemRel implements Relationship {
 	@Override
 	public void setProperty(String key, Object value) {
 		properties.put(key, value);
+	}
+
+	// **********************
+	// Unsupported Operations
+	// **********************
+
+	@Override
+	public RelationshipType getType() {
+		// NOTE Not Supported
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public boolean isType(RelationshipType type) {
+		// NOTE Not Supported
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public Object getProperty(String key, Object defaultValue) {
+		// NOTE Not Supported
+		throw new UnsupportedOperationException();
 	}
 
 }

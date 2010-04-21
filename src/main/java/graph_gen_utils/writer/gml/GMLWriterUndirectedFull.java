@@ -47,8 +47,7 @@ public class GMLWriterUndirectedFull extends GMLWriter {
 				bufferedWriter.write("\tnode\n");
 				bufferedWriter.write("\t[\n");
 
-				Long nodeId = Long.parseLong((String) node
-						.getProperty(Consts.GID));
+				Long nodeId = (Long) node.getProperty(Consts.NODE_GID);
 
 				bufferedWriter.write(String.format("\t\t%s %s\n",
 						Consts.GML_ID, valToStr(nodeId)));
@@ -56,7 +55,7 @@ public class GMLWriterUndirectedFull extends GMLWriter {
 				for (String propKey : node.getPropertyKeys()) {
 					Object propVal = node.getProperty(propKey);
 
-					if (propKey.equals(Consts.GID))
+					if (propKey.equals(Consts.NODE_GID))
 						propVal = nodeId;
 
 					bufferedWriter.write(String.format("\t\t%s %s\n",
@@ -78,8 +77,7 @@ public class GMLWriterUndirectedFull extends GMLWriter {
 
 			for (Node fromNode : transNeo.getAllNodes()) {
 
-				Long fromId = Long.parseLong((String) fromNode
-						.getProperty(Consts.GID));
+				Long fromId = (Long) fromNode.getProperty(Consts.NODE_GID);
 
 				for (Relationship rel : fromNode
 						.getRelationships(Direction.OUTGOING)) {
@@ -88,8 +86,7 @@ public class GMLWriterUndirectedFull extends GMLWriter {
 
 					Node toNode = rel.getEndNode();
 
-					Long toId = Long.parseLong((String) toNode
-							.getProperty(Consts.GID));
+					Long toId = (Long) toNode.getProperty(Consts.NODE_GID);
 
 					bufferedWriter.write("\tedge\n");
 					bufferedWriter.write("\t[\n");

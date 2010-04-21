@@ -1,5 +1,7 @@
 package graph_gen_utils.memory_graph;
 
+import graph_gen_utils.general.Consts;
+
 import java.io.Serializable;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -16,21 +18,23 @@ import org.uncommons.maths.random.MersenneTwisterRNG;
 public class MemGraph implements GraphDatabaseService {
 
 	private Random rng = null;
-	private long nextId = -1;
+	private long nextNodeId = -1;
 
 	// Guarantees same order when iterating
 	private LinkedHashMap<Long, Node> nodes = null;
+	private LinkedHashMap<Long, Relationship> relationships = null;
 
 	public MemGraph() {
 		super();
 		this.rng = new MersenneTwisterRNG();
 		this.nodes = new LinkedHashMap<Long, Node>();
+		this.relationships = new LinkedHashMap<Long, Relationship>();
 	}
 
 	// NOTE Needed because no IdGenerator is used
 	// ID must be set before createNode() is called
-	public void setNextId(long nextId) {
-		this.nextId = nextId;
+	public void setNextNodeId(long nextNodeId) {
+		this.nextNodeId = nextNodeId;
 	}
 
 	// NOTE Needed because no NodeManager is used
@@ -39,6 +43,26 @@ public class MemGraph implements GraphDatabaseService {
 		if (nodes.remove(id) == null)
 			throw new NotFoundException("Node[" + id
 					+ "] not found so could not be removed");
+	}
+
+	// NOTE Needed because no NodeManager is used
+	// Called from MemNode. Should NEVER be called from elsewhere
+	public void removeRelationship(Long id) {
+		if (relationships.remove(id) == null)
+			throw new NotFoundException("Relationship[" + id
+					+ "] not found so could not be removed");
+	}
+
+	// NOTE Needed because no NodeManager is used
+	// Called from MemNode. Should NEVER be called from elsewhere
+	public void addRelationship(MemRel memRel) {
+		if (relationships.containsKey(memRel.getId()) == false) {
+			relationships.put(memRel.getId(), memRel);
+			return;
+		}
+
+		throw new NotFoundException("Relationship[" + memRel.getId()
+				+ "] not added as it already exists");
 	}
 
 	@Override
@@ -53,16 +77,37 @@ public class MemGraph implements GraphDatabaseService {
 
 	@Override
 	public Node createNode() {
-		if (nextId == -1) {
+		if (nextNodeId == -1) {
 			// NOTE Exception not thrown due to GraphDatabaseService interface
-			throw new Error("NextId has not been set");
+			throw new Error("NextNodeId has not been set");
 		}
 
-		MemNode node = new MemNode(nextId, rng, this);
-		nextId = -1;
+		MemNode node = new MemNode(nextNodeId, rng, this);
+		node.setProperty(Consts.NODE_GID, node.getId());
+		nextNodeId = -1;
 		nodes.put(node.getId(), node);
 		return node;
 	}
+
+	@Override
+	public Node getNodeById(long id) {
+		Node node = nodes.get(id);
+		if (node != null)
+			return node;
+		throw new NotFoundException("Node[" + id + "] not found");
+	}
+
+	@Override
+	public Relationship getRelationshipById(long id) {
+		Relationship rel = relationships.get(id);
+		if (rel != null)
+			return rel;
+		throw new NotFoundException("Relationship[" + id + "] not found");
+	}
+
+	// **********************
+	// Unsupported Operations
+	// **********************
 
 	@Override
 	public boolean enableRemoteShell() {
@@ -77,21 +122,7 @@ public class MemGraph implements GraphDatabaseService {
 	}
 
 	@Override
-	public Node getNodeById(long id) {
-		Node node = nodes.get(id);
-		if (node != null)
-			return node;
-		throw new NotFoundException("Node[" + id + "] not found");
-	}
-
-	@Override
 	public Node getReferenceNode() {
-		// NOTE Not Supported
-		throw new UnsupportedOperationException();
-	}
-
-	@Override
-	public Relationship getRelationshipById(long id) {
 		// NOTE Not Supported
 		throw new UnsupportedOperationException();
 	}
