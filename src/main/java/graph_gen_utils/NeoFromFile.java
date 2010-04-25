@@ -23,7 +23,10 @@ import graph_gen_utils.writer.gml.GMLWriterUndirectedFull;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.Map.Entry;
 
 import org.neo4j.graphdb.Direction;
@@ -31,7 +34,6 @@ import org.neo4j.graphdb.DynamicRelationshipType;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
-import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.index.IndexService;
 import org.neo4j.index.lucene.LuceneIndexService;
@@ -53,7 +55,13 @@ public class NeoFromFile {
 	}
 
 	public static void main(String[] args) throws Exception {
-
+		Set<String> x = new HashSet<String>();
+		x.add("cow");
+		System.out.println("Add 'cow'");
+		x.add("chicken");
+		System.out.println("Add 'chicken'");
+		System.out.printf("Contains 'cow' == %b\n", x.contains("cow"));
+		System.out.printf("Contains 'horse' == %b\n", x.contains("horse"));
 	}
 
 	// **************
@@ -75,11 +83,9 @@ public class NeoFromFile {
 	 * @param partitioner
 	 *            implementation of {@link Partitioner} that defines
 	 *            cluster/partition allocation scheme
-	 * 
-	 * @throws Exception
 	 */
 	public static void applyPtnToNeo(GraphDatabaseService transNeo,
-			Partitioner partitioner) throws Exception {
+			Partitioner partitioner) {
 
 		// PRINTOUT
 		long time = System.currentTimeMillis();
@@ -141,6 +147,8 @@ public class NeoFromFile {
 			applyNodeProps(transIndexService, transNeo, nodesBuff);
 		}
 
+		transIndexService.shutdown();
+
 		// PRINTOUT
 		System.out.printf("%s", getTimeStr(System.currentTimeMillis() - time));
 
@@ -158,15 +166,16 @@ public class NeoFromFile {
 	 * @param topology
 	 *            instance of {@link GraphTopology} the defines generated
 	 *            topology
-	 * 
-	 * @throws Exception
 	 */
 	public static void writeNeoFromTopology(GraphDatabaseService transNeo,
-			GraphTopology topology) throws Exception {
+			GraphTopology topology) {
 
-		Partitioner partitioner = new PartitionerAsSingle((byte) -1);
-
-		storePartitionedNodesAndRelsToNeo(transNeo, topology, partitioner);
+		try {
+			Partitioner partitioner = new PartitionerAsSingle((byte) -1);
+			storePartitionedNodesAndRelsToNeo(transNeo, topology, partitioner);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 
 	}
 
@@ -189,14 +198,16 @@ public class NeoFromFile {
 	 * @param partitioner
 	 *            implementation of {@link Partitioner} that defines
 	 *            cluster/partition allocation scheme
-	 * 
-	 * @throws Exception
 	 */
 	public static void writeNeoFromTopologyAndPtn(
 			GraphDatabaseService transNeo, GraphTopology topology,
-			Partitioner partitioner) throws Exception {
+			Partitioner partitioner) {
 
-		storePartitionedNodesAndRelsToNeo(transNeo, topology, partitioner);
+		try {
+			storePartitionedNodesAndRelsToNeo(transNeo, topology, partitioner);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 
 	}
 
@@ -209,16 +220,17 @@ public class NeoFromFile {
 	 * 
 	 * @param graphPath
 	 *            {@link String} representing path to .graph file
-	 * 
-	 * @throws Exception
 	 */
 	public static void writeNeoFromChaco(GraphDatabaseService transNeo,
-			String graphPath) throws Exception {
+			String graphPath) {
 
-		GraphReader parser = ChacoParserFactory.getChacoParser(graphPath);
-		Partitioner partitioner = new PartitionerAsSingle((byte) -1);
-
-		storePartitionedNodesAndRelsToNeo(transNeo, parser, partitioner);
+		try {
+			GraphReader parser = ChacoParserFactory.getChacoParser(graphPath);
+			Partitioner partitioner = new PartitionerAsSingle((byte) -1);
+			storePartitionedNodesAndRelsToNeo(transNeo, parser, partitioner);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 
 	}
 
@@ -242,16 +254,17 @@ public class NeoFromFile {
 	 * 
 	 * @param ptnPath
 	 *            {@link String} representing path to .ptn file
-	 * 
-	 * @throws Exception
 	 */
 	public static void writeNeoFromChacoAndPtn(GraphDatabaseService transNeo,
-			String graphPath, String ptnPath) throws Exception {
+			String graphPath, String ptnPath) {
 
-		GraphReader parser = ChacoParserFactory.getChacoParser(graphPath);
-		Partitioner partitioner = new PartitionerAsFile(new File(ptnPath));
-
-		storePartitionedNodesAndRelsToNeo(transNeo, parser, partitioner);
+		try {
+			GraphReader parser = ChacoParserFactory.getChacoParser(graphPath);
+			Partitioner partitioner = new PartitionerAsFile(new File(ptnPath));
+			storePartitionedNodesAndRelsToNeo(transNeo, parser, partitioner);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 
 	}
 
@@ -272,15 +285,16 @@ public class NeoFromFile {
 	 * @param partitioner
 	 *            implementation of {@link Partitioner} that defines
 	 *            cluster/partition allocation scheme
-	 * 
-	 * @throws Exception
 	 */
 	public static void writeNeoFromChacoAndPtn(GraphDatabaseService transNeo,
-			String graphPath, Partitioner partitioner) throws Exception {
+			String graphPath, Partitioner partitioner) {
 
-		GraphReader parser = ChacoParserFactory.getChacoParser(graphPath);
-
-		storePartitionedNodesAndRelsToNeo(transNeo, parser, partitioner);
+		try {
+			GraphReader parser = ChacoParserFactory.getChacoParser(graphPath);
+			storePartitionedNodesAndRelsToNeo(transNeo, parser, partitioner);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 
 	}
 
@@ -295,16 +309,17 @@ public class NeoFromFile {
 	 * 
 	 * @param gmlPath
 	 *            {@link String} representing path to .gml file
-	 * 
-	 * @throws Exception
 	 */
 	public static void writeNeoFromGML(GraphDatabaseService transNeo,
-			String gmlPath) throws Exception {
+			String gmlPath) {
 
-		GraphReader parser = new GMLParserDirected(new File(gmlPath));
-		Partitioner partitioner = new PartitionerAsSingle((byte) -1);
-
-		storePartitionedNodesAndRelsToNeo(transNeo, parser, partitioner);
+		try {
+			GraphReader parser = new GMLParserDirected(new File(gmlPath));
+			Partitioner partitioner = new PartitionerAsSingle((byte) -1);
+			storePartitionedNodesAndRelsToNeo(transNeo, parser, partitioner);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 
 	}
 
@@ -325,15 +340,16 @@ public class NeoFromFile {
 	 * @param partitioner
 	 *            implementation of {@link Partitioner} that defines
 	 *            cluster/partition allocation scheme
-	 * 
-	 * @throws Exception
 	 */
 	public static void writeNeoFromGMLAndPtn(GraphDatabaseService transNeo,
-			String gmlPath, Partitioner partitioner) throws Exception {
+			String gmlPath, Partitioner partitioner) {
 
-		GraphReader parser = new GMLParserDirected(new File(gmlPath));
-
-		storePartitionedNodesAndRelsToNeo(transNeo, parser, partitioner);
+		try {
+			GraphReader parser = new GMLParserDirected(new File(gmlPath));
+			storePartitionedNodesAndRelsToNeo(transNeo, parser, partitioner);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 
 	}
 
@@ -353,18 +369,18 @@ public class NeoFromFile {
 	 * @param chacoType
 	 *            {@link ChacoType} specifies whether node and/or edge weights
 	 *            are written to the chaco file
-	 * 
-	 * @throws Exception
 	 */
 	public static void writeChaco(GraphDatabaseService transNeo,
-			String chacoPath, ChacoType chacoType) throws Exception {
+			String chacoPath, ChacoType chacoType) {
 
-		File chacoFile = new File(chacoPath);
-
-		GraphWriter chacoWriter = ChacoWriterFactory.getChacoWriter(chacoType,
-				chacoFile);
-
-		writeGraphToFile(transNeo, chacoWriter);
+		try {
+			File chacoFile = new File(chacoPath);
+			GraphWriter chacoWriter = ChacoWriterFactory.getChacoWriter(
+					chacoType, chacoFile);
+			writeGraphToFile(transNeo, chacoWriter);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 
 	}
 
@@ -387,20 +403,19 @@ public class NeoFromFile {
 	 * 
 	 * @param ptnPath
 	 *            {@link String} representing path to .ptn file
-	 * 
-	 * @throws Exception
 	 */
 	public static void writeChacoAndPtn(GraphDatabaseService transNeo,
-			String chacoPath, ChacoType chacoType, String ptnPath)
-			throws Exception {
+			String chacoPath, ChacoType chacoType, String ptnPath) {
 
-		File chacoFile = new File(chacoPath);
-		File ptnFile = new File(ptnPath);
-
-		GraphWriter chacoPtnWriter = ChacoPtnWriterFactory.getChacoPtnWriter(
-				chacoType, chacoFile, ptnFile);
-
-		writeGraphToFile(transNeo, chacoPtnWriter);
+		try {
+			File chacoFile = new File(chacoPath);
+			File ptnFile = new File(ptnPath);
+			GraphWriter chacoPtnWriter = ChacoPtnWriterFactory
+					.getChacoPtnWriter(chacoType, chacoFile, ptnFile);
+			writeGraphToFile(transNeo, chacoPtnWriter);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 
 	}
 
@@ -416,17 +431,17 @@ public class NeoFromFile {
 	 * 
 	 * @param gmlPath
 	 *            {@link String} representing path to .gml file
-	 * 
-	 * @throws Exception
 	 */
 	public static void writeGMLFull(GraphDatabaseService transNeo,
-			String gmlPath) throws Exception {
+			String gmlPath) {
 
-		File gmlFile = new File(gmlPath);
-
-		GraphWriter gmlWriterFull = new GMLWriterUndirectedFull(gmlFile);
-
-		writeGraphToFile(transNeo, gmlWriterFull);
+		try {
+			File gmlFile = new File(gmlPath);
+			GraphWriter gmlWriterFull = new GMLWriterUndirectedFull(gmlFile);
+			writeGraphToFile(transNeo, gmlWriterFull);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 
 	}
 
@@ -436,24 +451,24 @@ public class NeoFromFile {
 	 * 
 	 * Only certain {@link Node} and {@link Relationship} properties are written
 	 * to the GML file. {@link Consts#COLOR}, {@link Consts#WEIGHT},
-	 * {@link Consts#NODE_GID}, and {@link Consts#NODE_LID}.
+	 * {@link Consts#NODE_GID}.
 	 * 
 	 * @param transNeo
 	 *            {@link GraphDatabaseService} representing a Neo4j instance
 	 * 
 	 * @param gmlPath
 	 *            {@link String} representing path to .gml file
-	 * 
-	 * @throws Exception
 	 */
 	public static void writeGMLBasic(GraphDatabaseService transNeo,
-			String gmlPath) throws Exception {
+			String gmlPath) {
 
-		File gmlFile = new File(gmlPath);
-
-		GraphWriter gmlWriterBasic = new GMLWriterUndirectedBasic(gmlFile);
-
-		writeGraphToFile(transNeo, gmlWriterBasic);
+		try {
+			File gmlFile = new File(gmlPath);
+			GraphWriter gmlWriterBasic = new GMLWriterUndirectedBasic(gmlFile);
+			writeGraphToFile(transNeo, gmlWriterBasic);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 
 	}
 
@@ -466,21 +481,24 @@ public class NeoFromFile {
 	 * 
 	 * @param metricsPath
 	 *            {@link String} representing path to .met file
-	 * 
-	 * @throws Exception
 	 */
 	public static void writeMetrics(GraphDatabaseService transNeo,
-			String metricsPath) throws Exception {
+			String metricsPath) {
 
-		// PRINTOUT
-		long time = System.currentTimeMillis();
-		System.out.printf("Writing Metrics File...");
+		try {
+			// PRINTOUT
+			long time = System.currentTimeMillis();
+			System.out.printf("Writing Metrics File...");
 
-		File metricsFile = new File(metricsPath);
-		MetricsWriterUndirected.writeMetrics(transNeo, metricsFile);
+			File metricsFile = new File(metricsPath);
+			MetricsWriterUndirected.writeMetrics(transNeo, metricsFile);
 
-		// PRINTOUT
-		System.out.printf("%s", getTimeStr(System.currentTimeMillis() - time));
+			// PRINTOUT
+			System.out.printf("%s", getTimeStr(System.currentTimeMillis()
+					- time));
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 
 	}
 
@@ -493,20 +511,25 @@ public class NeoFromFile {
 	 * 
 	 * @param metricsPath
 	 *            {@link String} representing path to .met file
-	 * 
-	 * @throws Exception
 	 */
 	public static void writeMetricsCSV(GraphDatabaseService transNeo,
-			String metricsPath) throws Exception {
-		// PRINTOUT
-		long time = System.currentTimeMillis();
-		System.out.printf("Writing Metrics CSV File...");
+			String metricsPath) {
 
-		File metricsFile = new File(metricsPath);
-		MetricsWriterUndirected.writeMetricsCSV(transNeo, metricsFile, null);
+		try {
+			// PRINTOUT
+			long time = System.currentTimeMillis();
+			System.out.printf("Writing Metrics CSV File...");
 
-		// PRINTOUT
-		System.out.printf("%s", getTimeStr(System.currentTimeMillis() - time));
+			File metricsFile = new File(metricsPath);
+			MetricsWriterUndirected
+					.writeMetricsCSV(transNeo, metricsFile, null);
+
+			// PRINTOUT
+			System.out.printf("%s", getTimeStr(System.currentTimeMillis()
+					- time));
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 
 	/**
@@ -522,27 +545,33 @@ public class NeoFromFile {
 	 * @param timeStep
 	 *            {@link Long} representing the time-step/iteration related to
 	 *            these metrics
-	 * 
-	 * @throws Exception
 	 */
 	public static void appendMetricsCSV(GraphDatabaseService transNeo,
-			String metricsPath, Long timeStep) throws Exception {
+			String metricsPath, Long timeStep) {
 
-		// PRINTOUT
-		long time = System.currentTimeMillis();
-		System.out.printf("Appending Metrics CSV File...");
+		try {
+			// PRINTOUT
+			long time = System.currentTimeMillis();
+			System.out.printf("Appending Metrics CSV File...");
 
-		File metricsFile = new File(metricsPath);
-		MetricsWriterUndirected.appendMetricsCSV(transNeo, metricsFile,
-				timeStep);
+			File metricsFile = new File(metricsPath);
+			MetricsWriterUndirected.appendMetricsCSV(transNeo, metricsFile,
+					timeStep);
 
-		// PRINTOUT
-		System.out.printf("%s", getTimeStr(System.currentTimeMillis() - time));
+			// PRINTOUT
+			System.out.printf("%s", getTimeStr(System.currentTimeMillis()
+					- time));
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 
 	}
 
 	/**
-	 * Loads the current Neo4j instance into an in-memory graph.
+	 * Loads the current Neo4j instance into an in-memory graph. Normalized edge
+	 * weights to the range [0,1].
+	 * 
+	 * 
 	 * 
 	 * @param transNeo
 	 *            {@link GraphDatabaseService} representing a Neo4j instance
@@ -589,6 +618,8 @@ public class NeoFromFile {
 			}
 
 			normalizedMinWeight = minWeight / maxWeight;
+			if (normalizedMinWeight < Consts.MIN_EDGE_WEIGHT)
+				normalizedMinWeight = Consts.MIN_EDGE_WEIGHT;
 
 			for (Node node : transNeo.getAllNodes()) {
 				Long nodeGID = (Long) node.getProperty(Consts.NODE_GID);
@@ -596,9 +627,11 @@ public class NeoFromFile {
 				memGraph.setNextNodeId(nodeGID);
 				MemNode memNode = (MemNode) memGraph.createNode();
 				memNode.setProperty(Consts.NODE_GID, nodeGID);
-				memNode.setProperty(Consts.NODE_LID, node.getId());
-				memNode.setProperty(Consts.COLOR, (Byte) node
-						.getProperty(Consts.COLOR));
+
+				Byte nodeColor = -1;
+				if (node.hasProperty(Consts.COLOR))
+					nodeColor = (Byte) node.getProperty(Consts.COLOR);
+				memNode.setProperty(Consts.COLOR, nodeColor);
 
 			}
 
@@ -627,8 +660,122 @@ public class NeoFromFile {
 
 					MemNode endNode = (MemNode) memGraph.getNodeById(endNodeId);
 
-					RelationshipType relType = DynamicRelationshipType
-							.withName(Consts.DEFAULT_REL_TYPE_STR);
+					Long relGID = rel.getId();
+					if (rel.hasProperty(Consts.REL_GID))
+						relGID = (Long) rel.getProperty(Consts.REL_GID);
+
+					memNode.setNextRelId(relGID);
+					MemRel memRel = (MemRel) memNode.createRelationshipTo(
+							endNode, Consts.RelationshipTypes.DEFAULT);
+					memRel.setProperty(Consts.WEIGHT, weight);
+				}
+
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			tx.finish();
+		}
+
+		// PRINTOUT
+		System.out.printf("%s", getTimeStr(System.currentTimeMillis() - time));
+
+		System.out.printf("\tNode Count = %d\n", nodeCount);
+		System.out.printf("\tEdge Count = %d\n", edgeCount);
+		System.out.printf("\tMin Edge Weight = %f\n", normalizedMinWeight);
+		System.out.printf("\tMax Edge Weight = %f\n", normalizedMaxWeight);
+
+		return memGraph;
+
+	}
+
+	public static MemGraph readMemGraph(GraphDatabaseService transNeo) {
+		return readMemGraph(transNeo, new HashSet<String>(),
+				new HashSet<String>());
+	}
+
+	public static MemGraph readMemGraph(GraphDatabaseService transNeo,
+			Set<String> nodeProps, Set<String> relProps) {
+
+		Set<String> defaultNodeProps = new HashSet<String>(Arrays.asList(
+				Consts.NODE_GID, Consts.NODE_LID, Consts.COLOR));
+
+		Set<String> defaultRelProps = new HashSet<String>(Arrays.asList(
+				Consts.REL_GID, Consts.WEIGHT));
+
+		// PRINTOUT
+		long time = System.currentTimeMillis();
+		System.out.printf("Loading Neo4j into MemGraph...");
+
+		MemGraph memGraph = new MemGraph();
+
+		Transaction tx = transNeo.beginTx();
+
+		long nodeCount = 0;
+		long edgeCount = 0;
+		double minWeight = Double.MAX_VALUE;
+		double maxWeight = Double.MIN_VALUE;
+		double normalizedMinWeight = Consts.MIN_EDGE_WEIGHT;
+		double normalizedMaxWeight = Double.MIN_VALUE;
+
+		try {
+			for (Node node : transNeo.getAllNodes()) {
+
+				Long nodeGID = (Long) node.getProperty(Consts.NODE_GID);
+
+				memGraph.setNextNodeId(nodeGID);
+				MemNode memNode = (MemNode) memGraph.createNode();
+				memNode.setProperty(Consts.NODE_GID, nodeGID);
+
+				Byte nodeColor = -1;
+				if (node.hasProperty(Consts.COLOR))
+					nodeColor = (Byte) node.getProperty(Consts.COLOR);
+				memNode.setProperty(Consts.COLOR, nodeColor);
+
+				for (String key : node.getPropertyKeys()) {
+					if (defaultNodeProps.contains(key))
+						continue;
+
+					if (nodeProps.contains(key))
+						memNode.setProperty(key, node.getProperty(key));
+				}
+
+				nodeCount++;
+
+				for (Relationship rel : node
+						.getRelationships(Direction.OUTGOING)) {
+
+					edgeCount++;
+
+					if (rel.hasProperty(Consts.WEIGHT)) {
+						double weight = (Double) rel.getProperty(Consts.WEIGHT);
+						if (weight > maxWeight)
+							maxWeight = weight;
+						if (weight < minWeight)
+							minWeight = weight;
+					}
+
+				}
+
+			}
+
+			normalizedMinWeight = minWeight / maxWeight;
+			if (normalizedMinWeight < Consts.MIN_EDGE_WEIGHT)
+				normalizedMinWeight = Consts.MIN_EDGE_WEIGHT;
+
+			for (Node node : transNeo.getAllNodes()) {
+
+				Long nodeGID = (Long) node.getProperty(Consts.NODE_GID);
+
+				MemNode memNode = (MemNode) memGraph.getNodeById(nodeGID);
+
+				for (Relationship rel : node
+						.getRelationships(Direction.OUTGOING)) {
+
+					Long endNodeId = (Long) rel.getEndNode().getProperty(
+							Consts.NODE_GID);
+
+					MemNode endNode = (MemNode) memGraph.getNodeById(endNodeId);
 
 					Long relGID = rel.getId();
 					if (rel.hasProperty(Consts.REL_GID))
@@ -636,8 +783,28 @@ public class NeoFromFile {
 
 					memNode.setNextRelId(relGID);
 					MemRel memRel = (MemRel) memNode.createRelationshipTo(
-							endNode, relType);
+							endNode, Consts.RelationshipTypes.DEFAULT);
+
+					// Store normalized edge weight, [0,1]
+					double weight = normalizedMinWeight;
+					if (rel.hasProperty(Consts.WEIGHT)) {
+						weight = (Double) rel.getProperty(Consts.WEIGHT)
+								/ maxWeight;
+
+						if (weight > normalizedMaxWeight)
+							normalizedMaxWeight = weight;
+					}
+
 					memRel.setProperty(Consts.WEIGHT, weight);
+
+					for (String key : rel.getPropertyKeys()) {
+						if (defaultRelProps.contains(key))
+							continue;
+
+						if (relProps.contains(key))
+							memRel.setProperty(key, rel.getProperty(key));
+					}
+
 				}
 
 			}
@@ -764,7 +931,7 @@ public class NeoFromFile {
 
 					node.setProperty(nodeProp.getKey(), nodeProp.getValue());
 					transIndexService.index(node, nodeProp.getKey(), nodeProp
-							.getValue());										
+							.getValue());
 
 				}
 
@@ -807,12 +974,10 @@ public class NeoFromFile {
 
 					if (fromColor == toColor) {
 						neoRel = fromNode.createRelationshipTo(toNode,
-								DynamicRelationshipType
-										.withName(Consts.INT_REL_TYPE_STR));
+								Consts.RelationshipTypes.INTERNAL);
 					} else {
 						neoRel = fromNode.createRelationshipTo(toNode,
-								DynamicRelationshipType
-										.withName(Consts.EXT_REL_TYPE_STR));
+								Consts.RelationshipTypes.EXTERNAL);
 					}
 
 					Long relGID = neoRel.getId();
