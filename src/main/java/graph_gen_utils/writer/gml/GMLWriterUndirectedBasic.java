@@ -53,7 +53,7 @@ public class GMLWriterUndirectedBasic extends GMLWriter {
 						Consts.GML_ID, valToStr(nodeId)));
 
 				for (String propKey : node.getPropertyKeys()) {
-
+					
 					if ((propKey.equals(Consts.NODE_GID) == false)
 							&& (propKey.equals(Consts.COLOR) == false)
 							&& (propKey.equals(Consts.WEIGHT) == false)

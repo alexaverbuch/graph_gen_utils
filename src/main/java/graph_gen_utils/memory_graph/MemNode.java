@@ -106,12 +106,14 @@ public class MemNode implements Node {
 
 	@Override
 	public Iterable<Relationship> getRelationships() {
-		return new RelationshipIterator(Direction.BOTH);
+		return relationships.values();
 	}
 
 	@Override
 	// TODO implement with iterator later
 	public Iterable<Relationship> getRelationships(Direction dir) {
+		if (dir == Direction.BOTH)
+			return relationships.values();
 		return new RelationshipIterator(dir);
 	}
 
@@ -275,11 +277,13 @@ public class MemNode implements Node {
 		private Direction direction = null;
 		private Iterator<Relationship> relationshipIter = null;
 		private Relationship nextRelationship = null;
+		private Relationship tempNextRelationship = null;
 
 		public RelationshipIterator(Direction direction) {
 			this.direction = direction;
 			this.relationshipIter = relationships.values().iterator();
 			this.nextRelationship = null;
+			this.tempNextRelationship = null;
 		}
 
 		@Override
@@ -288,15 +292,15 @@ public class MemNode implements Node {
 				if (nextRelationship == null)
 					nextRelationship = relationshipIter.next();
 
-				if (direction == Direction.BOTH)
+				if ((direction == Direction.OUTGOING)
+						&& (nextRelationship.getStartNode().getId() == getId()))
 					return true;
 
 				if ((direction == Direction.INCOMING)
 						&& (nextRelationship.getEndNode().getId() == getId()))
 					return true;
 
-				if ((direction == Direction.OUTGOING)
-						&& (nextRelationship.getStartNode().getId() == getId()))
+				if (direction == Direction.BOTH)
 					return true;
 
 				nextRelationship = null;
@@ -308,13 +312,13 @@ public class MemNode implements Node {
 		@Override
 		public Relationship next() {
 			if (nextRelationship != null) {
-				Relationship tempNextRelationship = nextRelationship;
+				tempNextRelationship = nextRelationship;
 				nextRelationship = null;
 				return tempNextRelationship;
 			}
 
 			if (hasNext()) {
-				Relationship tempNextRelationship = nextRelationship;
+				tempNextRelationship = nextRelationship;
 				nextRelationship = null;
 				return tempNextRelationship;
 			}

@@ -6,11 +6,14 @@ import graph_gen_utils.general.Consts;
 import graph_gen_utils.general.DirUtils;
 import graph_gen_utils.memory_graph.MemGraph;
 import graph_gen_utils.memory_graph.MemNode;
+import graph_gen_utils.partitioner.PartitionerAsBalanced;
 
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.DynamicRelationshipType;
 import org.neo4j.graphdb.GraphDatabaseService;
+import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
+import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.EmbeddedGraphDatabase;
 
@@ -20,27 +23,162 @@ public class DodgyTests {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		try {
-
-			read_write_read_write_etc();
-
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+		read_write_read_write_etc();
 	}
 
-	private static void read_write_read_write_etc() throws Exception {
-		DirUtils.cleanDir("var");
+	private static void cleanup() {
+		GraphDatabaseService romaniaNeo = new EmbeddedGraphDatabase(
+				"var/romania-BAL2-GID-COORDS_ALL-CARSHORTEST");
+
+		do_remove_edge_types(romaniaNeo);
+		do_remove_orphaned_nodes(romaniaNeo);
+
+		NeoFromFile.applyPtnToNeo(romaniaNeo, new PartitionerAsBalanced(
+				(byte) 2));
+
+		NeoFromFile
+				.writeGMLBasic(romaniaNeo,
+						"var/romania-balanced2-named-coords_all-carshortest-no_orphoned.basic.gml");
+
+		romaniaNeo.shutdown();
+	}
+
+	private static void do_remove_orphaned_nodes(GraphDatabaseService romaniaNeo) {
+
+		long maxDeletesPerTransaction = 100000;
+		long deletedNodes = maxDeletesPerTransaction;
+		while (deletedNodes >= maxDeletesPerTransaction) {
+			long time = System.currentTimeMillis();
+
+			System.out.printf("Deleting nodes...");
+
+			deletedNodes = remove_orphaned_nodes(romaniaNeo,
+					maxDeletesPerTransaction);
+
+			// PRINTOUT
+			System.out.printf("[%d] %s", deletedNodes, getTimeStr(System
+					.currentTimeMillis()
+					- time));
+		}
+
+	}
+
+	private static int remove_orphaned_nodes(GraphDatabaseService romaniaNeo,
+			long maxDeletesPerTransaction) {
+		int deletedNodes = 0;
+
+		Transaction tx = romaniaNeo.beginTx();
+
+		try {
+			for (Node v : romaniaNeo.getAllNodes()) {
+
+				if (v.hasRelationship() == false) {
+					v.delete();
+					deletedNodes++;
+				}
+
+				if (deletedNodes >= maxDeletesPerTransaction)
+					break;
+			}
+
+			tx.success();
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			tx.finish();
+		}
+
+		return deletedNodes;
+	}
+
+	private static void do_remove_edge_types(GraphDatabaseService romaniaNeo) {
+
+		long maxDeletesPerTransaction = 100000;
+		long deletedRels = maxDeletesPerTransaction;
+		while (deletedRels >= maxDeletesPerTransaction) {
+			long time = System.currentTimeMillis();
+
+			System.out.printf("Deleting relationships...");
+
+			deletedRels = remove_edge_types(romaniaNeo,
+					maxDeletesPerTransaction);
+
+			// PRINTOUT
+			System.out.printf("[%d] %s", deletedRels, getTimeStr(System
+					.currentTimeMillis()
+					- time));
+		}
+
+	}
+
+	private static int remove_edge_types(GraphDatabaseService romaniaNeo,
+			long maxDeletesPerTransaction) {
+
+		RelationshipType relTypeFootWay = DynamicRelationshipType
+				.withName("FOOT_WAY");
+		RelationshipType relTypeBicycleWay = DynamicRelationshipType
+				.withName("BICYCLE_WAY");
+		RelationshipType relTypeCarWay = DynamicRelationshipType
+				.withName("CAR_WAY");
+		RelationshipType relTypeCarShortestWay = DynamicRelationshipType
+				.withName("CAR_SHORTEST_WAY");
+
+		int deletedRels = 0;
+
+		Transaction tx = romaniaNeo.beginTx();
+
+		try {
+			for (Node v : romaniaNeo.getAllNodes()) {
+
+				for (Relationship e : v.getRelationships(Direction.OUTGOING)) {
+					// if (e.getType().equals(relTypeFootWay))
+					// continue;
+					//
+					// if (e.getType().equals(relTypeBicycleWay))
+					// continue;
+					//
+					// if (e.getType().equals(relTypeCarWay))
+					// continue;
+
+					if (e.getType().equals(relTypeCarShortestWay))
+						continue;
+
+					e.delete();
+
+					deletedRels++;
+					if (deletedRels >= maxDeletesPerTransaction)
+						break;
+				}
+
+				if (deletedRels >= maxDeletesPerTransaction)
+					break;
+			}
+
+			tx.success();
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			tx.finish();
+		}
+
+		return deletedRels;
+	}
+
+	private static void read_write_read_write_etc() {
+		DirUtils.cleanDir("var/read_write_results");
 
 		DirUtils.cleanDir("var/neo0");
 		GraphDatabaseService neo0 = new EmbeddedGraphDatabase("var/neo0");
 		NeoFromFile.writeNeoFromChaco(neo0, "graphs/test0.graph");
-		NeoFromFile.writeChaco(neo0, "var/neo0.graph", ChacoType.UNWEIGHTED);
-		NeoFromFile.writeGMLBasic(neo0, "var/neo0.basic.gml");
-		MemGraph mem0 = NeoFromFile.readMemGraph(neo0);
-		NeoFromFile.writeChaco(mem0, "var/neo0mem00.graph",
+		NeoFromFile.writeChaco(neo0, "var/read_write_results/neo0.graph",
 				ChacoType.UNWEIGHTED);
-		NeoFromFile.writeGMLBasic(mem0, "var/neo0mem00.basic.gml");
+		NeoFromFile
+				.writeGMLBasic(neo0, "var/read_write_results/neo0.basic.gml");
+		MemGraph mem0 = NeoFromFile.readMemGraph(neo0);
+		NeoFromFile.writeChaco(mem0, "var/read_write_results/neo0mem00.graph",
+				ChacoType.UNWEIGHTED);
+		NeoFromFile.writeGMLBasic(mem0,
+				"var/read_write_results/neo0mem00.basic.gml");
 
 		Transaction tx1 = mem0.beginTx();
 		try {
@@ -49,23 +187,20 @@ public class DodgyTests {
 
 			memNode9.setNextRelId(9);
 			memNode9.createRelationshipTo(mem0.getNodeById(5),
-					DynamicRelationshipType
-							.withName(Consts.DEFAULT_REL_TYPE_STR));
+					Consts.RelationshipTypes.DEFAULT);
 
 			((MemNode) mem0.getNodeById(5)).setNextRelId(10);
-			mem0.getNodeById(5).createRelationshipTo(
-					memNode9,
-					DynamicRelationshipType
-							.withName(Consts.DEFAULT_REL_TYPE_STR));
+			mem0.getNodeById(5).createRelationshipTo(memNode9,
+					Consts.RelationshipTypes.DEFAULT);
 
 			((MemNode) mem0.getNodeById(5)).setNextRelId(11);
-			mem0.getNodeById(5).createRelationshipTo(
-					memNode9,
-					DynamicRelationshipType
-							.withName(Consts.DEFAULT_REL_TYPE_STR));
+			mem0.getNodeById(5).createRelationshipTo(memNode9,
+					Consts.RelationshipTypes.DEFAULT);
 
-			NeoFromFile.writeGMLBasic(mem0, "var/neo0mem01.basic.gml");
-			NeoFromFile.writeChaco(mem0, "var/neo0mem01.graph",
+			NeoFromFile.writeGMLBasic(mem0,
+					"var/read_write_results/neo0mem01.basic.gml");
+			NeoFromFile.writeChaco(mem0,
+					"var/read_write_results/neo0mem01.graph",
 					ChacoType.UNWEIGHTED);
 
 			tx1.success();
@@ -77,10 +212,12 @@ public class DodgyTests {
 
 		DirUtils.cleanDir("var/neo1");
 		GraphDatabaseService neo1 = new EmbeddedGraphDatabase("var/neo1");
-		NeoFromFile.writeNeoFromGML(neo1, "var/neo0mem01.basic.gml");
+		NeoFromFile.writeNeoFromGML(neo1,
+				"var/read_write_results/neo0mem01.basic.gml");
 		MemGraph mem1 = NeoFromFile.readMemGraph(neo1);
-		NeoFromFile.writeGMLBasic(mem1, "var/neo1mem10.basic.gml");
-		NeoFromFile.writeChaco(mem1, "var/neo1mem10.graph",
+		NeoFromFile.writeGMLBasic(mem1,
+				"var/read_write_results/neo1mem10.basic.gml");
+		NeoFromFile.writeChaco(mem1, "var/read_write_results/neo1mem10.graph",
 				ChacoType.UNWEIGHTED);
 
 		Transaction tx2 = mem1.beginTx();
@@ -99,8 +236,9 @@ public class DodgyTests {
 			tx2.finish();
 		}
 
-		NeoFromFile.writeGMLBasic(mem1, "var/neo1mem11.basic.gml");
-		NeoFromFile.writeChaco(mem1, "var/neo1mem11.graph",
+		NeoFromFile.writeGMLBasic(mem1,
+				"var/read_write_results/neo1mem11.basic.gml");
+		NeoFromFile.writeChaco(mem1, "var/read_write_results/neo1mem11.graph",
 				ChacoType.UNWEIGHTED);
 
 		Transaction tx3 = mem1.beginTx();
@@ -142,15 +280,25 @@ public class DodgyTests {
 
 		DirUtils.cleanDir("var/neo2");
 		GraphDatabaseService neo2 = new EmbeddedGraphDatabase("var/neo2");
-		NeoFromFile.writeNeoFromGML(neo2, "var/neo1mem11.basic.gml");
+		NeoFromFile.writeNeoFromGML(neo2,
+				"var/read_write_results/neo1mem11.basic.gml");
 		MemGraph mem2 = NeoFromFile.readMemGraph(neo2);
-		NeoFromFile.writeGMLBasic(mem2, "var/neo2mem00.basic.gml");
-		NeoFromFile.writeChaco(mem2, "var/neo2mem00.graph",
+		NeoFromFile.writeGMLBasic(mem2,
+				"var/read_write_results/neo2mem00.basic.gml");
+		NeoFromFile.writeChaco(mem2, "var/read_write_results/neo2mem00.graph",
 				ChacoType.UNWEIGHTED);
 
 		neo0.shutdown();
 		neo1.shutdown();
 		neo2.shutdown();
+	}
+
+	private static String getTimeStr(long msTotal) {
+		long ms = msTotal % 1000;
+		long s = (msTotal / 1000) % 60;
+		long m = (msTotal / 1000) / 60;
+
+		return String.format("%d(m):%d(s):%d(ms)%n", m, s, ms);
 	}
 
 }

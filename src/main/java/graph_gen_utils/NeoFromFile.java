@@ -37,6 +37,7 @@ import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.index.IndexService;
 import org.neo4j.index.lucene.LuceneIndexService;
+import org.neo4j.kernel.EmbeddedGraphDatabase;
 
 import p_graph_service.PGraphDatabaseService;
 
@@ -55,13 +56,13 @@ public class NeoFromFile {
 	}
 
 	public static void main(String[] args) throws Exception {
-		Set<String> x = new HashSet<String>();
-		x.add("cow");
-		System.out.println("Add 'cow'");
-		x.add("chicken");
-		System.out.println("Add 'chicken'");
-		System.out.printf("Contains 'cow' == %b\n", x.contains("cow"));
-		System.out.printf("Contains 'horse' == %b\n", x.contains("horse"));
+		// GraphDatabaseService transNeo = new EmbeddedGraphDatabase(
+		// "/home/alex/workspace/astar_routing/var/romania-BAL2-GID-NAME-COORDS-ALL_RELS");
+		// addNames(transNeo);
+		// transNeo.shutdown();
+		double d = 1.0;
+		long l = (long) d;
+		System.out.println(l);
 	}
 
 	// **************
@@ -578,117 +579,6 @@ public class NeoFromFile {
 	 * 
 	 * @return {@link MemGraph}
 	 */
-	public static MemGraph readMemGraph(GraphDatabaseService transNeo) {
-
-		// PRINTOUT
-		long time = System.currentTimeMillis();
-		System.out.printf("Loading Neo4j into MemGraph...");
-
-		MemGraph memGraph = new MemGraph();
-
-		Transaction tx = transNeo.beginTx();
-
-		long nodeCount = 0;
-		long edgeCount = 0;
-		double minWeight = Double.MAX_VALUE;
-		double maxWeight = Double.MIN_VALUE;
-		double normalizedMinWeight = Consts.MIN_EDGE_WEIGHT;
-		double normalizedMaxWeight = Double.MIN_VALUE;
-
-		try {
-			for (Node node : transNeo.getAllNodes()) {
-
-				nodeCount++;
-
-				for (Relationship rel : node
-						.getRelationships(Direction.OUTGOING)) {
-
-					edgeCount++;
-
-					if (rel.hasProperty(Consts.WEIGHT)) {
-						double weight = (Double) rel.getProperty(Consts.WEIGHT);
-						if (weight > maxWeight)
-							maxWeight = weight;
-						if (weight < minWeight)
-							minWeight = weight;
-					}
-
-				}
-
-			}
-
-			normalizedMinWeight = minWeight / maxWeight;
-			if (normalizedMinWeight < Consts.MIN_EDGE_WEIGHT)
-				normalizedMinWeight = Consts.MIN_EDGE_WEIGHT;
-
-			for (Node node : transNeo.getAllNodes()) {
-				Long nodeGID = (Long) node.getProperty(Consts.NODE_GID);
-
-				memGraph.setNextNodeId(nodeGID);
-				MemNode memNode = (MemNode) memGraph.createNode();
-				memNode.setProperty(Consts.NODE_GID, nodeGID);
-
-				Byte nodeColor = -1;
-				if (node.hasProperty(Consts.COLOR))
-					nodeColor = (Byte) node.getProperty(Consts.COLOR);
-				memNode.setProperty(Consts.COLOR, nodeColor);
-
-			}
-
-			for (Node node : transNeo.getAllNodes()) {
-
-				Long nodeGID = (Long) node.getProperty(Consts.NODE_GID);
-
-				MemNode memNode = (MemNode) memGraph.getNodeById(nodeGID);
-
-				for (Relationship rel : node
-						.getRelationships(Direction.OUTGOING)) {
-
-					// Store normalized edge weight, [0,1]
-					double weight = normalizedMinWeight;
-					if (rel.hasProperty(Consts.WEIGHT)) {
-						weight = (Double) rel.getProperty(Consts.WEIGHT)
-								/ maxWeight;
-
-						if (weight > normalizedMaxWeight)
-							normalizedMaxWeight = weight;
-
-					}
-
-					Long endNodeId = (Long) rel.getEndNode().getProperty(
-							Consts.NODE_GID);
-
-					MemNode endNode = (MemNode) memGraph.getNodeById(endNodeId);
-
-					Long relGID = rel.getId();
-					if (rel.hasProperty(Consts.REL_GID))
-						relGID = (Long) rel.getProperty(Consts.REL_GID);
-
-					memNode.setNextRelId(relGID);
-					MemRel memRel = (MemRel) memNode.createRelationshipTo(
-							endNode, Consts.RelationshipTypes.DEFAULT);
-					memRel.setProperty(Consts.WEIGHT, weight);
-				}
-
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-		} finally {
-			tx.finish();
-		}
-
-		// PRINTOUT
-		System.out.printf("%s", getTimeStr(System.currentTimeMillis() - time));
-
-		System.out.printf("\tNode Count = %d\n", nodeCount);
-		System.out.printf("\tEdge Count = %d\n", edgeCount);
-		System.out.printf("\tMin Edge Weight = %f\n", normalizedMinWeight);
-		System.out.printf("\tMax Edge Weight = %f\n", normalizedMaxWeight);
-
-		return memGraph;
-
-	}
-
 	public static MemGraph readMemGraph(GraphDatabaseService transNeo) {
 		return readMemGraph(transNeo, new HashSet<String>(),
 				new HashSet<String>());

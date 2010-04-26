@@ -1,5 +1,7 @@
 package graph_gen_utils.general;
 
+import org.neo4j.graphdb.RelationshipType;
+
 public abstract class Consts {
 
 	// GML property names
@@ -12,14 +14,18 @@ public abstract class Consts {
 	public static String NODE_GID = "_n_gid";
 	public static String REL_GID = "_r_gid";
 	public static String COLOR = "_color";
-	public static String WEIGHT = "_weight";
-	public static String LATITUDE = "_lat";
-	public static String LONGITUDE = "_lon";
+	public static String WEIGHT = "weight";
+	public static String LATITUDE = "lat";
+	public static String LONGITUDE = "lon";
+	public static String NAME = "name";
 
 	// Neo4j Relationship types
-	public static String DEFAULT_REL_TYPE_STR = "default";
-	public static String INT_REL_TYPE_STR = "internal";
-	public static String EXT_REL_TYPE_STR = "external";
+	// public static String DEFAULT_REL_TYPE_STR = "default";
+	// public static String INT_REL_TYPE_STR = "internal";
+	// public static String EXT_REL_TYPE_STR = "external";
+	public static enum RelationshipTypes implements RelationshipType {
+		DEFAULT, INTERNAL, EXTERNAL
+	}
 
 	public static final double DEFAULT_REL_WEIGHT = 1.0;
 
