@@ -24,22 +24,23 @@ import graph_gen_utils.writer.gml.GMLWriterUndirectedFull;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
 
 import org.neo4j.graphdb.Direction;
-import org.neo4j.graphdb.DynamicRelationshipType;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.index.IndexService;
 import org.neo4j.index.lucene.LuceneIndexService;
-import org.neo4j.kernel.EmbeddedGraphDatabase;
 
 import p_graph_service.PGraphDatabaseService;
+import p_graph_service.core.PGraphDatabaseServiceImpl;
 
 /**
  * Provides easy means of creating a Neo4j instance from various graph file
@@ -60,14 +61,171 @@ public class NeoFromFile {
 		// "/home/alex/workspace/astar_routing/var/romania-BAL2-GID-NAME-COORDS-ALL_RELS");
 		// addNames(transNeo);
 		// transNeo.shutdown();
-		double d = 1.0;
-		long l = (long) d;
-		System.out.println(l);
 	}
 
 	// **************
 	// PUBLIC METHODS
 	// **************
+
+	/**
+	 * Moved from neo4j_partitioned_api scheme is defined by the
+	 * {@link Partitioner} parameter.
+	 * 
+	 * Takes a normal Neo4j instance {@link GraphDatabaseService} as input,
+	 * creates a new partitioned version {@link PGraphDatabaseService} in the
+	 * specified directory, then copies all data from the input instance into
+	 * the new instance.
+	 * 
+	 * {@link Node}s must have a {@link Consts#COLOR} attribute as this is used
+	 * to decide which partition each {@link Node} is stored in.
+	 * 
+	 * @param transNeo
+	 *            {@link GraphDatabaseService} representing the regular Neo4j
+	 *            instance
+	 * 
+	 * @param pdbPath
+	 *            {@link String} specifying the directory where partitioned
+	 *            Neo4j instance should be created
+	 * 
+	 * @return {@link PGraphDatabaseService}
+	 */
+	public static PGraphDatabaseService writePNeoFromNeo(String pdbPath,
+			GraphDatabaseService transNeo) {
+		PGraphDatabaseService partitionedTransNeo = new PGraphDatabaseServiceImpl(
+				pdbPath, 0);
+
+		ArrayList<Long> nodeIDs = new ArrayList<Long>();
+
+		// load all instance ids
+		HashSet<Long> instIDs = new HashSet<Long>();
+		for (Long instID : partitionedTransNeo.getInstancesIDs()) {
+			instIDs.add(instID);
+		}
+
+		System.out.println(new Date(System.currentTimeMillis())
+				+ " count nodes");
+
+		// counts all nodes
+		Transaction tx = transNeo.beginTx();
+		try {
+			for (Node n : transNeo.getAllNodes()) {
+				// ignore reference node
+				if (n.getId() == 0)
+					continue;
+
+				nodeIDs.add(n.getId());
+			}
+			tx.success();
+		} finally {
+			tx.finish();
+		}
+
+		int nodesInSystem = nodeIDs.size();
+		int nodeCount;
+		int stepSize = 1000;
+		int stepCount;
+
+		Iterator<Long> idIter;
+
+		System.out.println(new Date(System.currentTimeMillis())
+				+ " creating nodes");
+
+		nodeCount = 0;
+		stepCount = 0;
+		idIter = nodeIDs.iterator();
+		while (idIter.hasNext()) {
+			tx = transNeo.beginTx();
+			try {
+				// my own transaction
+				Transaction pTx = partitionedTransNeo.beginTx();
+				try {
+					while (idIter.hasNext() && stepCount < stepSize) {
+						Node n = transNeo.getNodeById(idIter.next());
+
+						long targetInst = (Byte) n.getProperty(Consts.COLOR);
+						long gid = n.getId();
+
+						// create instance if not yet existing
+						if (!instIDs.contains(targetInst)) {
+							partitionedTransNeo.addInstance(targetInst);
+							instIDs.add(targetInst);
+						}
+						Node newN = partitionedTransNeo.createNodeOn(gid,
+								targetInst);
+
+						for (String key : n.getPropertyKeys()) {
+							newN.setProperty(key, n.getProperty(key));
+						}
+
+						stepCount++;
+						nodeCount++;
+					}
+					stepCount = 0;
+					System.out.println(new Date(System.currentTimeMillis())
+							+ " " + nodeCount + " of " + nodesInSystem
+							+ " created");
+					pTx.success();
+				} finally {
+					pTx.finish();
+				}
+				tx.success();
+			} finally {
+				tx.finish();
+			}
+		}
+
+		System.out.println(new Date(System.currentTimeMillis())
+				+ " create relationships");
+		nodeCount = 0;
+		stepCount = 0;
+		idIter = nodeIDs.iterator();
+		while (idIter.hasNext()) {
+			tx = transNeo.beginTx();
+			try {
+				// my own transaction
+				Transaction pTx = partitionedTransNeo.beginTx();
+				try {
+					while (idIter.hasNext() && stepCount < stepSize) {
+						Node n = transNeo.getNodeById(idIter.next());
+
+						long curN = n.getId();
+						Node srtNode = partitionedTransNeo.getNodeById(curN);
+
+						for (Relationship rs : n
+								.getRelationships(Direction.OUTGOING)) {
+
+							long endNodeGID = rs.getEndNode().getId();
+							Node endNode = partitionedTransNeo
+									.getNodeById(endNodeGID);
+							Relationship newRs = srtNode.createRelationshipTo(
+									endNode, rs.getType());
+
+							// copy all properties
+							for (String key : rs.getPropertyKeys()) {
+								newRs.setProperty(key, rs.getProperty(key));
+							}
+						}
+						stepCount++;
+						nodeCount++;
+					}
+					stepCount = 0;
+					System.out.println(new Date(System.currentTimeMillis())
+							+ " relationship for " + nodeCount + " of "
+							+ nodesInSystem + " created");
+					pTx.success();
+				} finally {
+					pTx.finish();
+				}
+				tx.success();
+			} finally {
+				tx.finish();
+			}
+		}
+		System.out.println("done");
+		transNeo.shutdown();
+
+		return partitionedTransNeo;
+	}
 
 	/**
 	 * Allocates nodes of a Neo4j instance to clusters/partitions. Allocation
