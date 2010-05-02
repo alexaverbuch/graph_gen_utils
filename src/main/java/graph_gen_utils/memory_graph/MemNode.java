@@ -30,8 +30,8 @@ public class MemNode implements Node {
 
 	public MemNode(Long id, Random rng, MemGraph memGraph) {
 		this.randGen = new ContinuousUniformGenerator(0.0, 1.0, rng);
-		this.relationships = new LinkedHashMap<Long, Relationship>();
-		this.properties = new HashMap<String, Object>();
+		this.relationships = new LinkedHashMap<Long, Relationship>(8);
+		this.properties = new HashMap<String, Object>(4);
 		this.memGraph = memGraph;
 		this.id = id;
 	}
@@ -135,7 +135,6 @@ public class MemNode implements Node {
 	@Override
 	public void delete() {
 		if (relationships.size() > 0) {
-			System.out.println(relationships.toString());
 			String errStr = String.format(
 					"Node[%d] deleted but still has Relationships", getId());
 			// NOTE Not possible to throw Exception here due to Node interface

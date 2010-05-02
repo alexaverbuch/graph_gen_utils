@@ -20,7 +20,7 @@ public class MemRel implements Relationship {
 		super();
 		this.startNode = startNode;
 		this.endNode = endNode;
-		this.properties = new HashMap<String, Object>();
+		this.properties = new HashMap<String, Object>(4);
 		this.properties.put(Consts.WEIGHT, Consts.DEFAULT_REL_WEIGHT);
 		this.id = id;
 	}

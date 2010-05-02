@@ -23,7 +23,12 @@ public class DodgyTests {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		read_write_read_write_etc();
+		GraphDatabaseService romaniaNeo = new EmbeddedGraphDatabase(
+				"var/romania-BAL2-GID-NAME-COORDS-WEIGHTS-ALL_RELS");
+
+		do_apply_weight_all_edges(romaniaNeo);
+
+		romaniaNeo.shutdown();
 	}
 
 	private static void cleanup() {
@@ -32,6 +37,7 @@ public class DodgyTests {
 
 		do_remove_edge_types(romaniaNeo);
 		do_remove_orphaned_nodes(romaniaNeo);
+		do_apply_weight_all_edges(romaniaNeo);
 
 		NeoFromFile.applyPtnToNeo(romaniaNeo, new PartitionerAsBalanced(
 				(byte) 2));
@@ -131,15 +137,20 @@ public class DodgyTests {
 			for (Node v : romaniaNeo.getAllNodes()) {
 
 				for (Relationship e : v.getRelationships(Direction.OUTGOING)) {
-					// if (e.getType().equals(relTypeFootWay))
-					// continue;
-					//
-					// if (e.getType().equals(relTypeBicycleWay))
-					// continue;
-					//
-					// if (e.getType().equals(relTypeCarWay))
-					// continue;
 
+					// Don't delete FOOT_WAY
+					if (e.getType().equals(relTypeFootWay))
+						continue;
+
+					// Don't delete BICYCLE_WAY
+					if (e.getType().equals(relTypeBicycleWay))
+						continue;
+
+					// Don't delete CAR_WAY
+					if (e.getType().equals(relTypeCarWay))
+						continue;
+
+					// Don't delete CAR_SHORTEST_WAY
 					if (e.getType().equals(relTypeCarShortestWay))
 						continue;
 
@@ -162,6 +173,98 @@ public class DodgyTests {
 		}
 
 		return deletedRels;
+	}
+
+	private static void do_apply_weight_all_edges(
+			GraphDatabaseService romaniaNeo) {
+
+		long time = System.currentTimeMillis();
+
+		System.out.printf("Get all WEIGHTs...");
+
+		long edgeCount = 0;
+		double sumWeights = 0;
+
+		Transaction tx = romaniaNeo.beginTx();
+
+		try {
+			for (Node v : romaniaNeo.getAllNodes()) {
+
+				for (Relationship e : v.getRelationships(Direction.OUTGOING)) {
+
+					Double eWeight = (Double) e.getProperty(Consts.WEIGHT, 0.0);
+
+					edgeCount++;
+					sumWeights += eWeight;
+				}
+			}
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			tx.finish();
+		}
+
+		double averageWeight = sumWeights / edgeCount;
+		System.out.printf("AVERAGE_WEIGHT[%f]...", averageWeight);
+
+		System.out.printf("%s", getTimeStr(System.currentTimeMillis() - time));
+
+		long maxRelationshipsPerTransaction = 100000;
+		long updatedRels = maxRelationshipsPerTransaction;
+		while (updatedRels >= maxRelationshipsPerTransaction) {
+			time = System.currentTimeMillis();
+
+			System.out.printf("Applying WEIGHT to relationships...");
+
+			updatedRels = apply_weight_all_edges(romaniaNeo,
+					maxRelationshipsPerTransaction, averageWeight);
+
+			// PRINTOUT
+			System.out.printf("[%d] %s", updatedRels, getTimeStr(System
+					.currentTimeMillis()
+					- time));
+		}
+
+	}
+
+	private static int apply_weight_all_edges(GraphDatabaseService romaniaNeo,
+			long maxRelationshipsPerTransaction, double defaultWeight) {
+
+		int updatedRels = 0;
+
+		Transaction tx = romaniaNeo.beginTx();
+
+		try {
+			for (Node v : romaniaNeo.getAllNodes()) {
+
+				for (Relationship e : v.getRelationships(Direction.OUTGOING)) {
+
+					Double eWeight = (Double) e
+							.getProperty(Consts.WEIGHT, null);
+
+					if (eWeight != null)
+						continue;
+
+					e.setProperty(Consts.WEIGHT, defaultWeight);
+
+					updatedRels++;
+					if (updatedRels >= maxRelationshipsPerTransaction)
+						break;
+				}
+
+				if (updatedRels >= maxRelationshipsPerTransaction)
+					break;
+			}
+
+			tx.success();
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			tx.finish();
+		}
+
+		return updatedRels;
 	}
 
 	private static void read_write_read_write_etc() {

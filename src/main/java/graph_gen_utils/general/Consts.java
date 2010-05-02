@@ -37,6 +37,8 @@ public abstract class Consts {
 	public static double MIN_EDGE_WEIGHT = 0.05;
 
 	// Change log read timeout (ms)
-	public static int CHANGELOG_TIMEOUT = 1000;
-	public static int CHANGELOG_MAX_TIMEOUTS = 10;
+	// public static int CHANGELOG_TIMEOUT = 1000;
+	// public static int CHANGELOG_MAX_TIMEOUTS = 10;
+	public static int CHANGELOG_TIMEOUT = 1;
+	public static int CHANGELOG_MAX_TIMEOUTS = 1;
 }

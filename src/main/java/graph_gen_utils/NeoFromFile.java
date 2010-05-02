@@ -29,8 +29,11 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.StringTokenizer;
+import java.util.Vector;
 import java.util.Map.Entry;
 
+import org.apache.lucene.analysis.Tokenizer;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
@@ -57,10 +60,7 @@ public class NeoFromFile {
 	}
 
 	public static void main(String[] args) throws Exception {
-		// GraphDatabaseService transNeo = new EmbeddedGraphDatabase(
-		// "/home/alex/workspace/astar_routing/var/romania-BAL2-GID-NAME-COORDS-ALL_RELS");
-		// addNames(transNeo);
-		// transNeo.shutdown();
+
 	}
 
 	// **************
@@ -68,8 +68,7 @@ public class NeoFromFile {
 	// **************
 
 	/**
-	 * Moved from neo4j_partitioned_api scheme is defined by the
-	 * {@link Partitioner} parameter.
+	 * Moved from neo4j_partitioned_api.
 	 * 
 	 * Takes a normal Neo4j instance {@link GraphDatabaseService} as input,
 	 * creates a new partitioned version {@link PGraphDatabaseService} in the
@@ -91,6 +90,9 @@ public class NeoFromFile {
 	 */
 	public static PGraphDatabaseService writePNeoFromNeo(String pdbPath,
 			GraphDatabaseService transNeo) {
+
+		System.out.println("Converting Neo4j to PNeo4j");
+
 		PGraphDatabaseService partitionedTransNeo = new PGraphDatabaseServiceImpl(
 				pdbPath, 0);
 
@@ -102,8 +104,9 @@ public class NeoFromFile {
 			instIDs.add(instID);
 		}
 
-		System.out.println(new Date(System.currentTimeMillis())
-				+ " count nodes");
+		// PRINTOUT
+		long time = System.currentTimeMillis();
+		System.out.printf("\tCounting Nodes...");
 
 		// counts all nodes
 		Transaction tx = transNeo.beginTx();
@@ -127,8 +130,10 @@ public class NeoFromFile {
 
 		Iterator<Long> idIter;
 
-		System.out.println(new Date(System.currentTimeMillis())
-				+ " creating nodes");
+		// PRINTOUT
+		System.out.printf("[%d]...%s", nodesInSystem, getTimeStr(System
+				.currentTimeMillis()
+				- time));
 
 		nodeCount = 0;
 		stepCount = 0;
@@ -136,6 +141,11 @@ public class NeoFromFile {
 		while (idIter.hasNext()) {
 			tx = transNeo.beginTx();
 			try {
+
+				// PRINTOUT
+				time = System.currentTimeMillis();
+				System.out.printf("\tCreating Nodes...");
+
 				// my own transaction
 				Transaction pTx = partitionedTransNeo.beginTx();
 				try {
@@ -161,9 +171,11 @@ public class NeoFromFile {
 						nodeCount++;
 					}
 					stepCount = 0;
-					System.out.println(new Date(System.currentTimeMillis())
-							+ " " + nodeCount + " of " + nodesInSystem
-							+ " created");
+
+					// PRINTOUT
+					System.out.printf("[%d/%d]...%s", nodeCount, nodesInSystem,
+							getTimeStr(System.currentTimeMillis() - time));
+
 					pTx.success();
 				} finally {
 					pTx.finish();
@@ -174,14 +186,17 @@ public class NeoFromFile {
 			}
 		}
 
-		System.out.println(new Date(System.currentTimeMillis())
-				+ " create relationships");
 		nodeCount = 0;
 		stepCount = 0;
 		idIter = nodeIDs.iterator();
 		while (idIter.hasNext()) {
 			tx = transNeo.beginTx();
 			try {
+
+				// PRINTOUT
+				time = System.currentTimeMillis();
+				System.out.printf("\tCreating Relationships on Nodes...");
+
 				// my own transaction
 				Transaction pTx = partitionedTransNeo.beginTx();
 				try {
@@ -209,9 +224,11 @@ public class NeoFromFile {
 						nodeCount++;
 					}
 					stepCount = 0;
-					System.out.println(new Date(System.currentTimeMillis())
-							+ " relationship for " + nodeCount + " of "
-							+ nodesInSystem + " created");
+
+					// PRINTOUT
+					System.out.printf("[%d/%d]...%s", nodeCount, nodesInSystem,
+							getTimeStr(System.currentTimeMillis() - time));
+
 					pTx.success();
 				} finally {
 					pTx.finish();
@@ -221,7 +238,6 @@ public class NeoFromFile {
 				tx.finish();
 			}
 		}
-		System.out.println("done");
 		transNeo.shutdown();
 
 		return partitionedTransNeo;
@@ -915,7 +931,7 @@ public class NeoFromFile {
 			if ((nodesAndRels.size() % Consts.STORE_BUF) == 0) {
 
 				// PRINTOUT
-				System.out.printf(".");
+				// System.out.printf(".");
 
 				nodesAndRels = partitioner.applyPartitioning(nodesAndRels);
 				flushNodesTrans(transIndexService, transNeo, nodesAndRels);
@@ -930,15 +946,9 @@ public class NeoFromFile {
 		// PRINTOUT
 		System.out.printf("%s", getTimeStr(System.currentTimeMillis() - time));
 		time = System.currentTimeMillis();
-		System.out.printf("Optimizing Index...");
-
-		// PRINTOUT
-		System.out.printf("%s", getTimeStr(System.currentTimeMillis() - time));
 
 		// PRINTOUT
 		System.out.printf("Reading & Indexing Relationships...");
-
-		time = System.currentTimeMillis();
 
 		for (NodeData nodeData : parser.getRels()) {
 			nodesAndRels.add(nodeData);
@@ -946,7 +956,7 @@ public class NeoFromFile {
 			if ((nodesAndRels.size() % Consts.STORE_BUF) == 0) {
 
 				// PRINTOUT
-				System.out.printf(".");
+				// System.out.printf(".");
 
 				flushRelsTrans(transIndexService, transNeo, nodesAndRels);
 				nodesAndRels.clear();
