@@ -24,16 +24,12 @@ import graph_gen_utils.writer.gml.GMLWriterUndirectedFull;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
-import java.util.StringTokenizer;
-import java.util.Vector;
 import java.util.Map.Entry;
 
-import org.apache.lucene.analysis.Tokenizer;
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
@@ -761,10 +757,10 @@ public class NeoFromFile {
 	public static MemGraph readMemGraph(GraphDatabaseService transNeo,
 			Set<String> nodeProps, Set<String> relProps) {
 
-		Set<String> defaultNodeProps = new HashSet<String>(Arrays.asList(
+		Set<String> ignoreNodeProps = new HashSet<String>(Arrays.asList(
 				Consts.NODE_GID, Consts.NODE_LID, Consts.COLOR));
 
-		Set<String> defaultRelProps = new HashSet<String>(Arrays.asList(
+		Set<String> ignoreRelProps = new HashSet<String>(Arrays.asList(
 				Consts.REL_GID, Consts.WEIGHT));
 
 		// PRINTOUT
@@ -785,11 +781,10 @@ public class NeoFromFile {
 		try {
 			for (Node node : transNeo.getAllNodes()) {
 
-				Long nodeGID = (Long) node.getProperty(Consts.NODE_GID);
-
-				memGraph.setNextNodeId(nodeGID);
+				memGraph.setNextNodeId(node.getId());
 				MemNode memNode = (MemNode) memGraph.createNode();
-				memNode.setProperty(Consts.NODE_GID, nodeGID);
+				memNode.setProperty(Consts.NODE_GID, (Long) node
+						.getProperty(Consts.NODE_GID));
 
 				Byte nodeColor = -1;
 				if (node.hasProperty(Consts.COLOR))
@@ -797,7 +792,7 @@ public class NeoFromFile {
 				memNode.setProperty(Consts.COLOR, nodeColor);
 
 				for (String key : node.getPropertyKeys()) {
-					if (defaultNodeProps.contains(key))
+					if (ignoreNodeProps.contains(key))
 						continue;
 
 					if (nodeProps.contains(key))
@@ -829,9 +824,7 @@ public class NeoFromFile {
 
 			for (Node node : transNeo.getAllNodes()) {
 
-				Long nodeGID = (Long) node.getProperty(Consts.NODE_GID);
-
-				MemNode memNode = (MemNode) memGraph.getNodeById(nodeGID);
+				MemNode memNode = (MemNode) memGraph.getNodeById(node.getId());
 
 				for (Relationship rel : node
 						.getRelationships(Direction.OUTGOING)) {
@@ -862,7 +855,7 @@ public class NeoFromFile {
 					memRel.setProperty(Consts.WEIGHT, weight);
 
 					for (String key : rel.getPropertyKeys()) {
-						if (defaultRelProps.contains(key))
+						if (ignoreRelProps.contains(key))
 							continue;
 
 						if (relProps.contains(key))
