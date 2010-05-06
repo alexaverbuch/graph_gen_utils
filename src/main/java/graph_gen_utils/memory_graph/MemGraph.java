@@ -13,6 +13,8 @@ import org.neo4j.graphdb.NotFoundException;
 import org.neo4j.graphdb.Relationship;
 import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.Transaction;
+import org.neo4j.graphdb.event.KernelEventHandler;
+import org.neo4j.graphdb.event.TransactionEventHandler;
 import org.uncommons.maths.random.MersenneTwisterRNG;
 
 public class MemGraph implements GraphDatabaseService {
@@ -137,6 +139,33 @@ public class MemGraph implements GraphDatabaseService {
 	public void shutdown() {
 		// NOTE Do nothing silently
 		// Provide illusion of real GraphDatabaseService
+	}
+
+	@Override
+	public KernelEventHandler registerKernelEventHandler(KernelEventHandler arg0) {
+		// NOTE Not Supported
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public <T> TransactionEventHandler<T> registerTransactionEventHandler(
+			TransactionEventHandler<T> arg0) {
+		// NOTE Not Supported
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public KernelEventHandler unregisterKernelEventHandler(
+			KernelEventHandler arg0) {
+		// NOTE Not Supported
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public <T> TransactionEventHandler<T> unregisterTransactionEventHandler(
+			TransactionEventHandler<T> arg0) {
+		// NOTE Not Supported
+		throw new UnsupportedOperationException();
 	}
 
 }

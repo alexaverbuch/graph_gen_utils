@@ -4,6 +4,7 @@ import graph_gen_utils.general.Consts;
 
 import java.util.HashMap;
 
+import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.NotFoundException;
 import org.neo4j.graphdb.Relationship;
@@ -110,6 +111,12 @@ public class MemRel implements Relationship {
 
 	@Override
 	public Object getProperty(String key, Object defaultValue) {
+		// NOTE Not Supported
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public GraphDatabaseService getGraphDatabase() {
 		// NOTE Not Supported
 		throw new UnsupportedOperationException();
 	}

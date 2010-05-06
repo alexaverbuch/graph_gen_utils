@@ -9,6 +9,7 @@ import java.util.NoSuchElementException;
 import java.util.Random;
 
 import org.neo4j.graphdb.Direction;
+import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.NotFoundException;
 import org.neo4j.graphdb.Relationship;
@@ -335,6 +336,12 @@ public class MemNode implements Node {
 			return this;
 		}
 
+	}
+
+	@Override
+	public GraphDatabaseService getGraphDatabase() {
+		// NOTE Not Supported
+		throw new UnsupportedOperationException();
 	}
 
 }
