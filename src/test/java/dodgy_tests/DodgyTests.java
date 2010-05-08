@@ -17,18 +17,29 @@ import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.kernel.EmbeddedGraphDatabase;
 
+import p_graph_service.PGraphDatabaseService;
+
 public class DodgyTests {
 
 	/**
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		GraphDatabaseService romaniaNeo = new EmbeddedGraphDatabase(
-				"var/romania-BAL2-GID-NAME-COORDS-WEIGHTS-ALL_RELS");
+		// GraphDatabaseService romaniaNeo = new EmbeddedGraphDatabase(
+		// "var/romania-BAL2-GID-NAME-COORDS-WEIGHTS-ALL_RELS");
+		// do_apply_weight_all_edges(romaniaNeo);
+		// romaniaNeo.shutdown();
 
-		do_apply_weight_all_edges(romaniaNeo);
+		String dbDir = "/home/alex/workspace/neo4j_access_simulator/var/gis/romania-BAL2-GID-NAME-COORDS-ALL_RELS";
+		String pdbDir = "/home/alex/workspace/neo4j_access_simulator/var/gis/partitioned-romania-BAL2-GID-NAME-COORDS-ALL_RELS/";
+		db_to_pdb(dbDir, pdbDir);
+	}
 
-		romaniaNeo.shutdown();
+	private static void db_to_pdb(String dbDir, String pdbDir) {
+		GraphDatabaseService db = new EmbeddedGraphDatabase(dbDir);
+		PGraphDatabaseService pdb = NeoFromFile.writePNeoFromNeo(pdbDir, db);
+		db.shutdown();
+		pdb.shutdown();
 	}
 
 	private static void cleanup() {

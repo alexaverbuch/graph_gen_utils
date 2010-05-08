@@ -282,16 +282,17 @@ public class NeoFromFile {
 
 				NodeData nodeData = new NodeData();
 
-				Double lat = 0.0;
-				if (node.hasProperty(Consts.LATITUDE))
-					lat = (Double) node.getProperty(Consts.LATITUDE);
+				// TODO Allow user to select which properties are written
+				// Double lat = 0.0;
+				// if (node.hasProperty(Consts.LATITUDE))
+				// lat = (Double) node.getProperty(Consts.LATITUDE);
+				//
+				// Double lon = 0.0;
+				// if (node.hasProperty(Consts.LONGITUDE))
+				// lon = (Double) node.getProperty(Consts.LONGITUDE);
 
-				Double lon = 0.0;
-				if (node.hasProperty(Consts.LONGITUDE))
-					lon = (Double) node.getProperty(Consts.LONGITUDE);
-
-				nodeData.getProperties().put(Consts.LATITUDE, lat);
-				nodeData.getProperties().put(Consts.LONGITUDE, lon);
+				// nodeData.getProperties().put(Consts.LATITUDE, lat);
+				// nodeData.getProperties().put(Consts.LONGITUDE, lon);
 				nodeData.getProperties().put(Consts.NODE_LID, node.getId());
 				nodeData.getProperties().put(Consts.NODE_GID, nodeNumber);
 
