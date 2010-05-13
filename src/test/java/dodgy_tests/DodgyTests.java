@@ -1,12 +1,21 @@
 package dodgy_tests;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.nio.ByteBuffer;
+import java.nio.LongBuffer;
+import java.nio.channels.ReadableByteChannel;
+
 import graph_gen_utils.NeoFromFile;
 import graph_gen_utils.NeoFromFile.ChacoType;
 import graph_gen_utils.general.Consts;
 import graph_gen_utils.general.DirUtils;
+import graph_gen_utils.general.NodeData;
 import graph_gen_utils.memory_graph.MemGraph;
 import graph_gen_utils.memory_graph.MemNode;
 import graph_gen_utils.partitioner.PartitionerAsBalanced;
+import graph_gen_utils.reader.GraphReader;
+import graph_gen_utils.reader.twitter.TwitterParser;
 
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.DynamicRelationshipType;
@@ -25,14 +34,52 @@ public class DodgyTests {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		// GraphDatabaseService romaniaNeo = new EmbeddedGraphDatabase(
-		// "var/romania-BAL2-GID-NAME-COORDS-WEIGHTS-ALL_RELS");
-		// do_apply_weight_all_edges(romaniaNeo);
-		// romaniaNeo.shutdown();
+		test_twitter_parser();
+	}
 
-		String dbDir = "/home/alex/workspace/neo4j_access_simulator/var/gis/romania-BAL2-GID-NAME-COORDS-ALL_RELS";
-		String pdbDir = "/home/alex/workspace/neo4j_access_simulator/var/gis/partitioned-romania-BAL2-GID-NAME-COORDS-ALL_RELS/";
-		db_to_pdb(dbDir, pdbDir);
+	private static void test_twitter_parser() {
+		String pathStr = "/home/alex/workspace/graph_cluster_utils/sample dbs/";
+		String fileStr = pathStr + "twitter_sarunas.sub";
+		String dbDirStr = "var/twitter";
+
+		DirUtils.cleanDir(dbDirStr);
+		GraphDatabaseService transNeo = new EmbeddedGraphDatabase(dbDirStr);
+		NeoFromFile.writeNeoFromTwitterDataset(transNeo, fileStr);
+		NeoFromFile.writeMetricsCSV(transNeo, "var/twitter.met");
+		transNeo.shutdown();
+
+		// File file = new File(pathStr + fileStr);
+		//
+		// GraphReader twitterParser = new TwitterParser(file);
+		//
+		// long time = System.currentTimeMillis();
+		// System.out.println("Reading Twitter Nodes Started...");
+		//
+		// long nodeCount = 0;
+		// for (NodeData node : twitterParser.getNodes()) {
+		// if (++nodeCount % 100000 == 0)
+		// System.out.println("\tNodes: " + nodeCount);
+		// }
+		// System.out.println("Nodes: " + nodeCount);
+		//
+		// System.out.printf("Reading Twitter Nodes Done...%s",
+		// getTimeStr(System
+		// .currentTimeMillis()
+		// - time));
+		//
+		// time = System.currentTimeMillis();
+		// System.out.println("Reading Twitter Relationships Started...");
+		//
+		// long relCount = 0;
+		// for (NodeData rel : twitterParser.getRels()) {
+		// if (++relCount % 1000000 == 0)
+		// System.out.println("\tRelationships: " + relCount);
+		// }
+		// System.out.println("Relationships: " + relCount);
+		//
+		// System.out.printf("Reading Twitter Relationships Done...%s",
+		// getTimeStr(System.currentTimeMillis() - time));
+
 	}
 
 	private static void db_to_pdb(String dbDir, String pdbDir) {

@@ -382,13 +382,13 @@ public class GMLParserDirected implements GraphReader {
 						continue;
 					}
 
-					else if (tokenKey.equals(Consts.WEIGHT)) {
+					if (tokenKey.equals(Consts.WEIGHT)) {
 						tokenVal = Double.parseDouble(st.nextToken());
 						rel.put(tokenKey, tokenVal);
 						continue;
 					}
 
-					else if (tokenKey.equals(Consts.COLOR)) {
+					if (tokenKey.equals(Consts.COLOR)) {
 						tokenVal = Byte.parseByte(st.nextToken());
 						rel.put(tokenKey, tokenVal);
 						continue;

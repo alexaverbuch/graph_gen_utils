@@ -15,6 +15,7 @@ import graph_gen_utils.reader.gml.GMLParserDirected;
 import graph_gen_utils.reader.topology.GraphTopology;
 import graph_gen_utils.reader.topology.GraphTopologyFullyConnected;
 import graph_gen_utils.reader.topology.GraphTopologyRandom;
+import graph_gen_utils.reader.twitter.TwitterParser;
 import graph_gen_utils.writer.GraphWriter;
 import graph_gen_utils.writer.chaco.ChacoPtnWriterFactory;
 import graph_gen_utils.writer.chaco.ChacoWriterFactory;
@@ -526,6 +527,65 @@ public class NeoFromFile {
 	}
 
 	/**
+	 * Creates a Neo4j instance and populates it from the contents of a dataset
+	 * with a proprietry binary file format, which contains user
+	 * follows/following connectivity data from Twitter.
+	 * 
+	 * The file was obtained by crawling Twitter for 300 hours.
+	 * 
+	 * @param transNeo
+	 *            {@link GraphDatabaseService} representing a Neo4j instance
+	 * 
+	 * @param twitterPath
+	 *            {@link String} representing path to Twitter dataset
+	 */
+	public static void writeNeoFromTwitterDataset(
+			GraphDatabaseService transNeo, String twitterPath) {
+
+		try {
+			GraphReader parser = new TwitterParser(new File(twitterPath));
+			Partitioner partitioner = new PartitionerAsSingle((byte) -1);
+			storePartitionedNodesAndRelsToNeo(transNeo, parser, partitioner);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+	}
+
+	/**
+	 * Creates a Neo4j instance and populates it from the contents of a dataset
+	 * with a proprietry binary file format, which contains user
+	 * follows/following connectivity data from Twitter.
+	 * 
+	 * The file was obtained by crawling Twitter for 300 hours.
+	 * 
+	 * Allocates {@link Node}s to partitions/clusters. Allocation scheme is
+	 * defined by the {@link Partitioner} parameter.
+	 * 
+	 * @param transNeo
+	 *            {@link GraphDatabaseService} representing a Neo4j instance
+	 * 
+	 * @param twitterPath
+	 *            {@link String} representing path to Twitter dataset
+	 * 
+	 * @param partitioner
+	 *            implementation of {@link Partitioner} that defines
+	 *            cluster/partition allocation scheme
+	 */
+	public static void writeNeoFromTwitterDatasetAndPtn(
+			GraphDatabaseService transNeo, String twitterPath,
+			Partitioner partitioner) {
+
+		try {
+			GraphReader parser = new TwitterParser(new File(twitterPath));
+			storePartitionedNodesAndRelsToNeo(transNeo, parser, partitioner);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+	}
+
+	/**
 	 * Creates a Chaco file and populates it with the adjacency list
 	 * representation of the current Neo4j instance.
 	 * 
@@ -819,6 +879,12 @@ public class NeoFromFile {
 
 			}
 
+			if ((minWeight == Double.MAX_VALUE)
+					|| (maxWeight == Double.MIN_VALUE)) {
+				minWeight = 1.0;
+				maxWeight = 1.0;
+			}
+
 			normalizedMinWeight = minWeight / maxWeight;
 			if (normalizedMinWeight < Consts.MIN_EDGE_WEIGHT)
 				normalizedMinWeight = Consts.MIN_EDGE_WEIGHT;
@@ -830,28 +896,29 @@ public class NeoFromFile {
 				for (Relationship rel : node
 						.getRelationships(Direction.OUTGOING)) {
 
-					Long endNodeId = (Long) rel.getEndNode().getProperty(
-							Consts.NODE_GID);
+					MemNode endNode = (MemNode) memGraph.getNodeById(rel
+							.getEndNode().getId());
 
-					MemNode endNode = (MemNode) memGraph.getNodeById(endNodeId);
+					memNode.setNextRelId(rel.getId());
+					MemRel memRel = (MemRel) memNode.createRelationshipTo(
+							endNode, Consts.RelationshipTypes.DEFAULT);
 
 					Long relGID = rel.getId();
 					if (rel.hasProperty(Consts.REL_GID))
 						relGID = (Long) rel.getProperty(Consts.REL_GID);
 
-					memNode.setNextRelId(relGID);
-					MemRel memRel = (MemRel) memNode.createRelationshipTo(
-							endNode, Consts.RelationshipTypes.DEFAULT);
+					memRel.setProperty(Consts.REL_GID, relGID);
 
 					// Store normalized edge weight, [0,1]
 					double weight = normalizedMinWeight;
+
 					if (rel.hasProperty(Consts.WEIGHT)) {
 						weight = (Double) rel.getProperty(Consts.WEIGHT)
 								/ maxWeight;
-
-						if (weight > normalizedMaxWeight)
-							normalizedMaxWeight = weight;
 					}
+
+					if (weight > normalizedMaxWeight)
+						normalizedMaxWeight = weight;
 
 					memRel.setProperty(Consts.WEIGHT, weight);
 
