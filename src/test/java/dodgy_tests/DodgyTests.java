@@ -48,34 +48,47 @@ public class DodgyTests {
 		NeoFromFile.writeMetricsCSV(transNeo, "var/twitter.met");
 		transNeo.shutdown();
 
-		// File file = new File(pathStr + fileStr);
+		// File file = new File(fileStr);
 		//
 		// GraphReader twitterParser = new TwitterParser(file);
 		//
 		// long time = System.currentTimeMillis();
-		// System.out.println("Reading Twitter Nodes Started...");
-		//
-		// long nodeCount = 0;
-		// for (NodeData node : twitterParser.getNodes()) {
-		// if (++nodeCount % 100000 == 0)
-		// System.out.println("\tNodes: " + nodeCount);
-		// }
-		// System.out.println("Nodes: " + nodeCount);
-		//
-		// System.out.printf("Reading Twitter Nodes Done...%s",
-		// getTimeStr(System
-		// .currentTimeMillis()
-		// - time));
-		//
-		// time = System.currentTimeMillis();
+		// // System.out.println("Reading Twitter Nodes Started...");
+		// //
+		// // long nodeCount = 0;
+		// // for (NodeData node : twitterParser.getNodes()) {
+		// // if (++nodeCount % 100000 == 0)
+		// // System.out.println("\tNodes: " + nodeCount);
+		// // }
+		// // System.out.println("Nodes: " + nodeCount);
+		// //
+		// // System.out.printf("Reading Twitter Nodes Done...%s",
+		// // getTimeStr(System
+		// // .currentTimeMillis()
+		// // - time));
+		// //
+		// // time = System.currentTimeMillis();
 		// System.out.println("Reading Twitter Relationships Started...");
 		//
 		// long relCount = 0;
+		// long selfLoopsTotal = 0;
+		// long selfLoops = 0;
 		// for (NodeData rel : twitterParser.getRels()) {
-		// if (++relCount % 1000000 == 0)
-		// System.out.println("\tRelationships: " + relCount);
+		// long sourceId = (Long) rel.getProperties().get(Consts.NODE_GID);
+		// long destId = (Long) rel.getRelationships().get(0).get(
+		// Consts.NODE_GID);
+		// if (sourceId == destId)
+		// selfLoops++;
+		//
+		// if (++relCount % 1000000 == 0) {
+		// System.out.printf("\tRels [%d] Self-Loops [%d]\n", relCount,
+		// selfLoops);
+		// selfLoopsTotal += selfLoops;
+		// selfLoops = 0;
 		// }
-		// System.out.println("Relationships: " + relCount);
+		// }
+		// System.out.printf("\tRels [%d] Self-Loops Total [%d]\n", relCount,
+		// selfLoopsTotal);
 		//
 		// System.out.printf("Reading Twitter Relationships Done...%s",
 		// getTimeStr(System.currentTimeMillis() - time));

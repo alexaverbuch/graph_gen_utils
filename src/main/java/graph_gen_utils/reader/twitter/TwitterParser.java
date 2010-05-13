@@ -225,38 +225,46 @@ public class TwitterParser implements GraphReader {
 		private NodeData parseNodeAndRels() {
 			try {
 
-				if (relsInBuf <= 0) {
-					// NOTE No more Relationships remain in buffer
+				Integer sourceId = -1;
+				Integer destId = -1;
 
-					// read() places bytes at tbuffer's position
-					// position must be set before calling read()
-					// set position to 0
-					byteBuf.rewind();
+				do {
 
-					if ((relsInBuf = channel.read(byteBuf) / REL_SIZE) <= 0)
-						// NOTE No more Relationships remain in file
-						return null;
+					if (relsInBuf <= 0) {
+						// NOTE No more Relationships remain in buffer
 
-					// read() also moves position
-					// to read bytes buffer's position must be reset to 0
-					byteBuf.rewind();
+						// read() places bytes at tbuffer's position
+						// position must be set before calling read()
+						// set position to 0
+						byteBuf.rewind();
 
-					intBuf = byteBuf.asIntBuffer();
-				}
+						if ((relsInBuf = channel.read(byteBuf) / REL_SIZE) <= 0)
+							// NOTE No more Relationships remain in file
+							return null;
+
+						// read() also moves position
+						// to read bytes buffer's position must be reset to 0
+						byteBuf.rewind();
+
+						intBuf = byteBuf.asIntBuffer();
+					}
+
+					sourceId = intBuf.get();
+					destId = intBuf.get();
+
+					relsInBuf--;
+
+				} while (sourceId.equals(destId));
 
 				NodeData nodeAndRel = new NodeData();
 
-				Integer sourceId = intBuf.get();
 				nodeAndRel.getProperties().put(Consts.NODE_GID,
 						new Long(sourceId));
 
-				Integer destId = intBuf.get();
 				Map<String, Object> rel = new HashMap<String, Object>();
 				rel.put(Consts.NODE_GID, new Long(destId));
 
 				nodeAndRel.getRelationships().add(rel);
-
-				relsInBuf--;
 
 				return nodeAndRel;
 
