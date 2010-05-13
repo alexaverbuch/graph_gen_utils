@@ -7,6 +7,7 @@ graph_gen_utils.reader
 graph_gen_utils.reader.chaco
 graph_gen_utils.reader.gml
 graph_gen_utils.reader.topology
+graph_gen_utils.reader.twitter
 graph_gen_utils.writer
 graph_gen_utils.writer.chaco
 graph_gen_utils.writer.gml
