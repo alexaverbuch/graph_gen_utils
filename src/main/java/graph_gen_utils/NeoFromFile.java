@@ -942,53 +942,68 @@ public class NeoFromFile {
     
   }
   
-  // public static void removeDuplicateRelationships(
-  // GraphDatabaseService transNeo, Direction direction) {
-  //    
-  // long time = System.currentTimeMillis();
-  // System.out.printf("Deleting relationships...");
-  //    
-  // int deletedRels = 0;
-  //    
-  // Transaction tx = transNeo.beginTx();
-  //    
-  // try {
-  // for (Node node : transNeo.getAllNodes()) {
-  //        
-  // HashSet<Long> neighbourIds = new HashSet<Long>();
-  //        
-  // for (Relationship relationship : node.getRelationships(direction)) {
-  //          
-  // Node neighbour = relationship.getOtherNode(node);
-  //          
-  // // Neighbour has not been seen previously
-  // if (neighbourIds.add(neighbour.getId()) == true)
-  // continue;
-  //          
-  // relationship.delete();
-  //          
-  // if (++deletedRels % Consts.STORE_BUF == 0) {
-  // tx.success();
-  // tx.finish();
-  // tx = transNeo.beginTx();
-  // }
-  //          
-  // }
-  //        
-  // }
-  //      
-  // tx.success();
-  // } catch (Exception e) {
-  // e.printStackTrace();
-  // } finally {
-  // tx.finish();
-  // }
-  //    
-  // // PRINTOUT
-  // System.out.printf("%s", getTimeStr(System.currentTimeMillis() - time));
-  // System.out.printf("\tRelationships Deleted [%d]\n", deletedRels);
-  //    
-  // }
+  /**
+   * Deletes duplicate {@link Relationship}s (all but one {@link Relationship}
+   * between any two {@link Node}s). Useful for reducing the size of a Neo4j
+   * instance while maintaining the same basic connectivity/structure.
+   * {@link Direction} is considered when identifying duplicates.
+   * 
+   * @param transNeo {@link GraphDatabaseService} representing a Neo4j instance
+   * @param direction {@link Direction} which defines what a duplicate is. If
+   *          direction equals {@link Direction#OUTGOING} then all but one
+   *          outgoing {@link Relationship}s between any two {@link Node}s are
+   *          kept. In this case two {@link Relationship}s may exist between a
+   *          pair of {@link Node}s. If direction equals {@link Direction#BOTH}
+   *          then all but one {@link Relationship} of any direction between any
+   *          two {@link Node} s is kept.
+   */
+  public static void removeDuplicateRelationships(
+    GraphDatabaseService transNeo, Direction direction) {
+    
+    long time = System.currentTimeMillis();
+    System.out.printf("Deleting relationships...");
+    
+    int deletedRels = 0;
+    
+    Transaction tx = transNeo.beginTx();
+    
+    try {
+      for (Node node : transNeo.getAllNodes()) {
+        
+        HashSet<Long> neighbourIds = new HashSet<Long>();
+        
+        for (Relationship relationship : node.getRelationships(direction)) {
+          
+          Node neighbour = relationship.getOtherNode(node);
+          
+          // Neighbour has not been seen previously
+          if (neighbourIds.add(neighbour.getId()) == true)
+            continue;
+          
+          relationship.delete();
+          
+          if (++deletedRels % Consts.STORE_BUF == 0) {
+            tx.success();
+            tx.finish();
+            tx = transNeo.beginTx();
+          }
+          
+        }
+        
+      }
+      
+      tx.success();
+    } catch (Exception e) {
+      e.printStackTrace();
+    } finally {
+      tx.finish();
+    }
+    
+    // PRINTOUT
+    System.out.printf("%s", getTimeStr(System.currentTimeMillis() - time));
+    System.out.printf("\tRelationships Deleted [%d]\n", deletedRels);
+    
+  }
   
   // **************
   // PRIVATE METHODS
