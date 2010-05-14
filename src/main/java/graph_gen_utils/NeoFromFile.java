@@ -33,9 +33,11 @@ import java.util.Set;
 import java.util.Map.Entry;
 
 import org.neo4j.graphdb.Direction;
+import org.neo4j.graphdb.DynamicRelationshipType;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
+import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.index.IndexService;
 import org.neo4j.index.lucene.LuceneIndexService;
@@ -840,6 +842,106 @@ public class NeoFromFile {
     System.out.printf("\tMax Edge Weight = %f\n", normalizedMaxWeight);
     
     return memGraph;
+    
+  }
+  
+  /**
+   * Deletes all {@link Node}s that do not have at least one
+   * {@link Relationship} from the Neo4j instance.
+   * 
+   * @param transNeo {@link GraphDatabaseService} representing a Neo4j instance
+   */
+  public static void removeOrphanNodes(GraphDatabaseService transNeo) {
+    
+    long time = System.currentTimeMillis();
+    System.out.printf("Deleting orphan nodes...");
+    
+    long deletedNodes = 0;
+    
+    Transaction tx = transNeo.beginTx();
+    
+    try {
+      for (Node node : transNeo.getAllNodes()) {
+        
+        if (node.hasRelationship() == true)
+          continue;
+        
+        node.delete();
+        deletedNodes++;
+        
+        if (deletedNodes % Consts.STORE_BUF == 0) {
+          tx.success();
+          tx.finish();
+          tx = transNeo.beginTx();
+        }
+        
+      }
+      
+      tx.success();
+    } catch (Exception e) {
+      e.printStackTrace();
+    } finally {
+      tx.finish();
+    }
+    
+    // PRINTOUT
+    System.out.printf("%s", getTimeStr(System.currentTimeMillis() - time));
+    System.out.printf("\tNodes Deleted [%d]\n", deletedNodes);
+    
+  }
+  
+  /**
+   * Deletes all {@link Relationship}s of the specified {@link RelationshipType}
+   * s from the Neo4j instance.
+   * 
+   * @param transNeo {@link GraphDatabaseService} representing a Neo4j instance
+   * @param relTypes {@link HashSet} of {@link RelationshipType} representing
+   *          the {@link Relationship}s that should be deleted
+   */
+  public static void removeRelationshipsByType(GraphDatabaseService transNeo,
+    HashSet<RelationshipType> relTypes) {
+    
+    long time = System.currentTimeMillis();
+    System.out.printf("Deleting relationships...");
+    
+    int deletedRels = 0;
+    
+    Transaction tx = transNeo.beginTx();
+    
+    try {
+      for (Node node : transNeo.getAllNodes()) {
+        
+        for (Relationship relationship : node
+          .getRelationships(Direction.OUTGOING)) {
+          
+          // Don't delete Relationships of this type
+          if (relTypes.contains(relationship.getType()) == false)
+            continue;
+          
+          relationship.delete();
+          
+          deletedRels++;
+          
+          if (deletedRels % Consts.STORE_BUF == 0) {
+            tx.success();
+            tx.finish();
+            tx = transNeo.beginTx();
+          }
+          
+        }
+        
+      }
+      
+      tx.success();
+    } catch (Exception e) {
+      e.printStackTrace();
+    } finally {
+      tx.finish();
+    }
+    
+    // PRINTOUT
+    System.out.printf("%s", getTimeStr(System.currentTimeMillis() - time));
+    System.out.printf("\tRelationships Deleted [%d]\n", deletedRels);
     
   }
   

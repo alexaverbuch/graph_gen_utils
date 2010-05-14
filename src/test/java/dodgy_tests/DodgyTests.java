@@ -6,6 +6,7 @@ import java.nio.ByteBuffer;
 import java.nio.LongBuffer;
 import java.nio.channels.ReadableByteChannel;
 import java.util.HashMap;
+import java.util.HashSet;
 
 import graph_gen_utils.NeoFromFile;
 import graph_gen_utils.NeoFromFile.ChacoType;
@@ -17,6 +18,7 @@ import graph_gen_utils.memory_graph.MemNode;
 import graph_gen_utils.partitioner.Partitioner;
 import graph_gen_utils.partitioner.PartitionerAsBalanced;
 import graph_gen_utils.partitioner.PartitionerAsRandom;
+import graph_gen_utils.partitioner.PartitionerAsSingle;
 import graph_gen_utils.reader.GraphReader;
 import graph_gen_utils.reader.twitter.TwitterParser;
 
@@ -37,7 +39,64 @@ public class DodgyTests {
    * @param args
    */
   public static void main(String[] args) {
-    test_applyPtnToNeo();
+    test_delete_edge_types();
+  }
+  
+  private static void test_delete_edge_types() {
+    String dbStr = "/media/disk/alex/Neo4j/test";
+    String gml0Str = "/media/disk/alex/Neo4j/test.0.gml";
+    String gml1Str = "/media/disk/alex/Neo4j/test.1.gml";
+    String gml2Str = "/media/disk/alex/Neo4j/test.2.gml";
+    
+    DirUtils.cleanDir(dbStr);
+    GraphDatabaseService db = new EmbeddedGraphDatabase(dbStr);
+    
+    Transaction tx = db.beginTx();
+    
+    RelationshipType relType1 = DynamicRelationshipType.withName("RelType1");
+    RelationshipType relType2 = DynamicRelationshipType.withName("RelType2");
+    
+    try {
+      
+      Node refNode = db.getReferenceNode();
+      refNode.delete();
+      
+      Node node1 = db.createNode();
+      Node node2 = db.createNode();
+      Node node3 = db.createNode();
+      Node node4 = db.createNode();
+      
+      node1.createRelationshipTo(node2, relType2);
+      node2.createRelationshipTo(node3, relType1);
+      node3.createRelationshipTo(node4, relType1);
+      node4.createRelationshipTo(node1, relType2);
+      
+      node1.createRelationshipTo(node3, relType2);
+      node2.createRelationshipTo(node4, relType2);
+      
+      tx.success();
+      
+    } catch (Exception e) {
+      e.printStackTrace();
+    } finally {
+      tx.finish();
+    }
+    
+    Partitioner partitioner = new PartitionerAsSingle((byte) 0);
+    NeoFromFile.applyPtnToNeo(db, partitioner);
+    NeoFromFile.writeGMLBasic(db, gml0Str);
+    
+    HashSet<RelationshipType> relTypes = new HashSet<RelationshipType>();
+    relTypes.add(relType2);
+    NeoFromFile.removeRelationshipsByType(db, relTypes);
+    
+    NeoFromFile.writeGMLBasic(db, gml1Str);
+    
+    NeoFromFile.removeOrphanNodes(db);
+    
+    NeoFromFile.writeGMLBasic(db, gml2Str);
+    
+    db.shutdown();
   }
   
   private static void test_applyPtnToNeo() {
@@ -121,12 +180,19 @@ public class DodgyTests {
     pdb.shutdown();
   }
   
-  private static void cleanup() {
+  private static void cleanup_GIS() {
     GraphDatabaseService romaniaNeo =
       new EmbeddedGraphDatabase("var/romania-BAL2-GID-COORDS_ALL-CARSHORTEST");
     
-    do_remove_edge_types(romaniaNeo);
-    do_remove_orphaned_nodes(romaniaNeo);
+    HashSet<RelationshipType> relTypes = new HashSet<RelationshipType>();
+    relTypes.add(DynamicRelationshipType.withName("FOOT_WAY"));
+    relTypes.add(DynamicRelationshipType.withName("BICYCLE_WAY"));
+    relTypes.add(DynamicRelationshipType.withName("CAR_WAY"));
+    relTypes.add(DynamicRelationshipType.withName("CAR_SHORTEST_WAY"));
+    
+    NeoFromFile.removeRelationshipsByType(romaniaNeo, relTypes);
+    NeoFromFile.removeOrphanNodes(romaniaNeo);
+    
     do_apply_weight_all_edges(romaniaNeo);
     
     NeoFromFile.applyPtnToNeo(romaniaNeo, new PartitionerAsBalanced((byte) 2));
@@ -136,131 +202,6 @@ public class DodgyTests {
         "var/romania-balanced2-named-coords_all-carshortest-no_orphoned.basic.gml");
     
     romaniaNeo.shutdown();
-  }
-  
-  private static void do_remove_orphaned_nodes(GraphDatabaseService romaniaNeo) {
-    
-    long maxDeletesPerTransaction = 100000;
-    long deletedNodes = maxDeletesPerTransaction;
-    while (deletedNodes >= maxDeletesPerTransaction) {
-      long time = System.currentTimeMillis();
-      
-      System.out.printf("Deleting nodes...");
-      
-      deletedNodes =
-        remove_orphaned_nodes(romaniaNeo, maxDeletesPerTransaction);
-      
-      // PRINTOUT
-      System.out.printf("[%d] %s", deletedNodes, getTimeStr(System
-        .currentTimeMillis()
-        - time));
-    }
-    
-  }
-  
-  private static int remove_orphaned_nodes(GraphDatabaseService romaniaNeo,
-    long maxDeletesPerTransaction) {
-    int deletedNodes = 0;
-    
-    Transaction tx = romaniaNeo.beginTx();
-    
-    try {
-      for (Node v : romaniaNeo.getAllNodes()) {
-        
-        if (v.hasRelationship() == false) {
-          v.delete();
-          deletedNodes++;
-        }
-        
-        if (deletedNodes >= maxDeletesPerTransaction)
-          break;
-      }
-      
-      tx.success();
-    } catch (Exception e) {
-      e.printStackTrace();
-    } finally {
-      tx.finish();
-    }
-    
-    return deletedNodes;
-  }
-  
-  private static void do_remove_edge_types(GraphDatabaseService romaniaNeo) {
-    
-    long maxDeletesPerTransaction = 100000;
-    long deletedRels = maxDeletesPerTransaction;
-    while (deletedRels >= maxDeletesPerTransaction) {
-      long time = System.currentTimeMillis();
-      
-      System.out.printf("Deleting relationships...");
-      
-      deletedRels = remove_edge_types(romaniaNeo, maxDeletesPerTransaction);
-      
-      // PRINTOUT
-      System.out.printf("[%d] %s", deletedRels, getTimeStr(System
-        .currentTimeMillis()
-        - time));
-    }
-    
-  }
-  
-  private static int remove_edge_types(GraphDatabaseService romaniaNeo,
-    long maxDeletesPerTransaction) {
-    
-    RelationshipType relTypeFootWay =
-      DynamicRelationshipType.withName("FOOT_WAY");
-    RelationshipType relTypeBicycleWay =
-      DynamicRelationshipType.withName("BICYCLE_WAY");
-    RelationshipType relTypeCarWay =
-      DynamicRelationshipType.withName("CAR_WAY");
-    RelationshipType relTypeCarShortestWay =
-      DynamicRelationshipType.withName("CAR_SHORTEST_WAY");
-    
-    int deletedRels = 0;
-    
-    Transaction tx = romaniaNeo.beginTx();
-    
-    try {
-      for (Node v : romaniaNeo.getAllNodes()) {
-        
-        for (Relationship e : v.getRelationships(Direction.OUTGOING)) {
-          
-          // Don't delete FOOT_WAY
-          if (e.getType().equals(relTypeFootWay))
-            continue;
-          
-          // Don't delete BICYCLE_WAY
-          if (e.getType().equals(relTypeBicycleWay))
-            continue;
-          
-          // Don't delete CAR_WAY
-          if (e.getType().equals(relTypeCarWay))
-            continue;
-          
-          // Don't delete CAR_SHORTEST_WAY
-          if (e.getType().equals(relTypeCarShortestWay))
-            continue;
-          
-          e.delete();
-          
-          deletedRels++;
-          if (deletedRels >= maxDeletesPerTransaction)
-            break;
-        }
-        
-        if (deletedRels >= maxDeletesPerTransaction)
-          break;
-      }
-      
-      tx.success();
-    } catch (Exception e) {
-      e.printStackTrace();
-    } finally {
-      tx.finish();
-    }
-    
-    return deletedRels;
   }
   
   private static void do_apply_weight_all_edges(GraphDatabaseService romaniaNeo) {
