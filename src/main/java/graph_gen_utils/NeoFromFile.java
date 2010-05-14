@@ -955,8 +955,15 @@ public class NeoFromFile {
   // try {
   // for (Node node : transNeo.getAllNodes()) {
   //        
-  // for (Relationship relationship : node
-  // .getRelationships(direction)) {
+  // HashSet<Long> neighbourIds = new HashSet<Long>();
+  //        
+  // for (Relationship relationship : node.getRelationships(direction)) {
+  //          
+  // Node neighbour = relationship.getOtherNode(node);
+  //          
+  // // Neighbour has not been seen previously
+  // if (neighbourIds.add(neighbour.getId()) == true)
+  // continue;
   //          
   // relationship.delete();
   //          
