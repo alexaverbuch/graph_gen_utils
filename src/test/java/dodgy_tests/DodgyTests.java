@@ -39,10 +39,64 @@ public class DodgyTests {
    * @param args
    */
   public static void main(String[] args) {
-    test_delete_edge_types();
+    test_delete_duplicate_edges();
   }
   
-  private static void test_delete_edge_types() {
+  private static void test_delete_duplicate_edges() {
+    String dbStr = "/media/disk/alex/Neo4j/test";
+    String gml0Str = "/media/disk/alex/Neo4j/test.0.gml";
+    String gml1Str = "/media/disk/alex/Neo4j/test.1.gml";
+    String gml2Str = "/media/disk/alex/Neo4j/test.2.gml";
+    
+    DirUtils.cleanDir(dbStr);
+    GraphDatabaseService db = new EmbeddedGraphDatabase(dbStr);
+    
+    Transaction tx = db.beginTx();
+    
+    RelationshipType relType1 = DynamicRelationshipType.withName("RelType1");
+    
+    try {
+      
+      Node refNode = db.getReferenceNode();
+      refNode.delete();
+      
+      Node node1 = db.createNode();
+      Node node2 = db.createNode();
+      Node node3 = db.createNode();
+      Node node4 = db.createNode();
+      
+      node1.createRelationshipTo(node2, relType1);
+      node1.createRelationshipTo(node2, relType1);
+      node2.createRelationshipTo(node1, relType1);
+      node2.createRelationshipTo(node3, relType1);
+      node3.createRelationshipTo(node4, relType1);
+      node4.createRelationshipTo(node1, relType1);
+      
+      tx.success();
+      
+    } catch (Exception e) {
+      e.printStackTrace();
+    } finally {
+      tx.finish();
+    }
+    
+    Partitioner partitioner = new PartitionerAsSingle((byte) 0);
+    NeoFromFile.applyPtnToNeo(db, partitioner);
+    
+    NeoFromFile.writeGMLBasic(db, gml0Str);
+    
+    NeoFromFile.removeDuplicateRelationships(db, Direction.BOTH);
+    
+    NeoFromFile.writeGMLBasic(db, gml1Str);
+    
+    NeoFromFile.removeDuplicateRelationships(db, Direction.OUTGOING);
+    
+    NeoFromFile.writeGMLBasic(db, gml2Str);
+    
+    db.shutdown();
+  }
+  
+  private static void test_delete_edge_types_and_orphan_nodes() {
     String dbStr = "/media/disk/alex/Neo4j/test";
     String gml0Str = "/media/disk/alex/Neo4j/test.0.gml";
     String gml1Str = "/media/disk/alex/Neo4j/test.1.gml";
