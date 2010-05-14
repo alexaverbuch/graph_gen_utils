@@ -867,9 +867,8 @@ public class NeoFromFile {
           continue;
         
         node.delete();
-        deletedNodes++;
         
-        if (deletedNodes % Consts.STORE_BUF == 0) {
+        if (++deletedNodes % Consts.STORE_BUF == 0) {
           tx.success();
           tx.finish();
           tx = transNeo.beginTx();
@@ -920,9 +919,7 @@ public class NeoFromFile {
           
           relationship.delete();
           
-          deletedRels++;
-          
-          if (deletedRels % Consts.STORE_BUF == 0) {
+          if (++deletedRels % Consts.STORE_BUF == 0) {
             tx.success();
             tx.finish();
             tx = transNeo.beginTx();
@@ -944,6 +941,47 @@ public class NeoFromFile {
     System.out.printf("\tRelationships Deleted [%d]\n", deletedRels);
     
   }
+  
+  // public static void removeDuplicateRelationships(
+  // GraphDatabaseService transNeo, Direction direction) {
+  //    
+  // long time = System.currentTimeMillis();
+  // System.out.printf("Deleting relationships...");
+  //    
+  // int deletedRels = 0;
+  //    
+  // Transaction tx = transNeo.beginTx();
+  //    
+  // try {
+  // for (Node node : transNeo.getAllNodes()) {
+  //        
+  // for (Relationship relationship : node
+  // .getRelationships(direction)) {
+  //          
+  // relationship.delete();
+  //          
+  // if (++deletedRels % Consts.STORE_BUF == 0) {
+  // tx.success();
+  // tx.finish();
+  // tx = transNeo.beginTx();
+  // }
+  //          
+  // }
+  //        
+  // }
+  //      
+  // tx.success();
+  // } catch (Exception e) {
+  // e.printStackTrace();
+  // } finally {
+  // tx.finish();
+  // }
+  //    
+  // // PRINTOUT
+  // System.out.printf("%s", getTimeStr(System.currentTimeMillis() - time));
+  // System.out.printf("\tRelationships Deleted [%d]\n", deletedRels);
+  //    
+  // }
   
   // **************
   // PRIVATE METHODS

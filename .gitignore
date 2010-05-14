@@ -5,6 +5,7 @@
 *.graph
 *.ptn
 *.met
+/.classpath
 !test0.graph
 !test1.graph
 !test10.graph
