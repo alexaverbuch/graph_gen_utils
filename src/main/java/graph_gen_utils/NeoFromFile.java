@@ -33,7 +33,6 @@ import java.util.Set;
 import java.util.Map.Entry;
 
 import org.neo4j.graphdb.Direction;
-import org.neo4j.graphdb.DynamicRelationshipType;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.Relationship;
@@ -41,6 +40,7 @@ import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.index.IndexService;
 import org.neo4j.index.lucene.LuceneIndexService;
+import org.neo4j.kernel.impl.batchinsert.BatchInserter;
 
 import p_graph_service.PGraphDatabaseService;
 import p_graph_service.core.PGraphDatabaseServiceImpl;
@@ -291,8 +291,6 @@ public class NeoFromFile {
           nodes = new ArrayList<NodeData>();
         }
         
-        nodeNumber++;
-        
         NodeData nodeData = new NodeData();
         
         for (Entry<String, Object> prop : props.entrySet()) {
@@ -301,7 +299,7 @@ public class NeoFromFile {
         }
         
         nodeData.getProperties().put(Consts.NODE_LID, node.getId());
-        nodeData.getProperties().put(Consts.NODE_GID, nodeNumber);
+        nodeData.getProperties().put(Consts.NODE_GID, ++nodeNumber);
         
         nodes.add(nodeData);
         
@@ -340,7 +338,10 @@ public class NeoFromFile {
     
     try {
       Partitioner partitioner = new PartitionerAsSingle((byte) -1);
-      storePartitionedNodesAndRelsToNeo(transNeo, topology, partitioner);
+      GraphDatabaseServicesWriter dbWrapper =
+        GraphDatabaseServicesWriter.createTransactionalWrapper(transNeo);
+      storePartitionedNodesAndRelsToNeo(dbWrapper, topology, partitioner);
+      dbWrapper.shutdownIndex();
     } catch (Exception e) {
       e.printStackTrace();
     }
@@ -364,7 +365,10 @@ public class NeoFromFile {
     GraphTopology topology, Partitioner partitioner) {
     
     try {
-      storePartitionedNodesAndRelsToNeo(transNeo, topology, partitioner);
+      GraphDatabaseServicesWriter dbWrapper =
+        GraphDatabaseServicesWriter.createTransactionalWrapper(transNeo);
+      storePartitionedNodesAndRelsToNeo(dbWrapper, topology, partitioner);
+      dbWrapper.shutdownIndex();
     } catch (Exception e) {
       e.printStackTrace();
     }
@@ -384,7 +388,10 @@ public class NeoFromFile {
     try {
       GraphReader parser = ChacoParserFactory.getChacoParser(graphPath);
       Partitioner partitioner = new PartitionerAsSingle((byte) -1);
-      storePartitionedNodesAndRelsToNeo(transNeo, parser, partitioner);
+      GraphDatabaseServicesWriter dbWrapper =
+        GraphDatabaseServicesWriter.createTransactionalWrapper(transNeo);
+      storePartitionedNodesAndRelsToNeo(dbWrapper, parser, partitioner);
+      dbWrapper.shutdownIndex();
     } catch (Exception e) {
       e.printStackTrace();
     }
@@ -410,7 +417,10 @@ public class NeoFromFile {
     try {
       GraphReader parser = ChacoParserFactory.getChacoParser(graphPath);
       Partitioner partitioner = new PartitionerAsFile(new File(ptnPath));
-      storePartitionedNodesAndRelsToNeo(transNeo, parser, partitioner);
+      GraphDatabaseServicesWriter dbWrapper =
+        GraphDatabaseServicesWriter.createTransactionalWrapper(transNeo);
+      storePartitionedNodesAndRelsToNeo(dbWrapper, parser, partitioner);
+      dbWrapper.shutdownIndex();
     } catch (Exception e) {
       e.printStackTrace();
     }
@@ -433,7 +443,36 @@ public class NeoFromFile {
     
     try {
       GraphReader parser = ChacoParserFactory.getChacoParser(graphPath);
-      storePartitionedNodesAndRelsToNeo(transNeo, parser, partitioner);
+      GraphDatabaseServicesWriter dbWrapper =
+        GraphDatabaseServicesWriter.createTransactionalWrapper(transNeo);
+      storePartitionedNodesAndRelsToNeo(dbWrapper, parser, partitioner);
+      dbWrapper.shutdownIndex();
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+    
+  }
+  
+  /**
+   * Creates a Neo4j instance using the {@link BatchInserter}, populates it from
+   * the contents of a Chaco (.graph) file, then allocates {@link Node}s to
+   * partitions/clusters. Chaco files are basically persistent adjacency lists.
+   * Allocation scheme is defined by the {@link Partitioner} parameter.
+   * 
+   * @param dbDir {@link String} representing the path to a Neo4j instance
+   * @param graphPath {@link String} representing path to .graph file
+   * @param partitioner implementation of {@link Partitioner} that defines
+   *          cluster/partition allocation scheme
+   */
+  public static void writeNeoFromChacoAndPtnBatch(String dbDir,
+    String graphPath, Partitioner partitioner) {
+    
+    try {
+      GraphReader parser = ChacoParserFactory.getChacoParser(graphPath);
+      GraphDatabaseServicesWriter dbWrapper =
+        GraphDatabaseServicesWriter.createBatchWrapper(dbDir);
+      storePartitionedNodesAndRelsToNeo(dbWrapper, parser, partitioner);
+      dbWrapper.shutdownDbAndIndex();
     } catch (Exception e) {
       e.printStackTrace();
     }
@@ -453,7 +492,10 @@ public class NeoFromFile {
     try {
       GraphReader parser = new GMLParserDirected(new File(gmlPath));
       Partitioner partitioner = new PartitionerAsSingle((byte) -1);
-      storePartitionedNodesAndRelsToNeo(transNeo, parser, partitioner);
+      GraphDatabaseServicesWriter dbWrapper =
+        GraphDatabaseServicesWriter.createTransactionalWrapper(transNeo);
+      storePartitionedNodesAndRelsToNeo(dbWrapper, parser, partitioner);
+      dbWrapper.shutdownIndex();
     } catch (Exception e) {
       e.printStackTrace();
     }
@@ -476,7 +518,10 @@ public class NeoFromFile {
     
     try {
       GraphReader parser = new GMLParserDirected(new File(gmlPath));
-      storePartitionedNodesAndRelsToNeo(transNeo, parser, partitioner);
+      GraphDatabaseServicesWriter dbWrapper =
+        GraphDatabaseServicesWriter.createTransactionalWrapper(transNeo);
+      storePartitionedNodesAndRelsToNeo(dbWrapper, parser, partitioner);
+      dbWrapper.shutdownIndex();
     } catch (Exception e) {
       e.printStackTrace();
     }
@@ -498,7 +543,10 @@ public class NeoFromFile {
     try {
       GraphReader parser = new TwitterParser(new File(twitterPath));
       Partitioner partitioner = new PartitionerAsSingle((byte) -1);
-      storePartitionedNodesAndRelsToNeo(transNeo, parser, partitioner);
+      GraphDatabaseServicesWriter dbWrapper =
+        GraphDatabaseServicesWriter.createTransactionalWrapper(transNeo);
+      storePartitionedNodesAndRelsToNeo(dbWrapper, parser, partitioner);
+      dbWrapper.shutdownIndex();
     } catch (Exception e) {
       e.printStackTrace();
     }
@@ -522,7 +570,35 @@ public class NeoFromFile {
     
     try {
       GraphReader parser = new TwitterParser(new File(twitterPath));
-      storePartitionedNodesAndRelsToNeo(transNeo, parser, partitioner);
+      GraphDatabaseServicesWriter dbWrapper =
+        GraphDatabaseServicesWriter.createTransactionalWrapper(transNeo);
+      storePartitionedNodesAndRelsToNeo(dbWrapper, parser, partitioner);
+      dbWrapper.shutdownIndex();
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+    
+  }
+  
+  /**
+   * Creates a Neo4j instance using the {@link BatchInserter}, then populates it
+   * from the contents of a dataset with a proprietry binary file format, which
+   * contains user follows/following connectivity data from Twitter. The file
+   * was obtained by crawling Twitter for 300 hours.
+   * 
+   * @param dbDir {@link String} representing the path to a Neo4j instance
+   * @param twitterPath {@link String} representing path to Twitter dataset
+   */
+  public static void writeNeoFromTwitterDatasetBatch(String dbDir,
+    String twitterPath) {
+    
+    try {
+      GraphReader parser = new TwitterParser(new File(twitterPath));
+      Partitioner partitioner = new PartitionerAsSingle((byte) -1);
+      GraphDatabaseServicesWriter dbWrapper =
+        GraphDatabaseServicesWriter.createBatchWrapper(dbDir);
+      storePartitionedNodesAndRelsToNeo(dbWrapper, parser, partitioner);
+      dbWrapper.shutdownDbAndIndex();
     } catch (Exception e) {
       e.printStackTrace();
     }
@@ -1024,19 +1100,13 @@ public class NeoFromFile {
   }
   
   private static void storePartitionedNodesAndRelsToNeo(
-    GraphDatabaseService transNeo, GraphReader parser, Partitioner partitioner)
-    throws Exception {
-    
-    if (isSupportedGraphDatabaseService(transNeo) == false)
-      throw new UnsupportedOperationException(
-        "GraphDatabaseService implementation not supported");
+    GraphDatabaseServicesWriter dbWrapper, GraphReader parser,
+    Partitioner partitioner) throws Exception {
     
     long time = System.currentTimeMillis();
     
     // PRINTOUT
     System.out.printf("Reading & Indexing Nodes...");
-    
-    IndexService transIndexService = new LuceneIndexService(transNeo);
     
     ArrayList<NodeData> nodesAndRels = new ArrayList<NodeData>();
     
@@ -1049,14 +1119,16 @@ public class NeoFromFile {
         // System.out.printf(".");
         
         nodesAndRels = partitioner.applyPartitioning(nodesAndRels);
-        flushNodesTrans(transIndexService, transNeo, nodesAndRels);
+        dbWrapper.flushNodes(nodesAndRels);
         nodesAndRels.clear();
       }
     }
     
     nodesAndRels = partitioner.applyPartitioning(nodesAndRels);
-    flushNodesTrans(transIndexService, transNeo, nodesAndRels);
+    dbWrapper.flushNodes(nodesAndRels);
     nodesAndRels.clear();
+    
+    dbWrapper.optimizeIndex();
     
     // PRINTOUT
     System.out.printf("%s", getTimeStr(System.currentTimeMillis() - time));
@@ -1073,115 +1145,19 @@ public class NeoFromFile {
         // PRINTOUT
         // System.out.printf(".");
         
-        flushRelsTrans(transIndexService, transNeo, nodesAndRels);
+        dbWrapper.flushRels(nodesAndRels);
         nodesAndRels.clear();
       }
     }
     
-    flushRelsTrans(transIndexService, transNeo, nodesAndRels);
+    dbWrapper.flushRels(nodesAndRels);
     nodesAndRels.clear();
     
-    removeReferenceNode(transNeo);
-    
-    transIndexService.shutdown();
+    dbWrapper.removeReferenceNode();
     
     // PRINTOUT
     System.out.printf("%s", getTimeStr(System.currentTimeMillis() - time));
     
-  }
-  
-  private static void flushNodesTrans(IndexService transIndexService,
-    GraphDatabaseService transNeo, ArrayList<NodeData> nodes) {
-    
-    Transaction tx = transNeo.beginTx();
-    
-    try {
-      for (NodeData nodeAndRels : nodes) {
-        Node node = transNeo.createNode();
-        
-        for (Entry<String, Object> nodeProp : nodeAndRels.getProperties()
-          .entrySet()) {
-          
-          node.setProperty(nodeProp.getKey(), nodeProp.getValue());
-          transIndexService.index(node, nodeProp.getKey(), nodeProp.getValue());
-          
-        }
-        
-      }
-      
-      tx.success();
-    } catch (Exception e) {
-      e.printStackTrace();
-    } finally {
-      tx.finish();
-    }
-    
-  }
-  
-  private static void flushRelsTrans(IndexService transIndexService,
-    GraphDatabaseService transNeo, ArrayList<NodeData> nodes) {
-    
-    Transaction tx = transNeo.beginTx();
-    
-    Long fromId = null;
-    Long toId = null;
-    
-    try {
-      
-      for (NodeData nodeAndRels : nodes) {
-        fromId = (Long) nodeAndRels.getProperties().get(Consts.NODE_GID);
-        Node fromNode =
-          transIndexService.getSingleNode(Consts.NODE_GID, fromId);
-        Byte fromColor = (Byte) fromNode.getProperty(Consts.COLOR);
-        
-        for (Map<String, Object> rel : nodeAndRels.getRelationships()) {
-          toId = (Long) rel.get(Consts.NODE_GID);
-          
-          Node toNode = transIndexService.getSingleNode(Consts.NODE_GID, toId);
-          Byte toColor = (Byte) toNode.getProperty(Consts.COLOR);
-          
-          Relationship neoRel = null;
-          
-          if (fromColor == toColor) {
-            neoRel =
-              fromNode.createRelationshipTo(toNode,
-                Consts.RelationshipTypes.INTERNAL);
-          } else {
-            neoRel =
-              fromNode.createRelationshipTo(toNode,
-                Consts.RelationshipTypes.EXTERNAL);
-          }
-          
-          Long relGID = neoRel.getId();
-          
-          for (Entry<String, Object> relProp : rel.entrySet()) {
-            
-            String relPropKey = relProp.getKey();
-            
-            if (relPropKey.equals(Consts.NODE_GID))
-              continue;
-            
-            if (relPropKey.equals(Consts.REL_GID)) {
-              relGID = (Long) relProp.getValue();
-              continue;
-            }
-            
-            neoRel.setProperty(relPropKey, relProp.getValue());
-            
-          }
-          
-          neoRel.setProperty(Consts.REL_GID, relGID);
-          
-        }
-      }
-      
-      tx.success();
-    } catch (Exception e) {
-      e.printStackTrace();
-      System.err.printf("%nfromId[%d] toId[%d]%n", fromId, toId);
-    } finally {
-      tx.finish();
-    }
   }
   
   private static void applyNodeProps(IndexService transIndexService,
@@ -1213,35 +1189,6 @@ public class NeoFromFile {
     } finally {
       tx.finish();
     }
-  }
-  
-  // Used when reading from input graph (E.g. Chaco, GML, Topology etc)
-  // Not used when working on existing Neo4j instance
-  private static void removeReferenceNode(GraphDatabaseService transNeo) {
-    Transaction tx = transNeo.beginTx();
-    
-    try {
-      Node refNode = transNeo.getReferenceNode();
-      
-      for (Relationship refRel : refNode.getRelationships())
-        refRel.delete();
-      
-      refNode.delete();
-      tx.success();
-    } catch (Exception e) {
-      e.printStackTrace();
-    } finally {
-      tx.finish();
-    }
-  }
-  
-  private static boolean isSupportedGraphDatabaseService(
-    GraphDatabaseService transNeo) {
-    if (transNeo instanceof MemGraph)
-      return false;
-    if (transNeo instanceof PGraphDatabaseService)
-      return false;
-    return true;
   }
   
   private static String getTimeStr(long msTotal) {

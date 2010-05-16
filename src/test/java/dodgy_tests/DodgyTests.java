@@ -1,10 +1,5 @@
 package dodgy_tests;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.nio.ByteBuffer;
-import java.nio.LongBuffer;
-import java.nio.channels.ReadableByteChannel;
 import java.util.HashMap;
 import java.util.HashSet;
 
@@ -12,15 +7,15 @@ import graph_gen_utils.NeoFromFile;
 import graph_gen_utils.NeoFromFile.ChacoType;
 import graph_gen_utils.general.Consts;
 import graph_gen_utils.general.DirUtils;
-import graph_gen_utils.general.NodeData;
 import graph_gen_utils.memory_graph.MemGraph;
 import graph_gen_utils.memory_graph.MemNode;
 import graph_gen_utils.partitioner.Partitioner;
 import graph_gen_utils.partitioner.PartitionerAsBalanced;
+import graph_gen_utils.partitioner.PartitionerAsCoordinates;
+import graph_gen_utils.partitioner.PartitionerAsDefault;
 import graph_gen_utils.partitioner.PartitionerAsRandom;
 import graph_gen_utils.partitioner.PartitionerAsSingle;
-import graph_gen_utils.reader.GraphReader;
-import graph_gen_utils.reader.twitter.TwitterParser;
+import graph_gen_utils.partitioner.PartitionerAsCoordinates.BorderType;
 
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.DynamicRelationshipType;
@@ -39,7 +34,158 @@ public class DodgyTests {
    * @param args
    */
   public static void main(String[] args) {
-    test_delete_duplicate_edges();
+    test_transactional_vs_batch();
+  }
+  
+  private static void test_transactional_vs_batch() {
+    String testDir = "/media/disk/alex/Neo4j/test/";
+    String dbTransDir = testDir + "transNeo/";
+    String dbBatchDir = testDir + "batchNeo/";
+    String testGraphDir = "/home/alex/workspace/graph_cluster_utils/graphs/";
+    String testGraph = testGraphDir + "m14b.graph";
+    
+    // DirUtils.cleanDir(testDir);
+    // DirUtils.cleanDir(dbTransDir);
+    // DirUtils.cleanDir(dbBatchDir);
+    //    
+    // Partitioner partitioner = new PartitionerAsDefault();
+    //    
+    // long time = System.currentTimeMillis();
+    // NeoFromFile
+    // .writeNeoFromChacoAndPtnBatch(dbBatchDir, testGraph, partitioner);
+    // System.out.printf("Neo from Chaco [Batch]...%s", getTimeStr(System
+    // .currentTimeMillis()
+    // - time));
+    //    
+    // GraphDatabaseService dbBatch = new EmbeddedGraphDatabase(dbBatchDir);
+    // NeoFromFile.writeMetricsCSV(dbBatch, testDir + "batch.met");
+    // dbBatch.shutdown();
+    //    
+    // time = System.currentTimeMillis();
+    GraphDatabaseService dbTrans = new EmbeddedGraphDatabase(dbTransDir);
+    // NeoFromFile.writeNeoFromChacoAndPtn(dbTrans, testGraph, partitioner);
+    // System.out.printf("Neo from Chaco [Transactional]...%s",
+    // getTimeStr(System
+    // .currentTimeMillis()
+    // - time));
+    
+    NeoFromFile.writeMetricsCSV(dbTrans, testDir + "trans.met");
+    dbTrans.shutdown();
+    
+  }
+  
+  private static void do_partition_GIS() {
+    String dbStr =
+      "/media/disk/alex/Neo4j/Original/fs-tree (v=1.4m e=2.6m)-RAND2";
+    
+    GraphDatabaseService db = new EmbeddedGraphDatabase(dbStr);
+    
+    // double northWesternLon = 20d;
+    // double northWesternLat = 49d;
+    // double southEasternLon = 31d;
+    // double southEasternLat = 43d;
+    // BorderType borderType = BorderType.NORTH_SOUTH_BORDERS;
+    // byte ptns = 4;
+    //    
+    // Partitioner partitioner =
+    // new PartitionerAsCoordinates(northWesternLon, northWesternLat,
+    // southEasternLon, southEasternLat, borderType, ptns);
+    //    
+    // HashMap<String, Object> props = new HashMap<String, Object>();
+    // props.put(Consts.LONGITUDE, 0d);
+    // props.put(Consts.LATITUDE, 0d);
+    
+    // byte ptns = 2;
+    // Partitioner partitioner = new PartitionerAsRandom(ptns);
+    
+    // byte ptns = 4;
+    // Partitioner partitioner = new PartitionerAsRandom(ptns);
+    //    
+    // HashMap<String, Object> props = new HashMap<String, Object>();
+    //    
+    // NeoFromFile.applyPtnToNeo(db, partitioner, props);
+    NeoFromFile.writeMetricsCSV(db, "/media/disk/alex/Neo4j/fs-tree.rand2.met");
+    // NeoFromFile.writeGMLBasic(db,
+    // "/media/disk/alex/Neo4j/romania.rand4.gml");
+    
+    db.shutdown();
+  }
+  
+  private static void test_partitioner_as_coords() {
+    String dbStr = "/media/disk/alex/Neo4j/test";
+    String gml0Str = "/media/disk/alex/Neo4j/test.0.gml";
+    String gml1Str = "/media/disk/alex/Neo4j/test.1.gml";
+    
+    DirUtils.cleanDir(dbStr);
+    GraphDatabaseService db = new EmbeddedGraphDatabase(dbStr);
+    
+    Transaction tx = db.beginTx();
+    
+    RelationshipType relType1 = DynamicRelationshipType.withName("RelType1");
+    
+    try {
+      
+      Node refNode = db.getReferenceNode();
+      refNode.delete();
+      
+      Node node1 = db.createNode();
+      Node node2 = db.createNode();
+      Node node3 = db.createNode();
+      Node node4 = db.createNode();
+      
+      node1.createRelationshipTo(node2, relType1);
+      node2.createRelationshipTo(node3, relType1);
+      node3.createRelationshipTo(node4, relType1);
+      node4.createRelationshipTo(node1, relType1);
+      
+      node1.setProperty(Consts.LATITUDE, 50d);
+      node1.setProperty(Consts.LONGITUDE, -100d);
+      node1.setProperty(Consts.NAME, node1.getProperty(Consts.LONGITUDE)
+        .toString()
+        + " " + node1.getProperty(Consts.LATITUDE).toString());
+      
+      node2.setProperty(Consts.LATITUDE, 50d);
+      node2.setProperty(Consts.LONGITUDE, 100d);
+      node2.setProperty(Consts.NAME, node2.getProperty(Consts.LONGITUDE)
+        .toString()
+        + " " + node2.getProperty(Consts.LATITUDE).toString());
+      
+      node3.setProperty(Consts.LATITUDE, -50d);
+      node3.setProperty(Consts.LONGITUDE, 100d);
+      node3.setProperty(Consts.NAME, node3.getProperty(Consts.LONGITUDE)
+        .toString()
+        + " " + node3.getProperty(Consts.LATITUDE).toString());
+      
+      node4.setProperty(Consts.LATITUDE, -50d);
+      node4.setProperty(Consts.LONGITUDE, -100d);
+      node4.setProperty(Consts.NAME, node4.getProperty(Consts.LONGITUDE)
+        .toString()
+        + " " + node4.getProperty(Consts.LATITUDE).toString());
+      
+      tx.success();
+      
+    } catch (Exception e) {
+      e.printStackTrace();
+    } finally {
+      tx.finish();
+    }
+    
+    Partitioner partitionerSingle = new PartitionerAsSingle((byte) 0);
+    NeoFromFile.applyPtnToNeo(db, partitionerSingle);
+    
+    NeoFromFile.writeGMLFull(db, gml0Str);
+    
+    Partitioner partitionerCoords =
+      new PartitionerAsCoordinates(-100, 51, 101, -51,
+        BorderType.NORTH_SOUTH_BORDERS, (byte) 2);
+    HashMap<String, Object> props = new HashMap<String, Object>();
+    props.put(Consts.LONGITUDE, 0d);
+    props.put(Consts.LATITUDE, 0d);
+    NeoFromFile.applyPtnToNeo(db, partitionerCoords, props);
+    
+    NeoFromFile.writeGMLFull(db, gml1Str);
+    
+    db.shutdown();
   }
   
   private static void test_delete_duplicate_edges() {
@@ -155,17 +301,27 @@ public class DodgyTests {
   
   private static void test_applyPtnToNeo() {
     String graphStr = "/home/alex/workspace/graph_gen_utils/graphs/test0.graph";
-    String gmlStr = "/media/disk/alex/Neo4j/test.gml";
+    String gml0Str = "/media/disk/alex/Neo4j/test.0.gml";
+    String gml1Str = "/media/disk/alex/Neo4j/test.1.gml";
     String dbStr = "/media/disk/alex/Neo4j/test";
     
     DirUtils.cleanDir(dbStr);
     GraphDatabaseService db = new EmbeddedGraphDatabase(dbStr);
+    
     NeoFromFile.writeNeoFromChaco(db, graphStr);
-    Partitioner partitioner = new PartitionerAsBalanced((byte) 2);
+    
+    Partitioner partitionerBal = new PartitionerAsBalanced((byte) 2);
+    Partitioner partitionerRand = new PartitionerAsRandom((byte) 4);
+    
     HashMap<String, Object> props = new HashMap<String, Object>();
     props.put(Consts.LATITUDE, 0.5d);
-    NeoFromFile.applyPtnToNeo(db, partitioner, props);
-    NeoFromFile.writeGMLBasic(db, gmlStr);
+    
+    NeoFromFile.applyPtnToNeo(db, partitionerBal, props);
+    NeoFromFile.writeGMLBasic(db, gml0Str);
+    
+    NeoFromFile.applyPtnToNeo(db, partitionerRand, props);
+    NeoFromFile.writeGMLBasic(db, gml1Str);
+    
     db.shutdown();
   }
   
@@ -352,6 +508,16 @@ public class DodgyTests {
   private static void read_write_read_write_etc() {
     DirUtils.cleanDir("var/read_write_results");
     
+    DirUtils.cleanDir("var/batchNeo0");
+    Partitioner partitioner = new PartitionerAsDefault();
+    NeoFromFile.writeNeoFromChacoAndPtnBatch("var/batchNeo0",
+      "graphs/test0.graph", partitioner);
+    GraphDatabaseService batchNeo0 = new EmbeddedGraphDatabase("var/batchNeo0");
+    NeoFromFile.writeChaco(batchNeo0, "var/read_write_results/batchNeo0.graph",
+      ChacoType.UNWEIGHTED);
+    NeoFromFile.writeGMLBasic(batchNeo0,
+      "var/read_write_results/batchNeo0.basic.gml");
+    
     DirUtils.cleanDir("var/neo0");
     GraphDatabaseService neo0 = new EmbeddedGraphDatabase("var/neo0");
     NeoFromFile.writeNeoFromChaco(neo0, "graphs/test0.graph");
@@ -465,6 +631,7 @@ public class DodgyTests {
     NeoFromFile.writeChaco(mem2, "var/read_write_results/neo2mem00.graph",
       ChacoType.UNWEIGHTED);
     
+    batchNeo0.shutdown();
     neo0.shutdown();
     neo1.shutdown();
     neo2.shutdown();
