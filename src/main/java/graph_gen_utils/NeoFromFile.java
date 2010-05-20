@@ -921,11 +921,14 @@ public class NeoFromFile {
 
 			}
 
-			if ((minWeight == Double.MAX_VALUE)
-					|| (maxWeight == Double.MIN_VALUE)) {
-				minWeight = 1.0;
-				maxWeight = 1.0;
-			}
+			// FIXME Uncomment
+			// if ((minWeight == Double.MAX_VALUE)
+			// || (maxWeight == Double.MIN_VALUE)) {
+			// minWeight = 1.0;
+			// maxWeight = 1.0;
+			// }
+			minWeight = 1.0;
+			maxWeight = 1.0;
 
 			normalizedMinWeight = minWeight / maxWeight;
 			if (normalizedMinWeight < Consts.MIN_EDGE_WEIGHT)
@@ -951,13 +954,15 @@ public class NeoFromFile {
 
 					memRel.setProperty(Consts.REL_GID, relGID);
 
-					// Store normalized edge weight, [0,1]
-					double weight = normalizedMinWeight;
-
-					if (rel.hasProperty(Consts.WEIGHT)) {
-						weight = (Double) rel.getProperty(Consts.WEIGHT)
-								/ maxWeight;
-					}
+					// FIXME Uncomment
+					// // Store normalized edge weight, [0,1]
+					// double weight = normalizedMinWeight;
+					//
+					// if (rel.hasProperty(Consts.WEIGHT)) {
+					// weight = (Double) rel.getProperty(Consts.WEIGHT)
+					// / maxWeight;
+					// }
+					double weight = 1.0;
 
 					if (weight > normalizedMaxWeight)
 						normalizedMaxWeight = weight;
