@@ -41,4 +41,10 @@ public abstract class Consts {
 	// public static int CHANGELOG_MAX_TIMEOUTS = 10;
 	public static int CHANGELOG_TIMEOUT = 1;
 	public static int CHANGELOG_MAX_TIMEOUTS = 1;
+
+	// ChangeOp log operation names
+	public static String CHANGELOG_OP_ADD_NODE = "Add_Node";
+	public static String CHANGELOG_OP_ADD_RELATIONSIHP = "Add_Rel";
+	public static String CHANGELOG_OP_DELETE_NODE = "Del_Node";
+	public static String CHANGELOG_OP_DELETE_RELATIONSHIP = "Del_Rel";
 }
