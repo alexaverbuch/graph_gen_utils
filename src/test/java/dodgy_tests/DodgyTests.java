@@ -34,16 +34,6 @@ public class DodgyTests {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-    String fileStr = testDir + "twitter_sarunas.sub";
-    String dbDir = testDir + "twitter/";
-    
-    DirUtils.cleanDir(dbDir);
-    
-    NeoFromFile.writeNeoFromTwitterDatasetBatch(dbDir, fileStr);
-    
-    GraphDatabaseService transNeo = new EmbeddedGraphDatabase(dbDir);
-    NeoFromFile.writeMetricsCSV(transNeo, testDir + "twitter.met");
-    transNeo.shutdown();
 	}
 
 	private static void test_transactional_vs_batch() {
