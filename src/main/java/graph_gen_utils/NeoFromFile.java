@@ -1103,6 +1103,10 @@ public class NeoFromFile {
     GraphDatabaseServicesWriter dbWrapper, GraphReader parser,
     Partitioner partitioner) throws Exception {
     
+    // FIXME Temp!!!!!!!!!!!!!!
+    int readSoFar = 0;
+    long timeSoFar = System.currentTimeMillis();
+    
     long time = System.currentTimeMillis();
     
     // PRINTOUT
@@ -1114,6 +1118,13 @@ public class NeoFromFile {
       nodesAndRels.add(nodeData);
       
       if ((nodesAndRels.size() % Consts.STORE_BUF) == 0) {
+        
+        // FIXME Temp!!!!!!!!!!!!!!
+        if ((readSoFar += Consts.STORE_BUF) % 1000000 == 0) {
+          System.out.printf("\nRead so far [%d]...[%s]...", readSoFar,
+            getTimeStr(System.currentTimeMillis() - timeSoFar));
+          timeSoFar = System.currentTimeMillis();
+        }
         
         // PRINTOUT
         // System.out.printf(".");
@@ -1137,10 +1148,21 @@ public class NeoFromFile {
     // PRINTOUT
     System.out.printf("Reading & Indexing Relationships...");
     
+    // FIXME Temp!!!!!!!!!!!!!!
+    readSoFar = 0;
+    timeSoFar = System.currentTimeMillis();
+    
     for (NodeData nodeData : parser.getRels()) {
       nodesAndRels.add(nodeData);
       
       if ((nodesAndRels.size() % Consts.STORE_BUF) == 0) {
+        
+        // FIXME Temp!!!!!!!!!!!!!!
+        if ((readSoFar += Consts.STORE_BUF) % 1000000 == 0) {
+          System.out.printf("\nRead so far [%d]...[%s]...", readSoFar,
+            getTimeStr(System.currentTimeMillis() - timeSoFar));
+          timeSoFar = System.currentTimeMillis();
+        }
         
         // PRINTOUT
         // System.out.printf(".");
