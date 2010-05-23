@@ -2,6 +2,7 @@ package applications;
 
 import graph_gen_utils.NeoFromFile;
 
+import java.util.HashMap;
 import java.util.HashSet;
 
 import org.neo4j.graphdb.Direction;
@@ -16,20 +17,41 @@ public class SimplifyGraphs {
   public static void main(String[] args) {
     
     if (args[0].equals("help")) {
-      System.out.println("Params - " + "RelTypesToRemove:Str "
-        + "Neo4jDirectories:Str");
-      System.out.println("E.g. - " + "{RelType1,RelType2,...,RelTypeN} "
+      System.out.println("Params - " + "RelTypesToRemove:Tuple2 "
+        + "RandomRelDeleteParams:Array " + "RemoveDuplicateRelationships:Bool "
+        + "RemoveOrphanNodes:Bool " + "Neo4jDirectories:Array");
+      System.out.println("E.g. - " + "{RelType1:RelType2:...:RelTypeN} "
+        + "{PercentToDelete:MaxId} " + "{true} " + "{true} "
         + "Neo4jDir1/ Neo4jDir2/ ...");
       return;
     }
     
-    String[] relTypes = args[0].replaceAll("[{}]", "").split("[,]");
-    
+    String[] relTypes = args[0].replaceAll("[{}]", "").split("[:]");
     HashSet<String> removalRelTypes = new HashSet<String>();
-    for (String relType : relTypes)
+    for (String relType : relTypes) {
+      if (relType.isEmpty() == true)
+        continue;
       removalRelTypes.add(relType);
+    }
     
-    for (int i = 1; i < args.length; i++) {
+    String[] randomDeleteParams = args[1].replaceAll("[{}]", "").split("[:]");
+    if ((randomDeleteParams.length != 0) && (randomDeleteParams.length != 2)) {
+      System.out.printf("Invalid parameter: %s\n", args[1]);
+      return;
+    }
+    double percentRelsToDelete = Double.parseDouble(randomDeleteParams[0]);
+    if (percentRelsToDelete >= 1.0) {
+      System.out.println("PercentToDelete must be in range [0,1)");
+      return;
+    }
+    long maxRelId = Long.parseLong(randomDeleteParams[1]);
+    long relsToDelete = Math.round(percentRelsToDelete * maxRelId);
+    
+    boolean removeDuplicateRelationships = Boolean.parseBoolean(args[2]);
+    
+    boolean removeOrphanNodes = Boolean.parseBoolean(args[3]);
+    
+    for (int i = 4; i < args.length; i++) {
       String dbDir = args[i];
       
       GraphDatabaseService db = new EmbeddedGraphDatabase(dbDir);
@@ -37,17 +59,27 @@ public class SimplifyGraphs {
       try {
         
         long time = System.currentTimeMillis();
-        System.out.printf("Simplifying %s\n\t", dbDir);
+        System.out.printf("Simplifying %s\n", dbDir);
         
-        NeoFromFile.removeRelationshipsByType(db, removalRelTypes);
+        if (removalRelTypes.size() > 0) {
+          System.out.printf("\t");
+          NeoFromFile.removeRelationshipsByType(db, removalRelTypes);
+        }
         
-        System.out.printf("\t");
+        if (percentRelsToDelete > 0) {
+          System.out.printf("\t");
+          NeoFromFile.removeRandomRelationships(db, relsToDelete, maxRelId);
+        }
         
-        NeoFromFile.removeDuplicateRelationships(db, Direction.OUTGOING);
+        if (removeDuplicateRelationships == true) {
+          System.out.printf("\t");
+          NeoFromFile.removeDuplicateRelationships(db, Direction.OUTGOING);
+        }
         
-        System.out.printf("\t");
-        
-        NeoFromFile.removeOrphanNodes(db);
+        if (removeOrphanNodes == true) {
+          System.out.printf("\t");
+          NeoFromFile.removeOrphanNodes(db);
+        }
         
         System.out.printf("Time Taken: %s", getTimeStr(System
           .currentTimeMillis()
