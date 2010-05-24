@@ -18,8 +18,8 @@ public class MakeMetrics {
       return;
     }
     
-    String dbDir = args[0];
-    String metricsPath = args[1];
+    String metricsPath = args[0];
+    String dbDir = args[1];
     
     GraphDatabaseService db = new EmbeddedGraphDatabase(dbDir);
     
