@@ -34,6 +34,128 @@ public class DodgyTests {
 	 * @param args
 	 */
 	public static void main(String[] args) {
+		create_network_traffic_graphs();
+	}
+
+	private static void create_network_traffic_graphs() {
+		double[] weights;
+		String dbName;
+
+		// **************
+		// *** GLOBAL ***
+		// **************
+		//
+		// HARD 4
+		// 0↔1, 2↔3, 1↔3, 1↔2, 0↔2, 0↔3
+		// 0.41 0.28 0.00 1.00 0.00 0.00
+		weights = new double[] { 0.41, 0.28, 0.00, 1.00, 0.00, 0.00 };
+		dbName = "global_hard_4";
+		make_network_traffic_graph(weights, dbName);
+
+		// DiDiC 4
+		// 0↔1, 2↔3, 1↔3, 1↔2, 0↔2, 0↔3
+		// 0.98 0.98 0.97 1.00 0.97 0.98
+		weights = new double[] { 0.98, 0.98, 0.97, 1.00, 0.97, 0.98 };
+		dbName = "global_didic_4";
+		make_network_traffic_graph(weights, dbName);
+
+		// RAND 4
+		// 0↔1, 2↔3, 1↔3, 1↔2, 0↔2, 0↔3
+		// 0.99 0.99 0.99 1.00 1.00 0.99
+		weights = new double[] { 0.99, 0.99, 0.99, 1.00, 1.00, 0.99 };
+		dbName = "global_rand_4";
+		make_network_traffic_graph(weights, dbName);
+
+		// **************
+		// *** LOCAL ****
+		// **************
+		// HARD 4
+		// 0↔1, 2↔3, 1↔3, 1↔2, 0↔2, 0↔3
+		// 1.00 1.00 1.00 1.00 1.00 1.00
+		weights = new double[] { 1.00, 1.00, 1.00, 1.00, 1.00, 1.00 };
+		dbName = "local_hard_4";
+		make_network_traffic_graph(weights, dbName);
+
+		// DiDiC 4
+		// 0↔1, 2↔3, 1↔3, 1↔2, 0↔2, 0↔3
+		// 0.63 0.67 0.69 0.59 1.00 0.53
+		weights = new double[] { 0.63, 0.67, 0.69, 0.59, 1.00, 0.53 };
+		dbName = "local_didic_4";
+		make_network_traffic_graph(weights, dbName);
+
+		// RAND 4
+		// 0↔1, 2↔3, 1↔3, 1↔2, 0↔2, 0↔3
+		// 1.00 0.94 0.95 0.96 0.97 0.97
+		weights = new double[] { 1.00, 0.94, 0.95, 0.96, 0.97, 0.97 };
+		dbName = "local_rand_4";
+		make_network_traffic_graph(weights, dbName);
+	}
+
+	private static void make_network_traffic_graph(double[] weights,
+			String dbName) {
+		Double minLat = 1d, minLon = 1d;
+		Double maxLat = 100d, maxLon = 100d;
+		String dbDir = "var/" + dbName;
+		DirUtils.cleanDir(dbDir);
+		GraphDatabaseService db = new EmbeddedGraphDatabase(dbDir);
+		Transaction tx = db.beginTx();
+		try {
+			Node nodePtn0 = db.createNode();
+			nodePtn0.setProperty(Consts.NAME, "Partition 0");
+			nodePtn0.setProperty(Consts.LONGITUDE, minLon);
+			nodePtn0.setProperty(Consts.LATITUDE, minLat);
+
+			Node nodePtn1 = db.createNode();
+			nodePtn1.setProperty(Consts.NAME, "Partition 1");
+			nodePtn1.setProperty(Consts.LONGITUDE, maxLon);
+			nodePtn1.setProperty(Consts.LATITUDE, minLat);
+
+			Node nodePtn2 = db.createNode();
+			nodePtn2.setProperty(Consts.NAME, "Partition 2");
+			nodePtn2.setProperty(Consts.LONGITUDE, maxLon);
+			nodePtn2.setProperty(Consts.LATITUDE, maxLat);
+
+			Node nodePtn3 = db.createNode();
+			nodePtn3.setProperty(Consts.NAME, "Partition 3");
+			nodePtn3.setProperty(Consts.LONGITUDE, minLon);
+			nodePtn3.setProperty(Consts.LATITUDE, maxLat);
+
+			Relationship rel0to1 = nodePtn0.createRelationshipTo(nodePtn1,
+					Consts.RelationshipTypes.DEFAULT);
+			rel0to1.setProperty(Consts.WEIGHT, weights[0]);
+
+			Relationship rel2to3 = nodePtn2.createRelationshipTo(nodePtn3,
+					Consts.RelationshipTypes.DEFAULT);
+			rel2to3.setProperty(Consts.WEIGHT, weights[1]);
+
+			Relationship rel1to3 = nodePtn1.createRelationshipTo(nodePtn3,
+					Consts.RelationshipTypes.DEFAULT);
+			rel1to3.setProperty(Consts.WEIGHT, weights[2]);
+
+			Relationship rel1to2 = nodePtn1.createRelationshipTo(nodePtn2,
+					Consts.RelationshipTypes.DEFAULT);
+			rel1to2.setProperty(Consts.WEIGHT, weights[3]);
+
+			Relationship rel0to2 = nodePtn0.createRelationshipTo(nodePtn2,
+					Consts.RelationshipTypes.DEFAULT);
+			rel0to2.setProperty(Consts.WEIGHT, weights[4]);
+
+			Relationship rel0to3 = nodePtn0.createRelationshipTo(nodePtn3,
+					Consts.RelationshipTypes.DEFAULT);
+			rel0to3.setProperty(Consts.WEIGHT, weights[5]);
+
+			db.getReferenceNode().delete();
+
+			tx.success();
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			tx.finish();
+		}
+
+		NeoFromFile.applyPtnToNeo(db, new PartitionerAsBalanced((byte) 4));
+		NeoFromFile.writeGMLFull(db, "var/" + dbName + ".gml");
+		db.shutdown();
 	}
 
 	private static void test_transactional_vs_batch() {

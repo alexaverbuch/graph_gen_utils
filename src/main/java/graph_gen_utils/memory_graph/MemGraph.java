@@ -3,6 +3,7 @@ package graph_gen_utils.memory_graph;
 import graph_gen_utils.general.Consts;
 
 import java.io.Serializable;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Random;
@@ -25,12 +26,14 @@ public class MemGraph implements GraphDatabaseService {
 	// Guarantees same order when iterating
 	private LinkedHashMap<Long, Node> nodes = null;
 	private LinkedHashMap<Long, Relationship> relationships = null;
+	private HashMap<Integer, String> propertyKeys = null;
 
 	public MemGraph() {
 		super();
 		this.rng = new MersenneTwisterRNG();
 		this.nodes = new LinkedHashMap<Long, Node>();
 		this.relationships = new LinkedHashMap<Long, Relationship>();
+		this.propertyKeys = new HashMap<Integer, String>();
 	}
 
 	// NOTE Needed because no IdGenerator is used
@@ -41,7 +44,7 @@ public class MemGraph implements GraphDatabaseService {
 
 	// NOTE Needed because no NodeManager is used
 	// Called from MemNode. Should NEVER be called from elsewhere
-	public void removeNode(Long id) {
+	void removeNode(Long id) {
 		if (nodes.remove(id) == null)
 			throw new NotFoundException("Node[" + id
 					+ "] not found so could not be removed");
@@ -49,7 +52,7 @@ public class MemGraph implements GraphDatabaseService {
 
 	// NOTE Needed because no NodeManager is used
 	// Called from MemNode. Should NEVER be called from elsewhere
-	public void removeRelationship(Long id) {
+	void removeRelationship(Long id) {
 		if (relationships.remove(id) == null)
 			throw new NotFoundException("Relationship[" + id
 					+ "] not found so could not be removed");
@@ -57,7 +60,7 @@ public class MemGraph implements GraphDatabaseService {
 
 	// NOTE Needed because no NodeManager is used
 	// Called from MemNode. Should NEVER be called from elsewhere
-	public void addRelationship(MemRel memRel) {
+	void addRelationship(MemRel memRel) {
 		if (relationships.containsKey(memRel.getId()) == false) {
 			relationships.put(memRel.getId(), memRel);
 			return;
@@ -65,6 +68,19 @@ public class MemGraph implements GraphDatabaseService {
 
 		throw new NotFoundException("Relationship[" + memRel.getId()
 				+ "] not added as it already exists");
+	}
+
+	// NOTE Needed to allow MemNode & MemRel to use Integers as property keys
+	// Called from MemNode. Should NEVER be called from elsewhere
+	void addPropertyKey(String propertyKey) {
+		if (propertyKeys.containsKey(propertyKey.hashCode()) == false)
+			propertyKeys.put(propertyKey.hashCode(), propertyKey);
+	}
+
+	// NOTE Needed to allow MemNode & MemRel to use Integers as property keys
+	// Called from MemNode. Should NEVER be called from elsewhere
+	String getPropertyKey(Integer propertyKeyHashcode) {
+		return propertyKeys.get(propertyKeyHashcode);
 	}
 
 	@Override

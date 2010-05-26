@@ -7,6 +7,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.NoSuchElementException;
 import java.util.Random;
+import java.util.Vector;
 
 import org.neo4j.graphdb.Direction;
 import org.neo4j.graphdb.GraphDatabaseService;
@@ -22,50 +23,54 @@ import org.uncommons.maths.random.ContinuousUniformGenerator;
 
 public class MemNode implements Node {
 
-	private ContinuousUniformGenerator randGen = null;
+	// private ContinuousUniformGenerator randGen = null;
 	private LinkedHashMap<Long, Relationship> relationships = null;
-	private HashMap<String, Object> properties = null;
+	// private HashMap<String, Object> properties = null;
+	private HashMap<Integer, Object> properties = null;
 	private MemGraph memGraph = null;
 	private long id = -1;
 	private long nextRelId = -1;
 
 	public MemNode(Long id, Random rng, MemGraph memGraph) {
-		this.randGen = new ContinuousUniformGenerator(0.0, 1.0, rng);
+		// this.randGen = new ContinuousUniformGenerator(0.0, 1.0, rng);
 		this.relationships = new LinkedHashMap<Long, Relationship>(8);
-		this.properties = new HashMap<String, Object>(4);
+		// this.properties = new HashMap<String, Object>(4);
+		this.properties = new HashMap<Integer, Object>(2);
 		this.memGraph = memGraph;
 		this.id = id;
 	}
 
-	public Node getRandomNeighbour(double stayingProbability) throws Exception {
-		int neighboursSize = relationships.size();
+	// public Node getRandomNeighbour(double stayingProbability) throws
+	// Exception {
+	// int neighboursSize = relationships.size();
+	//
+	// if (neighboursSize == 0)
+	// return this;
+	//
+	// double randVal = randGen.nextValue();
+	//
+	// if (randVal < stayingProbability)
+	// return this;
+	//
+	// int randIndex = (int) (((randVal - stayingProbability) / (1.0 -
+	// stayingProbability)) * neighboursSize);
+	//
+	// if (randIndex >= neighboursSize)
+	// throw new Exception(String.format(
+	// "randIndex[%d] >= neighbourSize[%d]\n", randIndex,
+	// neighboursSize));
+	//
+	// int currIndex = 0;
+	// for (Relationship rel : relationships.values()) {
+	// if (currIndex == randIndex)
+	// return rel.getEndNode();
+	// currIndex++;
+	// }
+	//
+	// throw new Exception("Unable to retrieve random node");
+	// }
 
-		if (neighboursSize == 0)
-			return this;
-
-		double randVal = randGen.nextValue();
-
-		if (randVal < stayingProbability)
-			return this;
-
-		int randIndex = (int) (((randVal - stayingProbability) / (1.0 - stayingProbability)) * neighboursSize);
-
-		if (randIndex >= neighboursSize)
-			throw new Exception(String.format(
-					"randIndex[%d] >= neighbourSize[%d]\n", randIndex,
-					neighboursSize));
-
-		int currIndex = 0;
-		for (Relationship rel : relationships.values()) {
-			if (currIndex == randIndex)
-				return rel.getEndNode();
-			currIndex++;
-		}
-
-		throw new Exception("Unable to retrieve random node");
-	}
-
-	public void removeRelationship(MemRel memRel) {
+	void removeRelationship(MemRel memRel) {
 		if (relationships.containsKey(memRel.getId()) == true) {
 			relationships.remove(memRel.getId());
 			if (memRel.getStartNode().getId() == getId())
@@ -77,6 +82,18 @@ public class MemNode implements Node {
 				memRel.getId(), getId());
 
 		throw new NotFoundException(errStr);
+	}
+
+	// NOTE Needed to allow MemNode & MemRel to use Integers as property keys
+	// Called from MemRel. Should NEVER be called from elsewhere
+	void addPropertyKey(String propertyKey) {
+		memGraph.addPropertyKey(propertyKey);
+	}
+
+	// NOTE Needed to allow MemNode & MemRel to use Integers as property keys
+	// Called from MemRel. Should NEVER be called from elsewhere
+	String getPropertyKey(Integer propertyKeyHashcode) {
+		return memGraph.getPropertyKey(propertyKeyHashcode);
 	}
 
 	// NOTE Needed because no IdGenerator is used
@@ -172,13 +189,20 @@ public class MemNode implements Node {
 	}
 
 	@Override
+	// NOTE This is slow, but used to reduce memory footprint
 	public Iterable<String> getPropertyKeys() {
-		return properties.keySet();
+		Vector<String> propertyKeys = new Vector<String>();
+		for (Integer propKey : properties.keySet()) {
+			propertyKeys.add(memGraph.getPropertyKey(propKey));
+		}
+		return propertyKeys;
+		// return properties.keySet();
 	}
 
 	@Override
 	public Object getProperty(String key) {
-		return properties.get(key);
+		return properties.get(key.hashCode());
+		// return properties.get(key);
 	}
 
 	@Override
@@ -188,17 +212,21 @@ public class MemNode implements Node {
 
 	@Override
 	public boolean hasProperty(String key) {
-		return properties.containsKey(key);
+		return properties.containsKey(key.hashCode());
+		// return properties.containsKey(key);
 	}
 
 	@Override
 	public Object removeProperty(String key) {
-		return properties.remove(key);
+		return properties.remove(key.hashCode());
+		// return properties.remove(key);
 	}
 
 	@Override
 	public void setProperty(String key, Object value) {
-		properties.put(key, value);
+		properties.put(key.hashCode(), value);
+		memGraph.addPropertyKey(key);
+		// properties.put(key, value);
 	}
 
 	// **********************

@@ -20,9 +20,6 @@ public abstract class Consts {
 	public static String NAME = "name";
 
 	// Neo4j Relationship types
-	// public static String DEFAULT_REL_TYPE_STR = "default";
-	// public static String INT_REL_TYPE_STR = "internal";
-	// public static String EXT_REL_TYPE_STR = "external";
 	public static enum RelationshipTypes implements RelationshipType {
 		DEFAULT, INTERNAL, EXTERNAL
 	}

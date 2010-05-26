@@ -1,8 +1,7 @@
 package graph_gen_utils.memory_graph;
 
-import graph_gen_utils.general.Consts;
-
 import java.util.HashMap;
+import java.util.Vector;
 
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
@@ -14,15 +13,18 @@ public class MemRel implements Relationship {
 
 	private MemNode startNode = null;
 	private MemNode endNode = null;
-	private HashMap<String, Object> properties = null;
+	private HashMap<Integer, Object> properties = null;
+	// private HashMap<String, Object> properties = null;
 	private long id = -1;
 
 	public MemRel(long id, MemNode startNode, MemNode endNode) {
 		super();
 		this.startNode = startNode;
 		this.endNode = endNode;
-		this.properties = new HashMap<String, Object>(4);
-		this.properties.put(Consts.WEIGHT, Consts.DEFAULT_REL_WEIGHT);
+		this.properties = new HashMap<Integer, Object>(2);
+		// this.properties = new HashMap<String, Object>(4);
+		// setProperty(Consts.WEIGHT, Consts.DEFAULT_REL_WEIGHT);
+		// this.properties.put(Consts.WEIGHT, Consts.DEFAULT_REL_WEIGHT);
 		this.id = id;
 	}
 
@@ -65,12 +67,17 @@ public class MemRel implements Relationship {
 
 	@Override
 	public Object getProperty(String key) {
-		return properties.get(key);
+		return properties.get(key.hashCode());
 	}
 
 	@Override
 	public Iterable<String> getPropertyKeys() {
-		return properties.keySet();
+		Vector<String> propertyKeys = new Vector<String>();
+		for (Integer propKey : properties.keySet()) {
+			propertyKeys.add(startNode.getPropertyKey(propKey));
+		}
+		return propertyKeys;
+		// return properties.keySet();
 	}
 
 	@Override
@@ -80,17 +87,21 @@ public class MemRel implements Relationship {
 
 	@Override
 	public boolean hasProperty(String key) {
-		return properties.containsKey(key);
+		return properties.containsKey(key.hashCode());
+		// return properties.containsKey(key);
 	}
 
 	@Override
 	public Object removeProperty(String key) {
-		return properties.remove(key);
+		return properties.remove(key.hashCode());
+		// return properties.remove(key);
 	}
 
 	@Override
 	public void setProperty(String key, Object value) {
-		properties.put(key, value);
+		properties.put(key.hashCode(), value);
+		startNode.addPropertyKey(key);
+		// properties.put(key, value);
 	}
 
 	// **********************
