@@ -23,20 +23,30 @@ import org.uncommons.maths.random.ContinuousUniformGenerator;
 
 public class MemNode implements Node {
 
-	// private ContinuousUniformGenerator randGen = null;
-	private LinkedHashMap<Long, Relationship> relationships = null;
+	// TODO UNCOMMENT (performance)
+	// private LinkedHashMap<Long, Relationship> relationships = null;
+	private HashMap<Integer, Relationship> relationships = null;
 
 	// TODO UNCOMMENT (performance)
 	// private HashMap<String, Object> properties = null;
 	private Byte color = null;
 
 	private MemGraph memGraph = null;
-	private long id = -1;
-	private long nextRelId = -1;
 
-	public MemNode(Long id, Random rng, MemGraph memGraph) {
-		// this.randGen = new ContinuousUniformGenerator(0.0, 1.0, rng);
-		this.relationships = new LinkedHashMap<Long, Relationship>(8);
+	// TODO UNCOMMENT (performance)
+	// private long id = -1;
+	private int id = -1;
+
+	// TODO UNCOMMENT (performance)
+	// private long nextRelId = -1;
+	private int nextRelId = -1;
+
+	// TODO UNCOMMENT (performance)
+	// public MemNode(long id, Random rng, MemGraph memGraph) {
+	public MemNode(int id, MemGraph memGraph) {
+		// TODO UNCOMMENT (performance)
+		// this.relationships = new LinkedHashMap<Long, Relationship>(8);
+		this.relationships = new HashMap<Integer, Relationship>(8);
 
 		// TODO UNCOMMENT (performance)
 		// this.properties = new HashMap<String, Object>(4);
@@ -46,42 +56,18 @@ public class MemNode implements Node {
 		this.id = id;
 	}
 
-	// TODO Uncomment later?
-	// public Node getRandomNeighbour(double stayingProbability) throws
-	// Exception {
-	// int neighboursSize = relationships.size();
-	//
-	// if (neighboursSize == 0)
-	// return this;
-	//
-	// double randVal = randGen.nextValue();
-	//
-	// if (randVal < stayingProbability)
-	// return this;
-	//
-	// int randIndex = (int) (((randVal - stayingProbability) / (1.0 -
-	// stayingProbability)) * neighboursSize);
-	//
-	// if (randIndex >= neighboursSize)
-	// throw new Exception(String.format(
-	// "randIndex[%d] >= neighbourSize[%d]\n", randIndex,
-	// neighboursSize));
-	//
-	// int currIndex = 0;
-	// for (Relationship rel : relationships.values()) {
-	// if (currIndex == randIndex)
-	// return rel.getEndNode();
-	// currIndex++;
-	// }
-	//
-	// throw new Exception("Unable to retrieve random node");
-	// }
-
 	void removeRelationship(MemRel memRel) {
-		if (relationships.containsKey(memRel.getId()) == true) {
-			relationships.remove(memRel.getId());
+		// TODO UNCOMMENT (performance)
+		// if (relationships.containsKey(memRel.getId()) == true) {
+		// relationships.remove(memRel.getId());
+		// if (memRel.getStartNode().getId() == getId())
+		// memGraph.removeRelationship(memRel.getId());
+		// return;
+		// }
+		if (relationships.containsKey((int) memRel.getId()) == true) {
+			relationships.remove((int) memRel.getId());
 			if (memRel.getStartNode().getId() == getId())
-				memGraph.removeRelationship(memRel.getId());
+				memGraph.removeRelationship((int) memRel.getId());
 			return;
 		}
 
@@ -94,12 +80,19 @@ public class MemNode implements Node {
 	// NOTE Needed because no IdGenerator is used
 	// ID must be set before createRelationship() is called
 	public void setNextRelId(long nextRelId) {
-		this.nextRelId = nextRelId;
+		this.nextRelId = (int) nextRelId;
 	}
 
 	public Relationship addRelationship(MemRel memRel) {
-		if (relationships.containsKey(memRel.getId()) == false) {
-			relationships.put(memRel.getId(), memRel);
+		// TODO UNCOMMENT (performance)
+		// if (relationships.containsKey(memRel.getId()) == false) {
+		// relationships.put(memRel.getId(), memRel);
+		// if (memRel.getStartNode().getId() == getId())
+		// memGraph.addRelationship(memRel);
+		// return memRel;
+		// }
+		if (relationships.containsKey((int) memRel.getId()) == false) {
+			relationships.put((int) memRel.getId(), memRel);
 			if (memRel.getStartNode().getId() == getId())
 				memGraph.addRelationship(memRel);
 			return memRel;
@@ -138,7 +131,6 @@ public class MemNode implements Node {
 		}
 
 		MemRel memRel = new MemRel(nextRelId, this, (MemNode) otherNode);
-		memRel.setProperty(Consts.REL_GID, memRel.getId());
 		nextRelId = -1;
 		((MemNode) otherNode).addRelationship(memRel);
 		return addRelationship(memRel);
@@ -152,7 +144,9 @@ public class MemNode implements Node {
 			// NOTE Not possible to throw Exception here due to Node interface
 			throw new Error(errStr);
 		}
-		memGraph.removeNode(getId());
+		// TODO UNCOMMENT (performance)
+		// memGraph.removeNode(getId());
+		memGraph.removeNode((int) getId());
 	}
 
 	@Override

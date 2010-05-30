@@ -906,23 +906,20 @@ public class NeoFromFile {
 				// memNode.setProperty(key, node.getProperty(key));
 				// }
 
-				nodeCount++;
-
-				for (Relationship rel : node
-						.getRelationships(Direction.OUTGOING)) {
-
-					edgeCount++;
-
-					// FIXME Uncomment later
-					// if (rel.hasProperty(Consts.WEIGHT)) {
-					// double weight = (Double) rel.getProperty(Consts.WEIGHT);
-					// if (weight > maxWeight)
-					// maxWeight = weight;
-					// if (weight < minWeight)
-					// minWeight = weight;
-					// }
-
-				}
+				// FIXME Uncomment later
+				// for (Relationship rel : node
+				// .getRelationships(Direction.OUTGOING)) {
+				//
+				// // FIXME Uncomment later
+				// // if (rel.hasProperty(Consts.WEIGHT)) {
+				// // double weight = (Double) rel.getProperty(Consts.WEIGHT);
+				// // if (weight > maxWeight)
+				// // maxWeight = weight;
+				// // if (weight < minWeight)
+				// // minWeight = weight;
+				// // }
+				//
+				// }
 
 			}
 
@@ -939,19 +936,20 @@ public class NeoFromFile {
 			if (normalizedMinWeight < Consts.MIN_EDGE_WEIGHT)
 				normalizedMinWeight = Consts.MIN_EDGE_WEIGHT;
 
-			// FIXME REMOVE, temp
-			long progressCounter = 0;
-
 			for (Node node : transNeo.getAllNodes()) {
 
+				nodeCount++;
+
 				// FIXME REMOVE, temp
-				if (++progressCounter % 100000 == 0)
-					System.out.printf("\t[%d]\n", progressCounter);
+				if (++nodeCount % 1000 == 0)
+					System.out.printf("\t[%d/%d]\n", nodeCount, edgeCount);
 
 				MemNode memNode = (MemNode) memGraph.getNodeById(node.getId());
 
 				for (Relationship rel : node
 						.getRelationships(Direction.OUTGOING)) {
+
+					edgeCount++;
 
 					MemNode endNode = (MemNode) memGraph.getNodeById(rel
 							.getEndNode().getId());
@@ -967,8 +965,9 @@ public class NeoFromFile {
 					//
 					// memRel.setProperty(Consts.REL_GID, relGID);
 
-					// Store normalized edge weight, [0,1]
-					double weight = normalizedMinWeight;
+					// FIXME Uncomment later
+					// // Store normalized edge weight, [0,1]
+					// double weight = normalizedMinWeight;
 
 					// FIXME Uncomment later
 					// if (rel.hasProperty(Consts.WEIGHT)) {

@@ -17,9 +17,11 @@ public class MemRel implements Relationship {
 	// TODO UNCOMMENT (performance)
 	// private HashMap<String, Object> properties = null;
 
-	private long id = -1;
+	// TODO UNCOMMENT (performance)
+	// private long id = -1;
+	private int id = -1;
 
-	public MemRel(long id, MemNode startNode, MemNode endNode) {
+	public MemRel(int id, MemNode startNode, MemNode endNode) {
 		super();
 		this.startNode = startNode;
 		this.endNode = endNode;
@@ -28,6 +30,8 @@ public class MemRel implements Relationship {
 		// this.properties = new HashMap<String, Object>(2);
 		// setProperty(Consts.WEIGHT, Consts.DEFAULT_REL_WEIGHT);
 
+		// TODO UNCOMMENT (performance)
+		// this.id = id;
 		this.id = id;
 	}
 
