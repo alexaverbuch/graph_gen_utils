@@ -1,55 +1,33 @@
 graph_gen_utils is a Maven project, built in Eclipse.
 
-It's a helper library designed to quickly create and populate a Neo4j database instance.
-Input graph files must be text files, encoded in the Chaco (often *.graph) ﬁle input format [1].
-Input colouring/partitioning files are often *.ptn ﬁles.
+Quickly import/export Neo4j database instances from/to different formats, including:
+	* Chaco files (+ Partition files) [1]
+	* GML files
+	* Generated topologeies (Random & Fully Connected)
+	* Proprietry format to import very big datasets from Twitter crawls
 
-Example files can be found in graphs/ and partitionings/ folders.
+Apply "partitionings" (a COLOR property is added to Nodes that represents the partition it belongs to) to a Neo4j instance:
+	* PartitionerAsRandom
+	* PartitionerAsBalanced (round robin partition allocation)
+	* PartitionerAsFile (Partition files) [1]
+	* PartitionerAsCoords (useful for GIS datasets)
+	* Partitioner... custom schemes possible by extending Partitioner
 
-Data is inserted using Neo4j's BatchInserter in 2 passes.
-1st pass - read complete Chaco file (and .ptn file), insert vertices into Neo4j, and index vertices using Lucene
-2nd pass - read complete Chaco file again, insert edges into Neo4j, and index edges using Lucene
+Load Neo4j database instance into memory:
+	* MemGraph (an in-memory implementation of the Neo4j GraphDatabaseService interface)
 
-Functionality:
-	-> Create Neo4j instance from Chaco (.graph) file
-	-> Create "coloured" Neo4j instance from Chaco (.graph) file and partition (.ptn) files
-	-> Create Chaco file from Neo4j instance
-	-> Create partition-quality metric (.met) file from a "coloured" Neo4j instance
+Write graph metrics to .csv file:
+	Graph metrics (general):
+		* Clustering-coefficient
+		* Number of vertices/nodes
+		* Number of edges/relationships
 
-Example Usage:
-	// Create NeoFromFile and assign DB location
-	NeoFromFile neoCreator = new NeoFromFile("var/test11");
+	Graph metrics (partitioning related):
+		* Modularity
+		* Edge cut
+		* Partition sizes
 
-	// To generate uncoloured/unpartitioned neo4j graph
-	//	* Assign input Chaco graph file
-	neoCreator.generateNeo("graphs/test11.graph");
-
-	// To generate coloured/partitioned neo4j graph
-	//	* Assign input Chaco graph file & input Partitioning file
-	neoCreator.generateNeo("graphs/test11.graph","partitionings/test11.2.ptn");
-
-	// To generate a Chaco file from DB instance
-	//	* Assign output Chaco graph file path & Chaco format
-	neoCreator.generateChaco("graphs/test11-gen.graph",NeoFromFile.ChacoType.UNWEIGHTED);
-
-	// To generate a Chaco file & Partition file from DB instance
-	//	* Assign output Chaco graph file path, Chaco format, & Partition file path
-	neoCreator.generateChaco("graphs/test11-gen.graph",NeoFromFile.ChacoType.UNWEIGHTED);
-
-	// To generate a partition-quality Metric file from a coloured DB instance
-	neoCreator.generateMetrics("metrics/test11-gen.met");
-
-
-Pre-alpha status...
-- Using NeoClipse it has been visually tested for correctness when loading graphs of 5 vertices and 10 edges
-  But no other testing has been performed yet
-- It has had minimal performance tests on Chaco graphs files of approx: 42mb - 450,000 vertices - 3,500,000 edges
-
-To do:
-- Improve performance further
-- Generate Chaco file from Neo4j instance (currently only supports generating Neo4j from file) [in progress...]
-- Add verification functionality to test if generated graphs are correct
-- Compare other graph metrics
+Neo4j database import procedure is memory optimized, and performance optimized via option to use batch inserter
 
 [1] B. Hendrickson and R. Leland. The Chaco User’s Guide Version 2.0. Tech. Rep. SAND 94-2692, Sandia Natl. Lab.,
 Albuquerque, NM, 1994.
