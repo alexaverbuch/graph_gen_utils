@@ -25,8 +25,11 @@ public class MemNode implements Node {
 
 	// private ContinuousUniformGenerator randGen = null;
 	private LinkedHashMap<Long, Relationship> relationships = null;
+
+	// TODO UNCOMMENT (performance)
 	// private HashMap<String, Object> properties = null;
-	private HashMap<Integer, Object> properties = null;
+	private Byte color = null;
+
 	private MemGraph memGraph = null;
 	private long id = -1;
 	private long nextRelId = -1;
@@ -34,12 +37,16 @@ public class MemNode implements Node {
 	public MemNode(Long id, Random rng, MemGraph memGraph) {
 		// this.randGen = new ContinuousUniformGenerator(0.0, 1.0, rng);
 		this.relationships = new LinkedHashMap<Long, Relationship>(8);
+
+		// TODO UNCOMMENT (performance)
 		// this.properties = new HashMap<String, Object>(4);
-		this.properties = new HashMap<Integer, Object>(2);
+		color = -1;
+
 		this.memGraph = memGraph;
 		this.id = id;
 	}
 
+	// TODO Uncomment later?
 	// public Node getRandomNeighbour(double stayingProbability) throws
 	// Exception {
 	// int neighboursSize = relationships.size();
@@ -84,18 +91,6 @@ public class MemNode implements Node {
 		throw new NotFoundException(errStr);
 	}
 
-	// NOTE Needed to allow MemNode & MemRel to use Integers as property keys
-	// Called from MemRel. Should NEVER be called from elsewhere
-	void addPropertyKey(String propertyKey) {
-		memGraph.addPropertyKey(propertyKey);
-	}
-
-	// NOTE Needed to allow MemNode & MemRel to use Integers as property keys
-	// Called from MemRel. Should NEVER be called from elsewhere
-	String getPropertyKey(Integer propertyKeyHashcode) {
-		return memGraph.getPropertyKey(propertyKeyHashcode);
-	}
-
 	// NOTE Needed because no IdGenerator is used
 	// ID must be set before createRelationship() is called
 	public void setNextRelId(long nextRelId) {
@@ -128,7 +123,6 @@ public class MemNode implements Node {
 	}
 
 	@Override
-	// TODO implement with iterator later
 	public Iterable<Relationship> getRelationships(Direction dir) {
 		if (dir == Direction.BOTH)
 			return relationships.values();
@@ -191,42 +185,45 @@ public class MemNode implements Node {
 	@Override
 	// NOTE This is slow, but used to reduce memory footprint
 	public Iterable<String> getPropertyKeys() {
-		Vector<String> propertyKeys = new Vector<String>();
-		for (Integer propKey : properties.keySet()) {
-			propertyKeys.add(memGraph.getPropertyKey(propKey));
-		}
-		return propertyKeys;
+		// TODO UNCOMMENT (performance)
 		// return properties.keySet();
+		return null;
 	}
 
 	@Override
 	public Object getProperty(String key) {
-		return properties.get(key.hashCode());
+		// TODO UNCOMMENT (performance)
 		// return properties.get(key);
+		return color;
 	}
 
 	@Override
 	public Iterable<Object> getPropertyValues() {
-		return properties.values();
+		// TODO UNCOMMENT (performance)
+		// return properties.values();
+		return null;
 	}
 
 	@Override
 	public boolean hasProperty(String key) {
-		return properties.containsKey(key.hashCode());
+		// TODO UNCOMMENT (performance)
 		// return properties.containsKey(key);
+		return false;
 	}
 
 	@Override
 	public Object removeProperty(String key) {
-		return properties.remove(key.hashCode());
+		// TODO UNCOMMENT (performance)
 		// return properties.remove(key);
+		return null;
 	}
 
 	@Override
 	public void setProperty(String key, Object value) {
-		properties.put(key.hashCode(), value);
-		memGraph.addPropertyKey(key);
+		// TODO UNCOMMENT (performance)
 		// properties.put(key, value);
+		if (key.equals(Consts.COLOR))
+			color = (Byte) value;
 	}
 
 	// **********************

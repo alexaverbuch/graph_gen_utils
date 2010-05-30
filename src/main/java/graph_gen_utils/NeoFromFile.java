@@ -887,6 +887,7 @@ public class NeoFromFile {
 
 				memGraph.setNextNodeId(node.getId());
 				MemNode memNode = (MemNode) memGraph.createNode();
+
 				// FIXME Uncomment later
 				// memNode.setProperty(Consts.NODE_GID, (Long) node
 				// .getProperty(Consts.NODE_GID));
@@ -896,13 +897,14 @@ public class NeoFromFile {
 					nodeColor = (Byte) node.getProperty(Consts.COLOR);
 				memNode.setProperty(Consts.COLOR, nodeColor);
 
-				for (String key : node.getPropertyKeys()) {
-					if (ignoreNodeProps.contains(key))
-						continue;
-
-					if (nodeProps.contains(key))
-						memNode.setProperty(key, node.getProperty(key));
-				}
+				// FIXME Uncomment later
+				// for (String key : node.getPropertyKeys()) {
+				// if (ignoreNodeProps.contains(key))
+				// continue;
+				//
+				// if (nodeProps.contains(key))
+				// memNode.setProperty(key, node.getProperty(key));
+				// }
 
 				nodeCount++;
 
@@ -911,13 +913,14 @@ public class NeoFromFile {
 
 					edgeCount++;
 
-					if (rel.hasProperty(Consts.WEIGHT)) {
-						double weight = (Double) rel.getProperty(Consts.WEIGHT);
-						if (weight > maxWeight)
-							maxWeight = weight;
-						if (weight < minWeight)
-							minWeight = weight;
-					}
+					// FIXME Uncomment later
+					// if (rel.hasProperty(Consts.WEIGHT)) {
+					// double weight = (Double) rel.getProperty(Consts.WEIGHT);
+					// if (weight > maxWeight)
+					// maxWeight = weight;
+					// if (weight < minWeight)
+					// minWeight = weight;
+					// }
 
 				}
 
@@ -929,7 +932,6 @@ public class NeoFromFile {
 			// minWeight = 1.0;
 			// maxWeight = 1.0;
 			// }
-			// FIXME Remove later
 			minWeight = 1.0;
 			maxWeight = 1.0;
 
@@ -937,7 +939,14 @@ public class NeoFromFile {
 			if (normalizedMinWeight < Consts.MIN_EDGE_WEIGHT)
 				normalizedMinWeight = Consts.MIN_EDGE_WEIGHT;
 
+			// FIXME REMOVE, temp
+			long progressCounter = 0;
+
 			for (Node node : transNeo.getAllNodes()) {
+
+				// FIXME REMOVE, temp
+				if (++progressCounter % 100000 == 0)
+					System.out.printf("\t[%d]\n", progressCounter);
 
 				MemNode memNode = (MemNode) memGraph.getNodeById(node.getId());
 
@@ -958,30 +967,28 @@ public class NeoFromFile {
 					//
 					// memRel.setProperty(Consts.REL_GID, relGID);
 
+					// Store normalized edge weight, [0,1]
+					double weight = normalizedMinWeight;
+
 					// FIXME Uncomment later
-					// // Store normalized edge weight, [0,1]
-					// double weight = normalizedMinWeight;
-					//
 					// if (rel.hasProperty(Consts.WEIGHT)) {
 					// weight = (Double) rel.getProperty(Consts.WEIGHT)
 					// / maxWeight;
 					// }
+					//
+					// if (weight > normalizedMaxWeight)
+					// normalizedMaxWeight = weight;
+					//
+					// memRel.setProperty(Consts.WEIGHT, weight);
 
-					// FIXME Remove later
-					double weight = 1.0;
-
-					if (weight > normalizedMaxWeight)
-						normalizedMaxWeight = weight;
-
-					memRel.setProperty(Consts.WEIGHT, weight);
-
-					for (String key : rel.getPropertyKeys()) {
-						if (ignoreRelProps.contains(key))
-							continue;
-
-						if (relProps.contains(key))
-							memRel.setProperty(key, rel.getProperty(key));
-					}
+					// FIXME Uncomment later
+					// for (String key : rel.getPropertyKeys()) {
+					// if (ignoreRelProps.contains(key))
+					// continue;
+					//
+					// if (relProps.contains(key))
+					// memRel.setProperty(key, rel.getProperty(key));
+					// }
 
 				}
 

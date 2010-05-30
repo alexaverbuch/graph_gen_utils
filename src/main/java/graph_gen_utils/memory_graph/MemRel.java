@@ -13,18 +13,21 @@ public class MemRel implements Relationship {
 
 	private MemNode startNode = null;
 	private MemNode endNode = null;
-	private HashMap<Integer, Object> properties = null;
+
+	// TODO UNCOMMENT (performance)
 	// private HashMap<String, Object> properties = null;
+
 	private long id = -1;
 
 	public MemRel(long id, MemNode startNode, MemNode endNode) {
 		super();
 		this.startNode = startNode;
 		this.endNode = endNode;
-		this.properties = new HashMap<Integer, Object>(2);
-		// this.properties = new HashMap<String, Object>(4);
+
+		// TODO UNCOMMENT (performance)
+		// this.properties = new HashMap<String, Object>(2);
 		// setProperty(Consts.WEIGHT, Consts.DEFAULT_REL_WEIGHT);
-		// this.properties.put(Consts.WEIGHT, Consts.DEFAULT_REL_WEIGHT);
+
 		this.id = id;
 	}
 
@@ -67,40 +70,42 @@ public class MemRel implements Relationship {
 
 	@Override
 	public Object getProperty(String key) {
-		return properties.get(key.hashCode());
+		// TODO UNCOMMENT (performance)
+		// return properties.get(key);
+		return 1d;
 	}
 
 	@Override
 	public Iterable<String> getPropertyKeys() {
-		Vector<String> propertyKeys = new Vector<String>();
-		for (Integer propKey : properties.keySet()) {
-			propertyKeys.add(startNode.getPropertyKey(propKey));
-		}
-		return propertyKeys;
+		// TODO UNCOMMENT (performance)
 		// return properties.keySet();
+		return null;
 	}
 
 	@Override
 	public Iterable<Object> getPropertyValues() {
-		return properties.values();
+		// TODO UNCOMMENT (performance)
+		// return properties.values();
+		return null;
 	}
 
 	@Override
 	public boolean hasProperty(String key) {
-		return properties.containsKey(key.hashCode());
+		// TODO UNCOMMENT (performance)
 		// return properties.containsKey(key);
+		return false;
 	}
 
 	@Override
 	public Object removeProperty(String key) {
-		return properties.remove(key.hashCode());
+		// TODO UNCOMMENT (performance)
 		// return properties.remove(key);
+		return null;
 	}
 
 	@Override
 	public void setProperty(String key, Object value) {
-		properties.put(key.hashCode(), value);
-		startNode.addPropertyKey(key);
+		// TODO UNCOMMENT (performance)
 		// properties.put(key, value);
 	}
 
