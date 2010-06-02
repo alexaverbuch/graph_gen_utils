@@ -4,7 +4,6 @@ import java.io.Serializable;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Random;
 
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
@@ -14,45 +13,32 @@ import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.Transaction;
 import org.neo4j.graphdb.event.KernelEventHandler;
 import org.neo4j.graphdb.event.TransactionEventHandler;
-import org.uncommons.maths.random.MersenneTwisterRNG;
 
 public class MemGraph implements GraphDatabaseService {
 
-	// TODO UNCOMMENT (performance)
-	// private long nextNodeId = -1;
-	private int nextNodeId = -1;
+	private long nextNodeId = -1;
 
 	// Guarantees same order when iterating
 	// TODO UNCOMMENT (performance)
-	// private LinkedHashMap<Long, Node> nodes = null;
-	private LinkedHashMap<Integer, Node> nodes = null;
+	private LinkedHashMap<Long, Node> nodes = null;
 
-	// TODO UNCOMMENT (performance)
-	// private LinkedHashMap<Long, Relationship> relationships = null;
-	private HashMap<Integer, Relationship> relationships = null;
+	private HashMap<Long, Relationship> relationships = null;
 
 	public MemGraph() {
 		super();
-		// TODO UNCOMMENT (performance)
-		// this.nodes = new LinkedHashMap<Long, Node>();
-		this.nodes = new LinkedHashMap<Integer, Node>();
-
-		// TODO UNCOMMENT (performance)
-		// this.relationships = new LinkedHashMap<Long, Relationship>();
-		this.relationships = new HashMap<Integer, Relationship>(1024 * 1024);
+		this.nodes = new LinkedHashMap<Long, Node>();
+		this.relationships = new HashMap<Long, Relationship>();
 	}
 
 	// NOTE Needed because no IdGenerator is used
 	// ID must be set before createNode() is called
 	public void setNextNodeId(long nextNodeId) {
-		this.nextNodeId = (int) nextNodeId;
+		this.nextNodeId = nextNodeId;
 	}
 
 	// NOTE Needed because no NodeManager is used
 	// Called from MemNode. Should NEVER be called from elsewhere
-	// TODO UNCOMMENT (performance)
-	// void removeNode(Long id) {
-	void removeNode(int id) {
+	void removeNode(long id) {
 		if (nodes.remove(id) == null)
 			throw new NotFoundException("Node[" + id
 					+ "] not found so could not be removed");
@@ -60,11 +46,7 @@ public class MemGraph implements GraphDatabaseService {
 
 	// NOTE Needed because no NodeManager is used
 	// Called from MemNode. Should NEVER be called from elsewhere
-	void removeRelationship(int id) {
-		// TODO UNCOMMENT (performance)
-		// if (relationships.remove(id) == null)
-		// throw new NotFoundException("Relationship[" + id
-		// + "] not found so could not be removed");
+	void removeRelationship(long id) {
 		if (relationships.remove(id) == null)
 			throw new NotFoundException("Relationship[" + id
 					+ "] not found so could not be removed");
@@ -73,13 +55,8 @@ public class MemGraph implements GraphDatabaseService {
 	// NOTE Needed because no NodeManager is used
 	// Called from MemNode. Should NEVER be called from elsewhere
 	void addRelationship(MemRel memRel) {
-		// TODO UNCOMMENT (performance)
-		// if (relationships.containsKey(memRel.getId()) == false) {
-		// relationships.put(memRel.getId(), memRel);
-		// return;
-		// }
-		if (relationships.containsKey((int) memRel.getId()) == false) {
-			relationships.put((int) memRel.getId(), memRel);
+		if (relationships.containsKey(memRel.getId()) == false) {
+			relationships.put(memRel.getId(), memRel);
 			return;
 		}
 
@@ -104,19 +81,15 @@ public class MemGraph implements GraphDatabaseService {
 			throw new Error("NextNodeId has not been set");
 		}
 
-		// TODO UNCOMMENT (performance)
-		// MemNode node = new MemNode(nextNodeId, rng, this);
-		// nextNodeId = -1;
-		// nodes.put(node.getId(), node);
 		MemNode node = new MemNode(nextNodeId, this);
 		nextNodeId = -1;
-		nodes.put((int) node.getId(), node);
+		nodes.put(node.getId(), node);
 		return node;
 	}
 
 	@Override
 	public Node getNodeById(long id) {
-		Node node = nodes.get((int) id);
+		Node node = nodes.get(id);
 		if (node != null)
 			return node;
 		throw new NotFoundException("Node[" + id + "] not found");
@@ -124,11 +97,7 @@ public class MemGraph implements GraphDatabaseService {
 
 	@Override
 	public Relationship getRelationshipById(long id) {
-		// TODO UNCOMMENT (performance)
-		// Relationship rel = relationships.get(id);
-		// if (rel != null)
-		// return rel;
-		Relationship rel = relationships.get((int) id);
+		Relationship rel = relationships.get(id);
 		if (rel != null)
 			return rel;
 

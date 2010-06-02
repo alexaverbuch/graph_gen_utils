@@ -1,6 +1,7 @@
 package graph_gen_utils.metrics;
 
 import graph_gen_utils.general.Consts;
+import graph_gen_utils.general.Utils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -158,18 +159,20 @@ public class MetricsReaderUndirected implements MetricsReader {
 				else
 					clusterNodes.put(vColor, new Long(1));
 
-				// Used for Clustering Coefficient
-				double nodeDegree = 0.0;
-				double nodeNeighbourRels = 0.0;
-				ArrayList<Node> nodeNeighbours = new ArrayList<Node>();
-				ArrayList<Long> nodeNeighboursIDs = new ArrayList<Long>();
+				// FIXME Uncomment Later!
+				// // Used for Clustering Coefficient
+				// double nodeDegree = 0.0;
+				// double nodeNeighbourRels = 0.0;
+				// ArrayList<Node> nodeNeighbours = new ArrayList<Node>();
+				// ArrayList<Long> nodeNeighboursIDs = new ArrayList<Long>();
 
 				for (Relationship e : v.getRelationships(Direction.BOTH)) {
 
 					edgeCount++;
 
-					// Used for Clustering Coefficient
-					nodeDegree++;
+					// FIXME Uncomment Later!
+					// // Used for Clustering Coefficient
+					// nodeDegree++;
 
 					Node u = e.getOtherNode(v);
 					Byte uColor = (Byte) u.getProperty(Consts.COLOR);
@@ -188,33 +191,36 @@ public class MetricsReaderUndirected implements MetricsReader {
 							clusterExtDeg.put(vColor, new Long(1));
 					}
 
-					// Used for Clustering Coefficient
-					nodeNeighbours.add(u);
-					nodeNeighboursIDs.add(u.getId());
+					// FIXME Uncomment Later!
+					// // Used for Clustering Coefficient
+					// nodeNeighbours.add(u);
+					// nodeNeighboursIDs.add(u.getId());
 
 				}
 
-				// Used for Clustering Coefficient
-				for (Node nodeNeighbour : nodeNeighbours) {
-					for (Relationship e : nodeNeighbour
-							.getRelationships(Direction.BOTH)) {
+				// FIXME Uncomment Later!
+				// // Used for Clustering Coefficient
+				// for (Node nodeNeighbour : nodeNeighbours) {
+				// for (Relationship e : nodeNeighbour
+				// .getRelationships(Direction.BOTH)) {
+				//
+				// Node nodeNeighboursNeighbour = e
+				// .getOtherNode(nodeNeighbour);
+				//
+				// // my neighbour neighbours my other neighbours
+				// if (nodeNeighboursIDs.contains(nodeNeighboursNeighbour
+				// .getId()))
+				// nodeNeighbourRels++;
+				//
+				// }
+				// }
 
-						Node nodeNeighboursNeighbour = e
-								.getOtherNode(nodeNeighbour);
-
-						// my neighbour neighbours my other neighbours
-						if (nodeNeighboursIDs.contains(nodeNeighboursNeighbour
-								.getId()))
-							nodeNeighbourRels++;
-
-					}
-				}
-
-				// Add local clustering coefficient to global clustering
-				// coefficient
-				double denominator = nodeDegree * (nodeDegree - 1);
-				if (denominator != 0)
-					clusteringCoefficient += (nodeNeighbourRels / denominator);
+				// FIXME Uncomment Later!
+				// // Add local clustering coefficient to global clustering
+				// // coefficient
+				// double denominator = nodeDegree * (nodeDegree - 1);
+				// if (denominator != 0)
+				// clusteringCoefficient += (nodeNeighbourRels / denominator);
 			}
 		} catch (Exception ex) {
 			ex.printStackTrace();
@@ -222,7 +228,8 @@ public class MetricsReaderUndirected implements MetricsReader {
 			tx.finish();
 		}
 
-		clusteringCoefficient = clusteringCoefficient / (double) nodeCount;
+		// FIXME Uncomment Later!
+		// clusteringCoefficient = clusteringCoefficient / (double) nodeCount;
 
 		edgeCount = edgeCount / 2; // Undirected
 

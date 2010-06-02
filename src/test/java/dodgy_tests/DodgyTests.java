@@ -6,7 +6,7 @@ import java.util.HashSet;
 import graph_gen_utils.NeoFromFile;
 import graph_gen_utils.NeoFromFile.ChacoType;
 import graph_gen_utils.general.Consts;
-import graph_gen_utils.general.DirUtils;
+import graph_gen_utils.general.Utils;
 import graph_gen_utils.memory_graph.MemGraph;
 import graph_gen_utils.memory_graph.MemNode;
 import graph_gen_utils.partitioner.Partitioner;
@@ -96,7 +96,7 @@ public class DodgyTests {
 		Double minLat = 1d, minLon = 1d;
 		Double maxLat = 100d, maxLon = 100d;
 		String dbDir = "var/" + dbName;
-		DirUtils.cleanDir(dbDir);
+		Utils.cleanDir(dbDir);
 		GraphDatabaseService db = new EmbeddedGraphDatabase(dbDir);
 		Transaction tx = db.beginTx();
 		try {
@@ -237,7 +237,7 @@ public class DodgyTests {
 		String gml0Str = "/media/disk/alex/Neo4j/test.0.gml";
 		String gml1Str = "/media/disk/alex/Neo4j/test.1.gml";
 
-		DirUtils.cleanDir(dbStr);
+		Utils.cleanDir(dbStr);
 		GraphDatabaseService db = new EmbeddedGraphDatabase(dbStr);
 
 		Transaction tx = db.beginTx();
@@ -315,7 +315,7 @@ public class DodgyTests {
 		String gml1Str = "/media/disk/alex/Neo4j/test.1.gml";
 		String gml2Str = "/media/disk/alex/Neo4j/test.2.gml";
 
-		DirUtils.cleanDir(dbStr);
+		Utils.cleanDir(dbStr);
 		GraphDatabaseService db = new EmbeddedGraphDatabase(dbStr);
 
 		Transaction tx = db.beginTx();
@@ -370,7 +370,7 @@ public class DodgyTests {
 		String gml1Str = "/media/disk/alex/Neo4j/test.1.gml";
 		String gml2Str = "/media/disk/alex/Neo4j/test.2.gml";
 
-		DirUtils.cleanDir(dbStr);
+		Utils.cleanDir(dbStr);
 		GraphDatabaseService db = new EmbeddedGraphDatabase(dbStr);
 
 		Transaction tx = db.beginTx();
@@ -431,7 +431,7 @@ public class DodgyTests {
 		String gml1Str = "/media/disk/alex/Neo4j/test.1.gml";
 		String dbStr = "/media/disk/alex/Neo4j/test";
 
-		DirUtils.cleanDir(dbStr);
+		Utils.cleanDir(dbStr);
 		GraphDatabaseService db = new EmbeddedGraphDatabase(dbStr);
 
 		NeoFromFile.writeNeoFromChaco(db, graphStr);
@@ -456,7 +456,7 @@ public class DodgyTests {
 		String fileStr = pathStr + "twitter_sarunas.sub";
 		String dbDirStr = "var/twitter";
 
-		DirUtils.cleanDir(dbDirStr);
+		Utils.cleanDir(dbDirStr);
 		GraphDatabaseService transNeo = new EmbeddedGraphDatabase(dbDirStr);
 		NeoFromFile.writeNeoFromTwitterDataset(transNeo, fileStr);
 		NeoFromFile.writeMetricsCSV(transNeo, "var/twitter.met");
@@ -634,9 +634,9 @@ public class DodgyTests {
 	}
 
 	private static void read_write_read_write_etc() {
-		DirUtils.cleanDir("var/read_write_results");
+		Utils.cleanDir("var/read_write_results");
 
-		DirUtils.cleanDir("var/batchNeo0");
+		Utils.cleanDir("var/batchNeo0");
 		Partitioner partitioner = new PartitionerAsDefault();
 		NeoFromFile.writeNeoFromChacoAndPtnBatch("var/batchNeo0",
 				"graphs/test0.graph", partitioner);
@@ -647,7 +647,7 @@ public class DodgyTests {
 		NeoFromFile.writeGMLBasic(batchNeo0,
 				"var/read_write_results/batchNeo0.basic.gml");
 
-		DirUtils.cleanDir("var/neo0");
+		Utils.cleanDir("var/neo0");
 		GraphDatabaseService neo0 = new EmbeddedGraphDatabase("var/neo0");
 		NeoFromFile.writeNeoFromChaco(neo0, "graphs/test0.graph");
 		NeoFromFile.writeChaco(neo0, "var/read_write_results/neo0.graph",
@@ -690,7 +690,7 @@ public class DodgyTests {
 			tx1.finish();
 		}
 
-		DirUtils.cleanDir("var/neo1");
+		Utils.cleanDir("var/neo1");
 		GraphDatabaseService neo1 = new EmbeddedGraphDatabase("var/neo1");
 		NeoFromFile.writeNeoFromGML(neo1,
 				"var/read_write_results/neo0mem01.basic.gml");
@@ -758,7 +758,7 @@ public class DodgyTests {
 			tx3.finish();
 		}
 
-		DirUtils.cleanDir("var/neo2");
+		Utils.cleanDir("var/neo2");
 		GraphDatabaseService neo2 = new EmbeddedGraphDatabase("var/neo2");
 		NeoFromFile.writeNeoFromGML(neo2,
 				"var/read_write_results/neo1mem11.basic.gml");

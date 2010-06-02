@@ -23,9 +23,7 @@ import org.uncommons.maths.random.ContinuousUniformGenerator;
 
 public class MemNode implements Node {
 
-	// TODO UNCOMMENT (performance)
-	// private LinkedHashMap<Long, Relationship> relationships = null;
-	private HashMap<Integer, Relationship> relationships = null;
+	private LinkedHashMap<Long, Relationship> relationships = null;
 
 	// TODO UNCOMMENT (performance)
 	// private HashMap<String, Object> properties = null;
@@ -33,20 +31,14 @@ public class MemNode implements Node {
 
 	private MemGraph memGraph = null;
 
-	// TODO UNCOMMENT (performance)
-	// private long id = -1;
-	private int id = -1;
+	private long id = -1;
 
-	// TODO UNCOMMENT (performance)
-	// private long nextRelId = -1;
-	private int nextRelId = -1;
+	private long nextRelId = -1;
 
 	// TODO UNCOMMENT (performance)
 	// public MemNode(long id, Random rng, MemGraph memGraph) {
-	public MemNode(int id, MemGraph memGraph) {
-		// TODO UNCOMMENT (performance)
-		// this.relationships = new LinkedHashMap<Long, Relationship>(8);
-		this.relationships = new HashMap<Integer, Relationship>(8);
+	public MemNode(long id, MemGraph memGraph) {
+		this.relationships = new LinkedHashMap<Long, Relationship>();
 
 		// TODO UNCOMMENT (performance)
 		// this.properties = new HashMap<String, Object>(4);
@@ -57,17 +49,10 @@ public class MemNode implements Node {
 	}
 
 	void removeRelationship(MemRel memRel) {
-		// TODO UNCOMMENT (performance)
-		// if (relationships.containsKey(memRel.getId()) == true) {
-		// relationships.remove(memRel.getId());
-		// if (memRel.getStartNode().getId() == getId())
-		// memGraph.removeRelationship(memRel.getId());
-		// return;
-		// }
-		if (relationships.containsKey((int) memRel.getId()) == true) {
-			relationships.remove((int) memRel.getId());
+		if (relationships.containsKey(memRel.getId()) == true) {
+			relationships.remove(memRel.getId());
 			if (memRel.getStartNode().getId() == getId())
-				memGraph.removeRelationship((int) memRel.getId());
+				memGraph.removeRelationship(memRel.getId());
 			return;
 		}
 
@@ -80,19 +65,12 @@ public class MemNode implements Node {
 	// NOTE Needed because no IdGenerator is used
 	// ID must be set before createRelationship() is called
 	public void setNextRelId(long nextRelId) {
-		this.nextRelId = (int) nextRelId;
+		this.nextRelId = nextRelId;
 	}
 
 	public Relationship addRelationship(MemRel memRel) {
-		// TODO UNCOMMENT (performance)
-		// if (relationships.containsKey(memRel.getId()) == false) {
-		// relationships.put(memRel.getId(), memRel);
-		// if (memRel.getStartNode().getId() == getId())
-		// memGraph.addRelationship(memRel);
-		// return memRel;
-		// }
-		if (relationships.containsKey((int) memRel.getId()) == false) {
-			relationships.put((int) memRel.getId(), memRel);
+		if (relationships.containsKey(memRel.getId()) == false) {
+			relationships.put(memRel.getId(), memRel);
 			if (memRel.getStartNode().getId() == getId())
 				memGraph.addRelationship(memRel);
 			return memRel;
@@ -146,7 +124,7 @@ public class MemNode implements Node {
 		}
 		// TODO UNCOMMENT (performance)
 		// memGraph.removeNode(getId());
-		memGraph.removeNode((int) getId());
+		memGraph.removeNode(getId());
 	}
 
 	@Override
@@ -202,7 +180,7 @@ public class MemNode implements Node {
 	public boolean hasProperty(String key) {
 		// TODO UNCOMMENT (performance)
 		// return properties.containsKey(key);
-		return false;
+		return true;
 	}
 
 	@Override

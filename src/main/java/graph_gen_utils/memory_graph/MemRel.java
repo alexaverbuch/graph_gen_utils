@@ -17,21 +17,16 @@ public class MemRel implements Relationship {
 	// TODO UNCOMMENT (performance)
 	// private HashMap<String, Object> properties = null;
 
-	// TODO UNCOMMENT (performance)
-	// private long id = -1;
-	private int id = -1;
+	private long id = -1;
 
-	public MemRel(int id, MemNode startNode, MemNode endNode) {
+	public MemRel(long id, MemNode startNode, MemNode endNode) {
 		super();
 		this.startNode = startNode;
 		this.endNode = endNode;
 
 		// TODO UNCOMMENT (performance)
-		// this.properties = new HashMap<String, Object>(2);
-		// setProperty(Consts.WEIGHT, Consts.DEFAULT_REL_WEIGHT);
+		// this.properties = new HashMap<String, Object>();
 
-		// TODO UNCOMMENT (performance)
-		// this.id = id;
 		this.id = id;
 	}
 
@@ -97,7 +92,7 @@ public class MemRel implements Relationship {
 	public boolean hasProperty(String key) {
 		// TODO UNCOMMENT (performance)
 		// return properties.containsKey(key);
-		return false;
+		return true;
 	}
 
 	@Override

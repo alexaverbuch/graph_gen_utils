@@ -936,13 +936,23 @@ public class NeoFromFile {
 			if (normalizedMinWeight < Consts.MIN_EDGE_WEIGHT)
 				normalizedMinWeight = Consts.MIN_EDGE_WEIGHT;
 
+			// FIXME REMOVE, temp
+			normalizedMaxWeight = 1.0;
+
+			// FIXME REMOVE, temp
+			// long bufferTime = System.currentTimeMillis();
+			// System.out.println();
+
 			for (Node node : transNeo.getAllNodes()) {
 
-				nodeCount++;
-
 				// FIXME REMOVE, temp
-				if (++nodeCount % 1000 == 0)
-					System.out.printf("\t[%d/%d]\n", nodeCount, edgeCount);
+				if (++nodeCount % 1000 == 0) {
+					// System.out
+					// .printf("\t[%d/%d]...%s", nodeCount, edgeCount,
+					// getTimeStr(System.currentTimeMillis()
+					// - bufferTime));
+					// bufferTime = System.currentTimeMillis();
+				}
 
 				MemNode memNode = (MemNode) memGraph.getNodeById(node.getId());
 
