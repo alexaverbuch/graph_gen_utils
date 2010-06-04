@@ -1267,6 +1267,82 @@ public class NeoFromFile {
 
 	}
 
+	/**
+	 * Deletes a specified number of {@link Node}s by selecting them from among
+	 * all {@link Node}s and then deleting them from the Neo4j instance.
+	 * Selection is performed uniformly random.
+	 * 
+	 * @param transNeo
+	 *            {@link GraphDatabaseService} representing a Neo4j instance
+	 * @param percNodesToKeep
+	 *            percentage of {@link Node}s that should not be deleted
+	 */
+	public static void removeRandomNodes(GraphDatabaseService transNeo,
+			double percNodesToKeep) {
+
+		long time = System.currentTimeMillis();
+		long flushTime = System.currentTimeMillis();
+
+		System.out.println("Deleting random nodes...");
+
+		int deletedRelsCount = 0;
+		int deletedNodesCount = 0;
+		int storeBuff = 0;
+
+		Transaction tx = transNeo.beginTx();
+
+		try {
+			Random rand = new Random();
+
+			for (Node node : transNeo.getAllNodes()) {
+
+				if (rand.nextDouble() < percNodesToKeep)
+					continue;
+
+				for (Relationship rel : node.getRelationships()) {
+					rel.delete();
+					deletedRelsCount++;
+					storeBuff++;
+				}
+
+				node.delete();
+				deletedNodesCount++;
+				storeBuff++;
+
+				if (storeBuff >= Consts.STORE_BUF) {
+					storeBuff = 0;
+
+					tx.success();
+					tx.finish();
+					tx = transNeo.beginTx();
+
+					// if ((deletedRelsCount + deletedNodesCount) % 1000000 ==
+					// 0) {
+					System.out.printf("\t[%d,%d]...%s", deletedNodesCount,
+							deletedRelsCount, getTimeStr(System
+									.currentTimeMillis()
+									- flushTime));
+					flushTime = System.currentTimeMillis();
+					// }
+				}
+
+			}
+
+			tx.success();
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			tx.finish();
+		}
+
+		// PRINTOUT
+		System.out
+				.printf("\tDeleted [%d,%d]...%s", deletedNodesCount,
+						deletedRelsCount, getTimeStr(System.currentTimeMillis()
+								- time));
+
+	}
+
 	// **************
 	// PRIVATE METHODS
 	// ***************

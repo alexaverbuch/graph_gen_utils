@@ -18,11 +18,12 @@ public class SimplifyGraphs {
 		if (args[0].equals("help")) {
 			System.out.println("Params - " + "RelTypesToRemove:Tuple2 "
 					+ "RandomRelDeleteParams:Array "
+					+ "RandomNodeDeleteParams:Array "
 					+ "RemoveDuplicateRelationships:Bool "
 					+ "RemoveOrphanNodes:Bool " + "Neo4jDirectories:Array");
 			System.out.println("E.g. - " + "{RelType1:RelType2:...:RelTypeN} "
-					+ "{PercentToKeep:MaxId} " + "true " + "true "
-					+ "Neo4jDir1/ Neo4jDir2/ ...");
+					+ "{PercentRelToKeep:MaxId} " + "PercentNodeToKeep "
+					+ "true " + "true " + "Neo4jDir1/ Neo4jDir2/ ...");
 			return;
 		}
 
@@ -34,25 +35,33 @@ public class SimplifyGraphs {
 			removalRelTypes.add(relType);
 		}
 
-		String[] randomDeleteParams = args[1].replaceAll("[{}]", "").split(
+		String[] randomRelDeleteParams = args[1].replaceAll("[{}]", "").split(
 				"[:]");
-		if ((randomDeleteParams.length != 0)
-				&& (randomDeleteParams.length != 2)) {
+		if ((randomRelDeleteParams.length != 0)
+				&& (randomRelDeleteParams.length != 2)) {
 			System.out.printf("Invalid parameter: %s\n", args[1]);
 			return;
 		}
-		double percRelsToKeep = Double.parseDouble(randomDeleteParams[0]);
+		double percRelsToKeep = Double.parseDouble(randomRelDeleteParams[0]);
 		if ((percRelsToKeep < 0) || (percRelsToKeep >= 1.0)) {
-			System.out.println("PercentToDelete must be in range [0,1)");
-			return;
+			System.out.println("PercentRelsToKeep must be in range [0,1)");
+			System.out.println("Random Rel delete will not be performed");
+			percRelsToKeep = -1;
 		}
-		int maxRelId = Integer.parseInt(randomDeleteParams[1]);
+		int maxRelId = Integer.parseInt(randomRelDeleteParams[1]);
 
-		boolean removeDuplicateRelationships = Boolean.parseBoolean(args[2]);
+		double percNodesToKeep = Double.parseDouble(args[2]);
+		if ((percNodesToKeep < 0) || (percNodesToKeep >= 1.0)) {
+			System.out.println("PercentNodesToKeep must be in range [0,1)");
+			System.out.println("Random Node delete will not be performed");
+			percNodesToKeep = -1;
+		}
 
-		boolean removeOrphanNodes = Boolean.parseBoolean(args[3]);
+		boolean removeDuplicateRelationships = Boolean.parseBoolean(args[3]);
 
-		for (int i = 4; i < args.length; i++) {
+		boolean removeOrphanNodes = Boolean.parseBoolean(args[4]);
+
+		for (int i = 5; i < args.length; i++) {
 			String dbDir = args[i];
 
 			GraphDatabaseService db = new EmbeddedGraphDatabase(dbDir);
@@ -71,6 +80,11 @@ public class SimplifyGraphs {
 					System.out.printf("\t");
 					NeoFromFile.removeRandomRelationships(db, percRelsToKeep,
 							maxRelId);
+				}
+
+				if (percNodesToKeep > 0) {
+					System.out.printf("\t");
+					NeoFromFile.removeRandomNodes(db, percNodesToKeep);
 				}
 
 				if (removeDuplicateRelationships == true) {

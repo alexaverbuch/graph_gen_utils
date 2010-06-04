@@ -160,19 +160,19 @@ public class MetricsReaderUndirected implements MetricsReader {
 					clusterNodes.put(vColor, new Long(1));
 
 				// FIXME Uncomment Later!
-				// // Used for Clustering Coefficient
-				// double nodeDegree = 0.0;
-				// double nodeNeighbourRels = 0.0;
-				// ArrayList<Node> nodeNeighbours = new ArrayList<Node>();
-				// ArrayList<Long> nodeNeighboursIDs = new ArrayList<Long>();
+				// Used for Clustering Coefficient
+				double nodeDegree = 0.0;
+				double nodeNeighbourRels = 0.0;
+				ArrayList<Node> nodeNeighbours = new ArrayList<Node>();
+				ArrayList<Long> nodeNeighboursIDs = new ArrayList<Long>();
 
 				for (Relationship e : v.getRelationships(Direction.BOTH)) {
 
 					edgeCount++;
 
 					// FIXME Uncomment Later!
-					// // Used for Clustering Coefficient
-					// nodeDegree++;
+					// Used for Clustering Coefficient
+					nodeDegree++;
 
 					Node u = e.getOtherNode(v);
 					Byte uColor = (Byte) u.getProperty(Consts.COLOR);
@@ -192,35 +192,35 @@ public class MetricsReaderUndirected implements MetricsReader {
 					}
 
 					// FIXME Uncomment Later!
-					// // Used for Clustering Coefficient
-					// nodeNeighbours.add(u);
-					// nodeNeighboursIDs.add(u.getId());
+					// Used for Clustering Coefficient
+					nodeNeighbours.add(u);
+					nodeNeighboursIDs.add(u.getId());
 
 				}
 
 				// FIXME Uncomment Later!
-				// // Used for Clustering Coefficient
-				// for (Node nodeNeighbour : nodeNeighbours) {
-				// for (Relationship e : nodeNeighbour
-				// .getRelationships(Direction.BOTH)) {
-				//
-				// Node nodeNeighboursNeighbour = e
-				// .getOtherNode(nodeNeighbour);
-				//
-				// // my neighbour neighbours my other neighbours
-				// if (nodeNeighboursIDs.contains(nodeNeighboursNeighbour
-				// .getId()))
-				// nodeNeighbourRels++;
-				//
-				// }
-				// }
+				// Used for Clustering Coefficient
+				for (Node nodeNeighbour : nodeNeighbours) {
+					for (Relationship e : nodeNeighbour
+							.getRelationships(Direction.BOTH)) {
+
+						Node nodeNeighboursNeighbour = e
+								.getOtherNode(nodeNeighbour);
+
+						// my neighbour neighbours my other neighbours
+						if (nodeNeighboursIDs.contains(nodeNeighboursNeighbour
+								.getId()))
+							nodeNeighbourRels++;
+
+					}
+				}
 
 				// FIXME Uncomment Later!
-				// // Add local clustering coefficient to global clustering
-				// // coefficient
-				// double denominator = nodeDegree * (nodeDegree - 1);
-				// if (denominator != 0)
-				// clusteringCoefficient += (nodeNeighbourRels / denominator);
+				// Add local clustering coefficient to global clustering
+				// coefficient
+				double denominator = nodeDegree * (nodeDegree - 1);
+				if (denominator != 0)
+					clusteringCoefficient += (nodeNeighbourRels / denominator);
 			}
 		} catch (Exception ex) {
 			ex.printStackTrace();
@@ -229,7 +229,7 @@ public class MetricsReaderUndirected implements MetricsReader {
 		}
 
 		// FIXME Uncomment Later!
-		// clusteringCoefficient = clusteringCoefficient / (double) nodeCount;
+		clusteringCoefficient = clusteringCoefficient / (double) nodeCount;
 
 		edgeCount = edgeCount / 2; // Undirected
 
