@@ -1,4 +1,4 @@
-package graph_gen_utils;
+package graph_gen_utils; 
 
 import graph_gen_utils.general.NodeData;
 import graph_gen_utils.general.Consts;
