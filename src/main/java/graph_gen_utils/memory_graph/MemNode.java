@@ -21,7 +21,6 @@ import org.neo4j.graphdb.ReturnableEvaluator;
 import org.neo4j.graphdb.StopEvaluator;
 import org.neo4j.graphdb.Traverser;
 import org.neo4j.graphdb.Traverser.Order;
-import org.uncommons.maths.random.ContinuousUniformGenerator;
 
 public class MemNode implements Node {
 
@@ -359,6 +358,12 @@ public class MemNode implements Node {
 
 	@Override
 	public Expansion<Relationship> expandAll() {
+		// NOTE Not Supported
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public Expansion<Relationship> expand(Direction arg0) {
 		// NOTE Not Supported
 		throw new UnsupportedOperationException();
 	}
