@@ -15,7 +15,7 @@ public class MemRel implements Relationship {
 	private MemNode endNode = null;
 
 	// TODO UNCOMMENT (performance)
-	// private HashMap<String, Object> properties = null;
+	private HashMap<String, Object> properties = null;
 
 	private long id = -1;
 
@@ -25,7 +25,7 @@ public class MemRel implements Relationship {
 		this.endNode = endNode;
 
 		// TODO UNCOMMENT (performance)
-		// this.properties = new HashMap<String, Object>();
+		this.properties = new HashMap<String, Object>();
 
 		this.id = id;
 	}
@@ -70,42 +70,42 @@ public class MemRel implements Relationship {
 	@Override
 	public Object getProperty(String key) {
 		// TODO UNCOMMENT (performance)
-		// return properties.get(key);
-		return 1d;
+		return properties.get(key);
+		// return 1d;
 	}
 
 	@Override
 	public Iterable<String> getPropertyKeys() {
 		// TODO UNCOMMENT (performance)
-		// return properties.keySet();
-		return null;
+		return properties.keySet();
+		// return null;
 	}
 
 	@Override
 	public Iterable<Object> getPropertyValues() {
 		// TODO UNCOMMENT (performance)
-		// return properties.values();
-		return null;
+		return properties.values();
+		// return null;
 	}
 
 	@Override
 	public boolean hasProperty(String key) {
 		// TODO UNCOMMENT (performance)
-		// return properties.containsKey(key);
-		return true;
+		return properties.containsKey(key);
+		// return true;
 	}
 
 	@Override
 	public Object removeProperty(String key) {
 		// TODO UNCOMMENT (performance)
-		// return properties.remove(key);
-		return null;
+		return properties.remove(key);
+		// return null;
 	}
 
 	@Override
 	public void setProperty(String key, Object value) {
 		// TODO UNCOMMENT (performance)
-		// properties.put(key, value);
+		properties.put(key, value);
 	}
 
 	// **********************

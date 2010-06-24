@@ -170,7 +170,9 @@ public class GMLParserDirected implements GraphReader {
 						continue;
 					}
 
-					if (tokenKey.equals(Consts.WEIGHT)) {
+					if (tokenKey.equals(Consts.WEIGHT)
+							|| tokenKey.equals(Consts.LATITUDE)
+							|| tokenKey.equals(Consts.LONGITUDE)) {
 						tokenVal = Double.parseDouble(st.nextToken());
 						node.getProperties().put(tokenKey, tokenVal);
 						continue;

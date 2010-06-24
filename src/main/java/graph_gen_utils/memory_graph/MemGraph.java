@@ -19,7 +19,6 @@ public class MemGraph implements GraphDatabaseService {
 	private long nextNodeId = -1;
 
 	// Guarantees same order when iterating
-	// TODO UNCOMMENT (performance)
 	private LinkedHashMap<Long, Node> nodes = null;
 
 	private HashMap<Long, Relationship> relationships = null;

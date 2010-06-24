@@ -1,5 +1,7 @@
 package dodgy_tests;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 
@@ -34,7 +36,7 @@ public class DodgyTests {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		create_network_traffic_graphs();
+		do_partition_GIS();
 	}
 
 	private static void create_network_traffic_graphs() {
@@ -196,38 +198,36 @@ public class DodgyTests {
 	}
 
 	private static void do_partition_GIS() {
-		String dbStr = "/media/disk/alex/Neo4j/Original/fs-tree (v=1.4m e=2.6m)-RAND2";
+		String dirStr = "/home/alex/workspace/graph_cluster_utils/sample dbs/simulated - gis romania/";
+		// String dbStr = dirStr
+		// + "romania-gis-COORD-BAL_NS2-GID-NAME-COORDS-BICYCLE";
+		String dbStr = dirStr
+				+ "romania-gis-COORD-BAL_NS4-GID-NAME-COORDS-BICYCLE";
+
+		double northWesternLon = 20d;
+		double northWesternLat = 49d;
+		double southEasternLon = 31d;
+		double southEasternLat = 43d;
 
 		GraphDatabaseService db = new EmbeddedGraphDatabase(dbStr);
 
-		// double northWesternLon = 20d;
-		// double northWesternLat = 49d;
-		// double southEasternLon = 31d;
-		// double southEasternLat = 43d;
-		// BorderType borderType = BorderType.NORTH_SOUTH_BORDERS;
-		// byte ptns = 4;
-		//    
-		// Partitioner partitioner =
-		// new PartitionerAsCoordinates(northWesternLon, northWesternLat,
-		// southEasternLon, southEasternLat, borderType, ptns);
-		//    
-		// HashMap<String, Object> props = new HashMap<String, Object>();
-		// props.put(Consts.LONGITUDE, 0d);
-		// props.put(Consts.LATITUDE, 0d);
+		BorderType borderType = BorderType.NORTH_SOUTH_BORDERS;
 
-		// byte ptns = 2;
-		// Partitioner partitioner = new PartitionerAsRandom(ptns);
+		// double[] borders = new double[] { 25.54991 };
+		double[] borders = new double[] { 23.6699606, 25.54991, 26.2199546 };
 
-		// byte ptns = 4;
-		// Partitioner partitioner = new PartitionerAsRandom(ptns);
-		//    
-		// HashMap<String, Object> props = new HashMap<String, Object>();
-		//    
-		// NeoFromFile.applyPtnToNeo(db, partitioner, props);
-		NeoFromFile.writeMetricsCSV(db,
-				"/media/disk/alex/Neo4j/fs-tree.rand2.met");
-		// NeoFromFile.writeGMLBasic(db,
-		// "/media/disk/alex/Neo4j/romania.rand4.gml");
+		Partitioner partitioner = new PartitionerAsCoordinates(northWesternLon,
+				northWesternLat, southEasternLon, southEasternLat, borderType,
+				borders);
+
+		HashMap<String, Object> props = new HashMap<String, Object>();
+		props.put(Consts.LONGITUDE, 0d);
+		props.put(Consts.LATITUDE, 0d);
+
+		NeoFromFile.applyPtnToNeo(db, partitioner, props);
+
+		// NeoFromFile.writeMetricsCSV(db, dirStr + "gis-hard2.met");
+		NeoFromFile.writeMetricsCSV(db, dirStr + "gis-hard4.met");
 
 		db.shutdown();
 	}

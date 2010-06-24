@@ -10,10 +10,12 @@ import java.util.Random;
 import java.util.Vector;
 
 import org.neo4j.graphdb.Direction;
+import org.neo4j.graphdb.Expansion;
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
 import org.neo4j.graphdb.NotFoundException;
 import org.neo4j.graphdb.Relationship;
+import org.neo4j.graphdb.RelationshipExpander;
 import org.neo4j.graphdb.RelationshipType;
 import org.neo4j.graphdb.ReturnableEvaluator;
 import org.neo4j.graphdb.StopEvaluator;
@@ -26,8 +28,8 @@ public class MemNode implements Node {
 	private LinkedHashMap<Long, Relationship> relationships = null;
 
 	// TODO UNCOMMENT (performance)
-	// private HashMap<String, Object> properties = null;
-	private Byte color = null;
+	private HashMap<String, Object> properties = null;
+	// private Byte color = null;
 
 	private MemGraph memGraph = null;
 
@@ -35,14 +37,13 @@ public class MemNode implements Node {
 
 	private long nextRelId = -1;
 
-	// TODO UNCOMMENT (performance)
 	// public MemNode(long id, Random rng, MemGraph memGraph) {
 	public MemNode(long id, MemGraph memGraph) {
 		this.relationships = new LinkedHashMap<Long, Relationship>();
 
 		// TODO UNCOMMENT (performance)
-		// this.properties = new HashMap<String, Object>(4);
-		color = -1;
+		this.properties = new HashMap<String, Object>(4);
+		// color = -1;
 
 		this.memGraph = memGraph;
 		this.id = id;
@@ -122,8 +123,6 @@ public class MemNode implements Node {
 			// NOTE Not possible to throw Exception here due to Node interface
 			throw new Error(errStr);
 		}
-		// TODO UNCOMMENT (performance)
-		// memGraph.removeNode(getId());
 		memGraph.removeNode(getId());
 	}
 
@@ -157,45 +156,43 @@ public class MemNode implements Node {
 	@Override
 	// NOTE This is slow, but used to reduce memory footprint
 	public Iterable<String> getPropertyKeys() {
-		// TODO UNCOMMENT (performance)
-		// return properties.keySet();
-		return null;
+		return properties.keySet();
 	}
 
 	@Override
 	public Object getProperty(String key) {
 		// TODO UNCOMMENT (performance)
-		// return properties.get(key);
-		return color;
+		return properties.get(key);
+		// return color;
 	}
 
 	@Override
 	public Iterable<Object> getPropertyValues() {
 		// TODO UNCOMMENT (performance)
-		// return properties.values();
-		return null;
+		return properties.values();
+		// return null;
 	}
 
 	@Override
 	public boolean hasProperty(String key) {
 		// TODO UNCOMMENT (performance)
-		// return properties.containsKey(key);
-		return true;
+		return properties.containsKey(key);
+		// return true;
 	}
 
 	@Override
 	public Object removeProperty(String key) {
 		// TODO UNCOMMENT (performance)
-		// return properties.remove(key);
-		return null;
+		return properties.remove(key);
+		// return null;
 	}
 
 	@Override
 	public void setProperty(String key, Object value) {
 		// TODO UNCOMMENT (performance)
-		// properties.put(key, value);
-		if (key.equals(Consts.COLOR))
-			color = (Byte) value;
+		properties.put(key, value);
+		// if (key.equals(Consts.COLOR))
+		// color = (Byte) value;
 	}
 
 	// **********************
@@ -337,6 +334,31 @@ public class MemNode implements Node {
 
 	@Override
 	public GraphDatabaseService getGraphDatabase() {
+		// NOTE Not Supported
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public Expansion<Relationship> expand(RelationshipType type) {
+		// NOTE Not Supported
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public Expansion<Relationship> expand(RelationshipExpander expander) {
+		// NOTE Not Supported
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public Expansion<Relationship> expand(RelationshipType type,
+			Direction direction) {
+		// NOTE Not Supported
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public Expansion<Relationship> expandAll() {
 		// NOTE Not Supported
 		throw new UnsupportedOperationException();
 	}

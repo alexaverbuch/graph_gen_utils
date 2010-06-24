@@ -22,27 +22,33 @@ public class GetNodesByCoords {
 	public static void main(String[] args) {
 
 		if (args[0].equals("help")) {
-			System.out.println("Params - " + "OutputFilePath:Str "
+			System.out.println("Params - " + "OutputDir:Str "
 					+ "Neo4jDirectory:Str");
 			return;
 		}
 
-		String outputFilePath = args[0];
+		String outputDir = args[0];
 		String dbDir = args[1];
 
-		BufferedWriter bufferedWriter = null;
+		BufferedWriter bufferedWriterLon = null;
+		BufferedWriter bufferedWriterLat = null;
 		GraphDatabaseService db = new EmbeddedGraphDatabase(dbDir);
 
 		Transaction tx = db.beginTx();
 
 		try {
-			bufferedWriter = new BufferedWriter(new FileWriter(new File(
-					outputFilePath)));
+			bufferedWriterLon = new BufferedWriter(new FileWriter(new File(
+					outputDir + "/lon.txt")));
+			bufferedWriterLat = new BufferedWriter(new FileWriter(new File(
+					outputDir + "/lat.txt")));
 
 			for (Node node : db.getAllNodes()) {
 				double nodeLon = (Double) node.getProperty(Consts.LONGITUDE);
-				bufferedWriter.write(Double.toString(nodeLon));
-				bufferedWriter.newLine();
+				bufferedWriterLon.write(Double.toString(nodeLon));
+				bufferedWriterLon.newLine();
+				double nodeLat = (Double) node.getProperty(Consts.LATITUDE);
+				bufferedWriterLat.write(Double.toString(nodeLat));
+				bufferedWriterLat.newLine();
 			}
 
 			tx.finish();
@@ -54,9 +60,13 @@ public class GetNodesByCoords {
 
 			// Close the BufferedWriter
 			try {
-				if (bufferedWriter != null) {
-					bufferedWriter.flush();
-					bufferedWriter.close();
+				if (bufferedWriterLon != null) {
+					bufferedWriterLon.flush();
+					bufferedWriterLon.close();
+				}
+				if (bufferedWriterLat != null) {
+					bufferedWriterLat.flush();
+					bufferedWriterLat.close();
 				}
 			} catch (IOException ex) {
 				ex.printStackTrace();

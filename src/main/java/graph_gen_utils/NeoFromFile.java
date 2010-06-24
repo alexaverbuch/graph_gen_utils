@@ -1,4 +1,4 @@
-package graph_gen_utils; 
+package graph_gen_utils;
 
 import graph_gen_utils.general.NodeData;
 import graph_gen_utils.general.Consts;
@@ -45,6 +45,7 @@ import org.neo4j.kernel.impl.batchinsert.BatchInserter;
 
 import p_graph_service.PGraphDatabaseService;
 import p_graph_service.core.PGraphDatabaseServiceImpl;
+import p_graph_service.sim.PGraphDatabaseServiceSIM;
 
 /**
  * Provides easy means of creating a Neo4j instance from various graph file
@@ -69,12 +70,12 @@ public class NeoFromFile {
 	// **************
 
 	/**
-	 * Moved from neo4j_partitioned_api. Takes a normal Neo4j instance
-	 * {@link GraphDatabaseService} as input, creates a new partitioned version
-	 * {@link PGraphDatabaseService} in the specified directory, then copies all
-	 * data from the input instance into the new instance. {@link Node}s must
-	 * have a {@link Consts#COLOR} attribute as this is used to decide which
-	 * partition each {@link Node} is stored in.
+	 * Martin's code, moved from neo4j_partitioned_api. Takes a normal Neo4j
+	 * instance {@link GraphDatabaseService} as input, creates a new partitioned
+	 * version {@link PGraphDatabaseService} in the specified directory, then
+	 * copies all data from the input instance into the new instance.
+	 * {@link Node}s must have a {@link Consts#COLOR} attribute as this is used
+	 * to decide which partition each {@link Node} is stored in.
 	 * 
 	 * @param transNeo
 	 *            {@link GraphDatabaseService} representing the regular Neo4j
@@ -89,7 +90,10 @@ public class NeoFromFile {
 
 		System.out.println("Converting Neo4j to PNeo4j");
 
-		PGraphDatabaseService partitionedTransNeo = new PGraphDatabaseServiceImpl(
+		// PGraphDatabaseService partitionedTransNeo = new
+		// PGraphDatabaseServiceImpl(
+		// pdbPath, 0);
+		PGraphDatabaseService partitionedTransNeo = new PGraphDatabaseServiceSIM(
 				pdbPath, 0);
 
 		ArrayList<Long> nodeIDs = new ArrayList<Long>();
@@ -888,16 +892,16 @@ public class NeoFromFile {
 				memGraph.setNextNodeId(node.getId());
 				MemNode memNode = (MemNode) memGraph.createNode();
 
-				// FIXME Uncomment later
-				// memNode.setProperty(Consts.NODE_GID, (Long) node
-				// .getProperty(Consts.NODE_GID));
+				// FIXME UNCOMMENT (Performance)
+				memNode.setProperty(Consts.NODE_GID, (Long) node
+						.getProperty(Consts.NODE_GID));
 
 				Byte nodeColor = -1;
 				if (node.hasProperty(Consts.COLOR))
 					nodeColor = (Byte) node.getProperty(Consts.COLOR);
 				memNode.setProperty(Consts.COLOR, nodeColor);
 
-				// FIXME Uncomment later
+				// FIXME UNCOMMENT (Performance)
 				// for (String key : node.getPropertyKeys()) {
 				// if (ignoreNodeProps.contains(key))
 				// continue;
@@ -906,53 +910,39 @@ public class NeoFromFile {
 				// memNode.setProperty(key, node.getProperty(key));
 				// }
 
-				// FIXME Uncomment later
+				// FIXME UNCOMMENT (Performance)
 				// for (Relationship rel : node
 				// .getRelationships(Direction.OUTGOING)) {
 				//
-				// // FIXME Uncomment later
-				// // if (rel.hasProperty(Consts.WEIGHT)) {
-				// // double weight = (Double) rel.getProperty(Consts.WEIGHT);
-				// // if (weight > maxWeight)
-				// // maxWeight = weight;
-				// // if (weight < minWeight)
-				// // minWeight = weight;
-				// // }
+				// if (rel.hasProperty(Consts.WEIGHT)) {
+				// double weight = (Double) rel.getProperty(Consts.WEIGHT);
+				// if (weight > maxWeight)
+				// maxWeight = weight;
+				// if (weight < minWeight)
+				// minWeight = weight;
+				// }
 				//
 				// }
 
 			}
 
-			// FIXME Uncomment later
+			// FIXME UNCOMMENT (Performance)
 			// if ((minWeight == Double.MAX_VALUE)
 			// || (maxWeight == Double.MIN_VALUE)) {
 			// minWeight = 1.0;
 			// maxWeight = 1.0;
 			// }
+			// normalizedMinWeight = minWeight / maxWeight;
+			// if (normalizedMinWeight < Consts.MIN_EDGE_WEIGHT)
+			// normalizedMinWeight = Consts.MIN_EDGE_WEIGHT;
 			minWeight = 1.0;
 			maxWeight = 1.0;
-
-			normalizedMinWeight = minWeight / maxWeight;
-			if (normalizedMinWeight < Consts.MIN_EDGE_WEIGHT)
-				normalizedMinWeight = Consts.MIN_EDGE_WEIGHT;
-
-			// FIXME REMOVE, temp
+			normalizedMinWeight = 1.0;
 			normalizedMaxWeight = 1.0;
-
-			// FIXME REMOVE, temp
-			// long bufferTime = System.currentTimeMillis();
-			// System.out.println();
 
 			for (Node node : transNeo.getAllNodes()) {
 
-				// FIXME REMOVE, temp
-				if (++nodeCount % 1000 == 0) {
-					// System.out
-					// .printf("\t[%d/%d]...%s", nodeCount, edgeCount,
-					// getTimeStr(System.currentTimeMillis()
-					// - bufferTime));
-					// bufferTime = System.currentTimeMillis();
-				}
+				nodeCount++;
 
 				MemNode memNode = (MemNode) memGraph.getNodeById(node.getId());
 
@@ -968,18 +958,17 @@ public class NeoFromFile {
 					MemRel memRel = (MemRel) memNode.createRelationshipTo(
 							endNode, Consts.RelationshipTypes.DEFAULT);
 
-					// FIXME Uncomment later
+					// FIXME UNCOMMENT (Performance)
 					// Long relGID = rel.getId();
 					// if (rel.hasProperty(Consts.REL_GID))
 					// relGID = (Long) rel.getProperty(Consts.REL_GID);
 					//
 					// memRel.setProperty(Consts.REL_GID, relGID);
 
-					// FIXME Uncomment later
+					// FIXME UNCOMMENT (Performance)
 					// // Store normalized edge weight, [0,1]
 					// double weight = normalizedMinWeight;
-
-					// FIXME Uncomment later
+					//
 					// if (rel.hasProperty(Consts.WEIGHT)) {
 					// weight = (Double) rel.getProperty(Consts.WEIGHT)
 					// / maxWeight;
@@ -989,8 +978,9 @@ public class NeoFromFile {
 					// normalizedMaxWeight = weight;
 					//
 					// memRel.setProperty(Consts.WEIGHT, weight);
+					memRel.setProperty(Consts.WEIGHT, 1d);
 
-					// FIXME Uncomment later
+					// FIXME UNCOMMENT (Performance)
 					// for (String key : rel.getPropertyKeys()) {
 					// if (ignoreRelProps.contains(key))
 					// continue;
