@@ -58,7 +58,8 @@ public class MetricsReaderUndirected implements MetricsReader {
 
 	private GraphDatabaseService transNeo = null;
 
-	public MetricsReaderUndirected(GraphDatabaseService transNeo) {
+	public MetricsReaderUndirected(GraphDatabaseService transNeo,
+			boolean doClusterCoefficient) {
 		this.transNeo = transNeo;
 
 		clusterNodes.clear();
@@ -74,8 +75,10 @@ public class MetricsReaderUndirected implements MetricsReader {
 		maxClusterSize = 0;
 		modularity = 0.0;
 
-		collectDataAndCalcMetrics();
-
+		if (doClusterCoefficient == true)
+			collectDataAndCalcMetricsWithClusterCoefficient();
+		else
+			collectDataAndCalcMetrics();
 	}
 
 	// --------------
@@ -143,7 +146,7 @@ public class MetricsReaderUndirected implements MetricsReader {
 	// Metrics Calcs
 	// -------------
 
-	private void collectDataAndCalcMetrics() {
+	private void collectDataAndCalcMetricsWithClusterCoefficient() {
 
 		Transaction tx = transNeo.beginTx();
 
@@ -159,8 +162,7 @@ public class MetricsReaderUndirected implements MetricsReader {
 				else
 					clusterNodes.put(vColor, new Long(1));
 
-				// FIXME Uncomment Later!
-				// Used for Clustering Coefficient
+				// NOTE Used for Clustering Coefficient
 				double nodeDegree = 0.0;
 				double nodeNeighbourRels = 0.0;
 				ArrayList<Node> nodeNeighbours = new ArrayList<Node>();
@@ -170,8 +172,7 @@ public class MetricsReaderUndirected implements MetricsReader {
 
 					edgeCount++;
 
-					// FIXME Uncomment Later!
-					// Used for Clustering Coefficient
+					// NOTE Used for Clustering Coefficient
 					nodeDegree++;
 
 					Node u = e.getOtherNode(v);
@@ -191,15 +192,13 @@ public class MetricsReaderUndirected implements MetricsReader {
 							clusterExtDeg.put(vColor, new Long(1));
 					}
 
-					// FIXME Uncomment Later!
-					// Used for Clustering Coefficient
+					// NOTE Used for Clustering Coefficient
 					nodeNeighbours.add(u);
 					nodeNeighboursIDs.add(u.getId());
 
 				}
 
-				// FIXME Uncomment Later!
-				// Used for Clustering Coefficient
+				// NOTE Used for Clustering Coefficient
 				for (Node nodeNeighbour : nodeNeighbours) {
 					for (Relationship e : nodeNeighbour
 							.getRelationships(Direction.BOTH)) {
@@ -215,7 +214,7 @@ public class MetricsReaderUndirected implements MetricsReader {
 					}
 				}
 
-				// FIXME Uncomment Later!
+				// NOTE Used for Clustering Coefficient
 				// Add local clustering coefficient to global clustering
 				// coefficient
 				double denominator = nodeDegree * (nodeDegree - 1);
@@ -228,8 +227,74 @@ public class MetricsReaderUndirected implements MetricsReader {
 			tx.finish();
 		}
 
-		// FIXME Uncomment Later!
+		// NOTE Used for Clustering Coefficient
 		clusteringCoefficient = clusteringCoefficient / (double) nodeCount;
+
+		edgeCount = edgeCount / 2; // Undirected
+
+		// Make sure all colours are represented in both HashMaps
+		for (Byte extDegKey : clusterExtDeg.keySet())
+			if (clusterIntDeg.containsKey(extDegKey) == false)
+				clusterIntDeg.put(extDegKey, new Long(0));
+
+		// Make sure all colours are represented in both HashMaps
+		for (Byte intDegKey : clusterIntDeg.keySet()) {
+			if (clusterExtDeg.containsKey(intDegKey) == false)
+				clusterExtDeg.put(intDegKey, new Long(0));
+		}
+
+		clusterCount = clusterIntDeg.size();
+
+		calcEdgCutMetric();
+		calcClusterSizeMetrics();
+		calcModularity();
+	}
+
+	private void collectDataAndCalcMetrics() {
+
+		Transaction tx = transNeo.beginTx();
+
+		try {
+			for (Node v : transNeo.getAllNodes()) {
+
+				nodeCount++;
+
+				Byte vColor = (Byte) v.getProperty(Consts.COLOR);
+
+				if (clusterNodes.containsKey(vColor))
+					clusterNodes.put(vColor, clusterNodes.get(vColor) + 1);
+				else
+					clusterNodes.put(vColor, new Long(1));
+
+				for (Relationship e : v.getRelationships(Direction.BOTH)) {
+
+					edgeCount++;
+
+					Node u = e.getOtherNode(v);
+					Byte uColor = (Byte) u.getProperty(Consts.COLOR);
+
+					if (vColor == uColor) {
+						if (clusterIntDeg.containsKey(vColor))
+							clusterIntDeg.put(vColor,
+									clusterIntDeg.get(vColor) + 1);
+						else
+							clusterIntDeg.put(vColor, new Long(1));
+					} else {
+						if (clusterExtDeg.containsKey(vColor))
+							clusterExtDeg.put(vColor,
+									clusterExtDeg.get(vColor) + 1);
+						else
+							clusterExtDeg.put(vColor, new Long(1));
+					}
+
+				}
+
+			}
+		} catch (Exception ex) {
+			ex.printStackTrace();
+		} finally {
+			tx.finish();
+		}
 
 		edgeCount = edgeCount / 2; // Undirected
 
