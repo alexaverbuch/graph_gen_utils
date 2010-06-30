@@ -1,6 +1,6 @@
 package graph_gen_utils.writer.chaco;
 
-import graph_gen_utils.NeoFromFile.ChacoType;
+import graph_gen_utils.general.ChacoType;
 import graph_gen_utils.writer.GraphWriter;
 
 import java.io.File;

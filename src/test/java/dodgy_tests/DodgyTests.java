@@ -6,7 +6,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 
 import graph_gen_utils.NeoFromFile;
-import graph_gen_utils.NeoFromFile.ChacoType;
+import graph_gen_utils.general.ChacoType;
 import graph_gen_utils.general.Consts;
 import graph_gen_utils.general.Utils;
 import graph_gen_utils.memory_graph.MemGraph;

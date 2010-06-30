@@ -1,7 +1,9 @@
 package graph_gen_utils;
 
-import graph_gen_utils.general.NodeData;
+import graph_gen_utils.general.ChacoType;
 import graph_gen_utils.general.Consts;
+import graph_gen_utils.general.NodeData;
+import graph_gen_utils.general.Consts.RelationshipTypes;
 import graph_gen_utils.memory_graph.MemGraph;
 import graph_gen_utils.memory_graph.MemNode;
 import graph_gen_utils.memory_graph.MemRel;
@@ -56,10 +58,6 @@ import p_graph_service.sim.PGraphDatabaseServiceSIM;
  * @since 2010-04-01
  */
 public class NeoFromFile {
-
-	public enum ChacoType {
-		UNWEIGHTED, WEIGHTED_EDGES, WEIGHTED_NODES, WEIGHTED
-	}
 
 	public static void main(String[] args) throws Exception {
 
