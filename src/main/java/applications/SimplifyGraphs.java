@@ -16,7 +16,7 @@ public class SimplifyGraphs {
 	public static void main(String[] args) {
 
 		if (args[0].equals("help")) {
-			System.out.println("Params - " + "RelTypesToRemove:Tuple2 "
+			System.out.println("Params - " + "RelTypesToRemove:Array "
 					+ "RandomRelDeleteParams:Array "
 					+ "RandomNodeDeleteParams:Array "
 					+ "RemoveDuplicateRelationships:Bool "
